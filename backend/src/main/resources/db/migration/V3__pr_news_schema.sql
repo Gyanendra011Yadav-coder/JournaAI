@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS saved_searches CASCADE;
 DROP TABLE IF EXISTS workspaces CASCADE;
 
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL,
@@ -20,13 +20,13 @@ CREATE TABLE users (
 );
 
 CREATE TABLE beats (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     slug TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE articles (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     headline TEXT NOT NULL,
     source TEXT,
     author TEXT,
@@ -43,15 +43,15 @@ CREATE TABLE articles (
 CREATE UNIQUE INDEX articles_canonical_url_idx ON articles (canonical_url);
 
 CREATE TABLE article_tags (
-    id SERIAL PRIMARY KEY,
-    article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
-    beat_id INTEGER NOT NULL REFERENCES beats(id) ON DELETE CASCADE,
+    id BIGSERIAL PRIMARY KEY,
+    article_id BIGINT NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+    beat_id BIGINT NOT NULL REFERENCES beats(id) ON DELETE CASCADE,
     UNIQUE (article_id, beat_id)
 );
 
 CREATE TABLE news_fetch_state (
-    id SERIAL PRIMARY KEY,
-    beat_id INTEGER NOT NULL REFERENCES beats(id) ON DELETE CASCADE,
+    id BIGSERIAL PRIMARY KEY,
+    beat_id BIGINT NOT NULL REFERENCES beats(id) ON DELETE CASCADE,
     timeframe TEXT NOT NULL,
     last_fetched_at TIMESTAMPTZ,
     failure_count INTEGER NOT NULL DEFAULT 0,
@@ -61,7 +61,7 @@ CREATE TABLE news_fetch_state (
 );
 
 CREATE TABLE journalists (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     outlet TEXT,
     location TEXT,
@@ -73,24 +73,24 @@ CREATE TABLE journalists (
 );
 
 CREATE TABLE journalist_tags (
-    id SERIAL PRIMARY KEY,
-    journalist_id INTEGER NOT NULL REFERENCES journalists(id) ON DELETE CASCADE,
-    beat_id INTEGER NOT NULL REFERENCES beats(id) ON DELETE CASCADE,
+    id BIGSERIAL PRIMARY KEY,
+    journalist_id BIGINT NOT NULL REFERENCES journalists(id) ON DELETE CASCADE,
+    beat_id BIGINT NOT NULL REFERENCES beats(id) ON DELETE CASCADE,
     UNIQUE (journalist_id, beat_id)
 );
 
 CREATE TABLE outreach_templates (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     subject TEXT NOT NULL,
     body TEXT NOT NULL
 );
 
 CREATE TABLE outreach_emails (
-    id SERIAL PRIMARY KEY,
-    article_id INTEGER REFERENCES articles(id),
-    journalist_id INTEGER REFERENCES journalists(id),
-    template_id INTEGER REFERENCES outreach_templates(id),
+    id BIGSERIAL PRIMARY KEY,
+    article_id BIGINT REFERENCES articles(id),
+    journalist_id BIGINT REFERENCES journalists(id),
+    template_id BIGINT REFERENCES outreach_templates(id),
     final_subject TEXT NOT NULL,
     final_body TEXT NOT NULL,
     status TEXT NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE outreach_emails (
 );
 
 CREATE TABLE audit_log (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     actor TEXT NOT NULL,
     action TEXT NOT NULL,
     entity TEXT NOT NULL,
