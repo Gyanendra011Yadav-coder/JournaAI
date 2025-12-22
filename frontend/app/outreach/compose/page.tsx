@@ -50,11 +50,12 @@ export default function OutreachComposePage() {
 
   return (
     <div className="space-y-6">
-      <header>
+      <header className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
+        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Outreach</p>
         <h1 className="text-2xl font-semibold">Compose Outreach</h1>
         <p className="text-slate-400">Draft an email and send from within the platform.</p>
       </header>
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+      <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4 shadow-[0_0_0_1px_rgba(59,130,246,0.1)]">
         <div>
           <label className="text-sm text-slate-300">Template</label>
           <select
@@ -67,7 +68,7 @@ export default function OutreachComposePage() {
                 setBody(selected.body);
               }
             }}
-            className="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg p-2"
+            className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3 focus:border-cyan-500/60 focus:outline-none"
           >
             {templates.map((template) => (
               <option key={template.id} value={template.id}>
@@ -84,7 +85,7 @@ export default function OutreachComposePage() {
         />
         <button
           onClick={handleSend}
-          className="px-4 py-2 bg-cyan-500 text-slate-900 rounded-lg font-semibold"
+          className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 text-slate-900 font-semibold shadow-lg shadow-cyan-500/20"
         >
           Send Outreach
         </button>
