@@ -1,41 +1,34 @@
 package ai.journa.prcontrol.config;
 
 import ai.journa.prcontrol.service.integration.EmailProvider;
-import ai.journa.prcontrol.service.integration.MediaDatabaseProvider;
 import ai.journa.prcontrol.service.integration.NewsProvider;
+import ai.journa.prcontrol.service.integration.real.GNewsProvider;
+import ai.journa.prcontrol.service.integration.real.RssNewsProvider;
 import ai.journa.prcontrol.service.mock.MockEmailProvider;
-import ai.journa.prcontrol.service.mock.MockMediaDatabaseProvider;
-import ai.journa.prcontrol.service.mock.MockNewsProvider;
-import ai.journa.prcontrol.service.integration.real.NewsApiProvider;
-import ai.journa.prcontrol.service.integration.real.SmtpEmailProvider;
-import ai.journa.prcontrol.service.integration.real.MediaDatabaseApiProvider;
-import org.springframework.beans.factory.annotation.Value;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class ProviderConfig {
     @Bean
-    public NewsProvider newsProvider(@Value("${app.providers.news:mock}") String mode) {
-        if ("real".equalsIgnoreCase(mode)) {
-            return new NewsApiProvider();
-        }
-        return new MockNewsProvider();
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 
     @Bean
-    public MediaDatabaseProvider mediaDatabaseProvider(@Value("${app.providers.media:mock}") String mode) {
-        if ("real".equalsIgnoreCase(mode)) {
-            return new MediaDatabaseApiProvider();
-        }
-        return new MockMediaDatabaseProvider();
+    public NewsProvider gNewsProvider(RestTemplate restTemplate, ObjectMapper objectMapper, NewsProviderProperties properties) {
+        return new GNewsProvider(restTemplate, objectMapper, properties.getGnews().getApiKey());
     }
 
     @Bean
-    public EmailProvider emailProvider(@Value("${app.providers.email:mock}") String mode) {
-        if ("real".equalsIgnoreCase(mode)) {
-            return new SmtpEmailProvider();
-        }
+    public NewsProvider rssNewsProvider(ObjectMapper objectMapper, NewsProviderProperties properties) {
+        return new RssNewsProvider(objectMapper, properties.getRss().getFeeds());
+    }
+
+    @Bean
+    public EmailProvider emailProvider() {
         return new MockEmailProvider();
     }
 }

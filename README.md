@@ -1,56 +1,63 @@
-# PR Control Tower
+# PR News & Outreach
 
-PR Control Tower is a local-first monorepo that helps PR professionals track news, summarize coverage, discover journalists from compliant sources, and send outreach with an audit trail.
+PR News & Outreach is a cache-first PR intelligence MVP that ingests news into Postgres, surfaces articles from the cache, and supports journalist discovery + outreach workflows.
 
 ## Architecture (Phase 1)
 
 ```mermaid
 graph TD
-  A[Next.js 14 App Router] -->|REST API| B[Spring Boot Backend]
-  B --> C[(PostgreSQL)]
-  B --> D[NewsProvider Interface]
-  B --> E[MediaDatabaseProvider Interface]
-  B --> F[EmailProvider Interface]
-  D --> G[MockNewsProvider]
-  D --> H[NewsApiProvider]
-  E --> I[MockMediaDatabaseProvider]
-  E --> J[MediaDatabaseApiProvider]
-  F --> K[MockEmailProvider]
-  F --> L[SmtpEmailProvider]
+  UI[Next.js 14 App Router] -->|REST API| API[Spring Boot 3.x]
+  API --> DB[(PostgreSQL + Flyway)]
+  API --> GNews[GNewsProvider]
+  API --> RSS[RssNewsProvider]
+  API --> Manual[ManualArticleProvider]
+  API --> Email[MockEmailProvider]
+  GNews --> DB
+  RSS --> DB
+  Manual --> DB
 ```
 
-### Folder Structure
+### Cache-first rule
+The UI never calls vendor APIs directly. Refreshing triggers backend ingestion into Postgres. The UI always reads from the cached tables.
+
+### Monorepo layout
 ```
-/backend      Spring Boot REST API
-/frontend     Next.js 14 App Router UI
-/docker-compose.yml
+/backend   Spring Boot REST API
+/frontend  Next.js App Router UI
 ```
 
-### Core API Routes
+## Database Schema (Postgres)
+Managed by Flyway migrations:
+- `users`
+- `beats`
+- `articles`
+- `article_tags`
+- `news_fetch_state`
+- `journalists`
+- `journalist_tags`
+- `outreach_templates`
+- `outreach_emails`
+- `audit_log`
+
+Seed data is installed automatically (12+ beats, 100 articles, 200 journalists, 5 templates).
+
+## Core API Contract
 - `POST /api/auth/register`
 - `POST /api/auth/login`
-- `POST /api/articles/search`
+- `GET /api/beats`
+- `GET /api/articles?beat=&timeframe=&page=&size=&from=`
+- `POST /api/articles/refresh`
+- `POST /api/articles/manual`
 - `GET /api/articles/{id}`
 - `POST /api/articles/{id}/save`
-- `GET /api/journalists/search`
+- `GET /api/journalists/search?beat=&outlet=&location=&keywords=`
 - `GET /api/journalists/{id}`
 - `GET /api/templates`
 - `POST /api/outreach/send`
-- `POST /api/admin/seed` (ADMIN)
-- `POST /api/admin/templates` (ADMIN)
 - `GET /api/audit`
+- `GET /api/settings/integrations`
 
-### Database Schema (Postgres)
-Managed with Flyway migration `backend/src/main/resources/db/migration/V1__init.sql`:
-- users
-- workspaces
-- beats
-- saved_searches
-- articles
-- journalists
-- outreach_templates
-- outreach_emails
-- audit_log
+OpenAPI UI: `/swagger-ui`
 
 ## Local Development
 
@@ -72,41 +79,35 @@ npm install
 npm run dev
 ```
 
-### 4) Seed Data
-1. Register (first user becomes ADMIN) via `/login`.
-2. Call `POST /api/admin/seed` from the UI or curl to seed beats + templates.
-
-### 5) Run Tests
+### 4) Run Tests
 ```bash
 cd backend
 ./gradlew test
 ```
 
-## Providers & Environment Variables
-Mock providers are enabled by default for a zero-key local run.
-
-Optional real provider placeholders:
-- `NEWSAPI_KEY`
-- `CISION_API_KEY` or `MUCKRACK_API_KEY`
-- `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`
-
-Switch providers via `application.yml`:
+```bash
+cd frontend
+npm run test
 ```
+
+## Environment Variables
+```bash
+GNEWS_API_KEY=your_key_here
+```
+
+## Configuration
+`backend/src/main/resources/application.yml` exposes rate limiting and cache controls:
+```yaml
 app:
-  providers:
-    news: real
-    media: real
-    email: real
+  news:
+    ttlMinutes: 15           # cache refresh TTL
+    searchesPerMinute: 30    # max searches per user per minute
+    failureThreshold: 3
+    circuitMinutes: 30
 ```
 
-## Compliance Notes
-- No scraping; only vendor APIs or mock data.
-- Outbound calls have basic rate limiting + retry wrappers.
-- Email logs are stored without secrets.
-
-## Phase Checklist
-- ✅ Architecture diagram + API routes + DB schema
-- ✅ Flyway migrations
-- ✅ Mock providers + real skeletons
-- ✅ End-to-end workflow with mock data
-- ✅ Tests (unit + integration/e2e)
+## Product Notes
+- Refresh uses GNews, falls back to RSS, then serves cached data if both fail.
+- Circuit breaker opens after repeated vendor failures.
+- Manual “Add Article URL” creates records without scraping.
+- Audit log entries are created for search, view, save, and send actions.

@@ -11,9 +11,6 @@ public class RegisterRequest {
     @NotBlank
     private String password;
 
-    @NotBlank
-    private String workspaceName;
-
     public String getEmail() {
         return email;
     }
@@ -28,13 +25,5 @@ public class RegisterRequest {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getWorkspaceName() {
-        return workspaceName;
-    }
-
-    public void setWorkspaceName(String workspaceName) {
-        this.workspaceName = workspaceName;
     }
 }

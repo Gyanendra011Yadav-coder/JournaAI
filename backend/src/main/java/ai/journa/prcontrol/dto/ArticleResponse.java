@@ -1,15 +1,19 @@
 package ai.journa.prcontrol.dto;
 
 import java.time.Instant;
+import java.util.List;
 
 public class ArticleResponse {
     private Long id;
     private String headline;
     private String source;
     private String author;
+    private String canonicalUrl;
     private String url;
     private Instant publishedAt;
     private String summary;
+    private String provider;
+    private List<String> beats;
     private boolean saved;
 
     public Long getId() {
@@ -44,6 +48,14 @@ public class ArticleResponse {
         this.author = author;
     }
 
+    public String getCanonicalUrl() {
+        return canonicalUrl;
+    }
+
+    public void setCanonicalUrl(String canonicalUrl) {
+        this.canonicalUrl = canonicalUrl;
+    }
+
     public String getUrl() {
         return url;
     }
@@ -66,6 +78,22 @@ public class ArticleResponse {
 
     public void setSummary(String summary) {
         this.summary = summary;
+    }
+
+    public String getProvider() {
+        return provider;
+    }
+
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
+
+    public List<String> getBeats() {
+        return beats;
+    }
+
+    public void setBeats(List<String> beats) {
+        this.beats = beats;
     }
 
     public boolean isSaved() {
