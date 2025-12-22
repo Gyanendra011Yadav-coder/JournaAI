@@ -1,0 +1,26 @@
+# IDE
+.idea/
+*.iml
+
+# Node / Next.js
+node_modules/
+.next/
+
+# Java / Gradle / Maven
+backend/target/
+backend/build/
+.gradle/
+
+# OS / misc
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+.env.*
+
+# Logs
+*.log
+
+# Test / coverage
+coverage/
