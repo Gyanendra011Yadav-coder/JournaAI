@@ -2,6 +2,10 @@ package ai.journa.prcontrol.domain;
 
 import jakarta.persistence.*;
 
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "journalists")
 public class Journalist {
@@ -14,8 +18,6 @@ public class Journalist {
 
     private String outlet;
 
-    private String beatTags;
-
     private String location;
 
     private String email;
@@ -27,6 +29,17 @@ public class Journalist {
 
     @Column(nullable = false)
     private String providerReferenceId;
+
+    @Column(nullable = false)
+    private Instant createdAt = Instant.now();
+
+    @ManyToMany
+    @JoinTable(
+            name = "journalist_tags",
+            joinColumns = @JoinColumn(name = "journalist_id"),
+            inverseJoinColumns = @JoinColumn(name = "beat_id")
+    )
+    private Set<Beat> beats = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -50,14 +63,6 @@ public class Journalist {
 
     public void setOutlet(String outlet) {
         this.outlet = outlet;
-    }
-
-    public String getBeatTags() {
-        return beatTags;
-    }
-
-    public void setBeatTags(String beatTags) {
-        this.beatTags = beatTags;
     }
 
     public String getLocation() {
@@ -98,5 +103,21 @@ public class Journalist {
 
     public void setProviderReferenceId(String providerReferenceId) {
         this.providerReferenceId = providerReferenceId;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Set<Beat> getBeats() {
+        return beats;
+    }
+
+    public void setBeats(Set<Beat> beats) {
+        this.beats = beats;
     }
 }

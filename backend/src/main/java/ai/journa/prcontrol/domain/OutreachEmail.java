@@ -36,6 +36,9 @@ public class OutreachEmail {
 
     private String providerMessageId;
 
+    @Column(nullable = false)
+    private Instant createdAt = Instant.now();
+
     public Long getId() {
         return id;
     }
@@ -106,5 +109,13 @@ public class OutreachEmail {
 
     public void setProviderMessageId(String providerMessageId) {
         this.providerMessageId = providerMessageId;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }
