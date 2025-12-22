@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: prcontrol
+      POSTGRES_USER: prcontrol
+      POSTGRES_PASSWORD: prcontrol
+    ports:
+      - "5432:5432"
+    volumes:
+      - prcontrol-data:/var/lib/postgresql/data
+volumes:
+  prcontrol-data:
