@@ -1,75 +1,47 @@
 package ai.journa.prcontrol.service;
 
+import ai.journa.prcontrol.config.NewsProviderProperties;
 import ai.journa.prcontrol.domain.Article;
-import ai.journa.prcontrol.domain.SavedSearch;
-import ai.journa.prcontrol.dto.ArticleSearchRequest;
+import ai.journa.prcontrol.domain.NewsFetchState;
 import ai.journa.prcontrol.repository.ArticleRepository;
-import ai.journa.prcontrol.repository.BeatRepository;
-import ai.journa.prcontrol.repository.SavedSearchRepository;
-import ai.journa.prcontrol.service.integration.NewsProvider;
-import ai.journa.prcontrol.service.integration.model.NewsArticle;
-import ai.journa.prcontrol.service.summarizer.Summarizer;
+import ai.journa.prcontrol.repository.NewsFetchStateRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 @Service
 public class ArticleService {
-    private final NewsProvider newsProvider;
     private final ArticleRepository articleRepository;
-    private final SavedSearchRepository savedSearchRepository;
-    private final BeatRepository beatRepository;
-    private final Summarizer summarizer;
+    private final NewsFetchStateRepository newsFetchStateRepository;
     private final AuditService auditService;
     private final RateLimiterService rateLimiterService;
+    private final NewsProviderProperties newsProviderProperties;
 
-    public ArticleService(NewsProvider newsProvider,
-                          ArticleRepository articleRepository,
-                          SavedSearchRepository savedSearchRepository,
-                          BeatRepository beatRepository,
-                          Summarizer summarizer,
+    public ArticleService(ArticleRepository articleRepository,
+                          NewsFetchStateRepository newsFetchStateRepository,
                           AuditService auditService,
-                          RateLimiterService rateLimiterService) {
-        this.newsProvider = newsProvider;
+                          RateLimiterService rateLimiterService,
+                          NewsProviderProperties newsProviderProperties) {
         this.articleRepository = articleRepository;
-        this.savedSearchRepository = savedSearchRepository;
-        this.beatRepository = beatRepository;
-        this.summarizer = summarizer;
+        this.newsFetchStateRepository = newsFetchStateRepository;
         this.auditService = auditService;
         this.rateLimiterService = rateLimiterService;
+        this.newsProviderProperties = newsProviderProperties;
     }
 
-    public List<Article> searchArticles(String actor, ArticleSearchRequest request) {
-        SavedSearch savedSearch = new SavedSearch();
-        savedSearch.setTimeframe(request.getTimeframe());
-        savedSearch.setFilters(request.getFilters());
-        beatRepository.findAll().stream()
-                .filter(beat -> beat.getName().equalsIgnoreCase(request.getBeat()))
-                .findFirst()
-                .ifPresent(savedSearch::setBeat);
-        savedSearchRepository.save(savedSearch);
-
-        auditService.record(actor, "SEARCH", "articles", "{\"beat\":\"" + request.getBeat() + "\"}");
-
-        List<NewsArticle> results = withRetry(() -> {
-            rateLimiterService.throttle(300);
-            return newsProvider.fetchArticles(request.getBeat(), request.getTimeframe(), request.getFilters(), request.getPage());
-        });
-        List<Article> articles = results.stream().map(result -> {
-            Article article = new Article();
-            article.setHeadline(result.getHeadline());
-            article.setSource(result.getSource());
-            article.setAuthor(result.getAuthor());
-            article.setUrl(result.getUrl());
-            article.setPublishedAt(result.getPublishedAt());
-            article.setRawPayload(result.getRawPayload());
-            String summaryInput = result.getDescription() != null ? result.getDescription() : result.getHeadline();
-            article.setSummary(summarizer.summarize(summaryInput));
-            return articleRepository.save(article);
-        }).collect(Collectors.toList());
-
-        return articles;
+    public Page<Article> searchArticles(String actor, String beat, String timeframe, Instant from, int page, int size) {
+        rateLimiterService.enforceSearchLimit(actor, newsProviderProperties.getSearchesPerMinute());
+        auditService.record(actor, "SEARCH", "articles", "{\"beat\":\"" + beat + "\"}");
+        Instant fromTime = resolveFrom(timeframe, from);
+        PageRequest pageable = PageRequest.of(page, size);
+        if (beat == null || beat.isBlank()) {
+            return articleRepository.findByPublishedAtAfterOrderByPublishedAtDesc(fromTime, pageable);
+        }
+        return articleRepository.findDistinctByBeats_NameIgnoreCaseAndPublishedAtAfterOrderByPublishedAtDesc(beat, fromTime, pageable);
     }
 
     public Article getArticle(Long id, String actor) {
@@ -88,22 +60,22 @@ public class ArticleService {
         return article;
     }
 
-    private List<NewsArticle> withRetry(NewsCall call) {
-        int attempts = 0;
-        RuntimeException last = null;
-        while (attempts < 3) {
-            try {
-                return call.get();
-            } catch (RuntimeException ex) {
-                last = ex;
-                attempts++;
-            }
-        }
-        throw last != null ? last : new IllegalStateException("Unable to fetch articles");
+    public Optional<Instant> getLastRefresh(String beat, String timeframe) {
+        return newsFetchStateRepository.findByBeat_NameIgnoreCaseAndTimeframe(beat, timeframe)
+                .map(NewsFetchState::getLastFetchedAt);
     }
 
-    @FunctionalInterface
-    private interface NewsCall {
-        List<NewsArticle> get();
+    private Instant resolveFrom(String timeframe, Instant from) {
+        if (from != null) {
+            return from;
+        }
+        Instant now = Instant.now();
+        if ("7d".equalsIgnoreCase(timeframe)) {
+            return now.minus(7, ChronoUnit.DAYS);
+        }
+        if ("30d".equalsIgnoreCase(timeframe)) {
+            return now.minus(30, ChronoUnit.DAYS);
+        }
+        return now.minus(24, ChronoUnit.HOURS);
     }
 }

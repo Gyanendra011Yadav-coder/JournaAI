@@ -1,11 +1,12 @@
-const beats = ["Taxation", "Markets", "Legal", "Technology", "Healthcare"]; 
+"use client";
 
 interface BeatSelectorProps {
   value: string;
+  beats: string[];
   onChange: (value: string) => void;
 }
 
-export function BeatSelector({ value, onChange }: BeatSelectorProps) {
+export function BeatSelector({ value, beats, onChange }: BeatSelectorProps) {
   return (
     <div className="flex flex-wrap gap-2">
       {beats.map((beat) => (

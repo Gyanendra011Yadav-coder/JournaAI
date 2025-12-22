@@ -7,9 +7,11 @@ public class NewsArticle {
     private String source;
     private String author;
     private String url;
+    private String canonicalUrl;
     private Instant publishedAt;
     private String description;
     private String rawPayload;
+    private String provider;
 
     public String getHeadline() {
         return headline;
@@ -43,6 +45,14 @@ public class NewsArticle {
         this.url = url;
     }
 
+    public String getCanonicalUrl() {
+        return canonicalUrl;
+    }
+
+    public void setCanonicalUrl(String canonicalUrl) {
+        this.canonicalUrl = canonicalUrl;
+    }
+
     public Instant getPublishedAt() {
         return publishedAt;
     }
@@ -65,5 +75,13 @@ public class NewsArticle {
 
     public void setRawPayload(String rawPayload) {
         this.rawPayload = rawPayload;
+    }
+
+    public String getProvider() {
+        return provider;
+    }
+
+    public void setProvider(String provider) {
+        this.provider = provider;
     }
 }

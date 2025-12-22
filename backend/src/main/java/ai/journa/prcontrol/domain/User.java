@@ -21,10 +21,6 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "workspace_id")
-    private Workspace workspace;
-
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -58,14 +54,6 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
-    }
-
-    public Workspace getWorkspace() {
-        return workspace;
-    }
-
-    public void setWorkspace(Workspace workspace) {
-        this.workspace = workspace;
     }
 
     public Instant getCreatedAt() {
