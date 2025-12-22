@@ -1,18 +1,8 @@
-package ai.journa.prcontrol.domain;
+package ai.journa.prcontrol.dto;
 
-import jakarta.persistence.*;
-
-@Entity
-@Table(name = "beats")
-public class Beat {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class BeatResponse {
     private Long id;
-
-    @Column(nullable = false, unique = true)
     private String name;
-
-    @Column(nullable = false, unique = true)
     private String slug;
 
     public Long getId() {

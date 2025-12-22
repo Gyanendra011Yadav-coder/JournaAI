@@ -20,7 +20,7 @@ public class JournalistController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<JournalistResponse>> search(@RequestParam String beat,
+    public ResponseEntity<List<JournalistResponse>> search(@RequestParam(required = false) String beat,
                                                            @RequestParam(required = false) String outlet,
                                                            @RequestParam(required = false) String location,
                                                            @RequestParam(required = false) String keywords,
@@ -39,7 +39,7 @@ public class JournalistController {
         response.setId(journalist.getId());
         response.setName(journalist.getName());
         response.setOutlet(journalist.getOutlet());
-        response.setBeatTags(journalist.getBeatTags());
+        response.setBeats(journalist.getBeats().stream().map(beat -> beat.getName()).collect(Collectors.toList()));
         response.setLocation(journalist.getLocation());
         response.setEmail(journalist.getEmail());
         return response;

@@ -1,10 +1,12 @@
 package ai.journa.prcontrol.dto;
 
+import java.util.List;
+
 public class JournalistResponse {
     private Long id;
     private String name;
     private String outlet;
-    private String beatTags;
+    private List<String> beats;
     private String location;
     private String email;
 
@@ -32,12 +34,12 @@ public class JournalistResponse {
         this.outlet = outlet;
     }
 
-    public String getBeatTags() {
-        return beatTags;
+    public List<String> getBeats() {
+        return beats;
     }
 
-    public void setBeatTags(String beatTags) {
-        this.beatTags = beatTags;
+    public void setBeats(List<String> beats) {
+        this.beats = beats;
     }
 
     public String getLocation() {

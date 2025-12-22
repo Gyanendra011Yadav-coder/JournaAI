@@ -8,14 +8,13 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("admin@example.com");
   const [password, setPassword] = useState("password");
-  const [workspace, setWorkspace] = useState("Agency Workspace");
   const [mode, setMode] = useState<"login" | "register">("register");
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     setError(null);
     const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
-    const payload = mode === "login" ? { email, password } : { email, password, workspaceName: workspace };
+    const payload = { email, password };
     const response = await fetch(`${API_BASE}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -38,16 +37,15 @@ export default function LoginPage() {
           <div className="absolute bottom-0 left-10 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
           <div className="relative space-y-6">
             <div className="text-xs uppercase tracking-[0.3em] text-cyan-300/80">Journa AI</div>
-            <h1 className="text-3xl font-semibold">PR Control Tower</h1>
+            <h1 className="text-3xl font-semibold">PR News & Outreach</h1>
             <p className="text-slate-300">
-              Keep your newsroom intelligence, outreach flows, and stakeholder updates in a single,
-              beautifully orchestrated command center.
+              Cache-first newsroom intelligence and outreach workflows that keep your team aligned.
             </p>
             <div className="space-y-3 text-sm text-slate-300">
               {[
-                "Live monitoring of media coverage.",
-                "Curated pitch templates tailored by beat.",
-                "Audit trails to keep your team aligned.",
+                "Curated beat coverage from compliant sources.",
+                "Journalist discovery with seeded data.",
+                "Audit trails for every search and send.",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-100">
@@ -78,19 +76,9 @@ export default function LoginPage() {
             </div>
           </div>
           <p className="text-slate-400 mt-2">
-            {mode === "login" ? "Sign in to review your daily intelligence brief." : "Create a workspace and start orchestrating PR workflows."}
+            {mode === "login" ? "Sign in to review your cached coverage." : "Create an account and start tracking beats."}
           </p>
           <div className="mt-6 space-y-4">
-            {mode === "register" && (
-              <div>
-                <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Workspace name</label>
-                <input
-                  className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3 focus:border-cyan-500/60 focus:outline-none"
-                  value={workspace}
-                  onChange={(event) => setWorkspace(event.target.value)}
-                />
-              </div>
-            )}
             <div>
               <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Email</label>
               <input
@@ -117,7 +105,7 @@ export default function LoginPage() {
             </button>
           </div>
           <div className="mt-6 rounded-xl border border-slate-800/80 bg-slate-900/60 p-4 text-sm text-slate-300">
-            Trusted by agency teams to centralize outreach, approvals, and coverage insights.
+            Primary workflow: search beats, refresh cache, find journalists, compose outreach.
           </div>
         </div>
       </div>

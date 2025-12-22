@@ -4,8 +4,8 @@ import { Sidebar } from "../components/Sidebar";
 import { TopBar } from "../components/TopBar";
 
 export const metadata: Metadata = {
-  title: "PR Control Tower",
-  description: "Streamline PR workflows",
+  title: "PR News & Outreach",
+  description: "Cache-first PR news and outreach workflow",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
