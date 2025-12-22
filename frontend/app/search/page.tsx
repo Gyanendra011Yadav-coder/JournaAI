@@ -36,11 +36,12 @@ export default function SearchPage() {
 
   return (
     <div className="space-y-6">
-      <header>
+      <header className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
+        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Discovery</p>
         <h1 className="text-2xl font-semibold">News Search</h1>
         <p className="text-slate-400">Track news by beat and timeframe.</p>
       </header>
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+      <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4 shadow-[0_0_0_1px_rgba(59,130,246,0.1)]">
         <div>
           <p className="text-sm text-slate-400 mb-2">Select beat</p>
           <BeatSelector value={beat} onChange={setBeat} />
@@ -51,7 +52,7 @@ export default function SearchPage() {
         </div>
         <button
           onClick={handleSearch}
-          className="px-4 py-2 bg-cyan-500 text-slate-900 rounded-lg font-semibold"
+          className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 text-slate-900 font-semibold shadow-lg shadow-cyan-500/20"
         >
           {loading ? "Searching..." : "Search"}
         </button>
