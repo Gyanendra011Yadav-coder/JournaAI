@@ -2,16 +2,15 @@ package ai.journa.prcontrol.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
-public class ArticleSearchRequest {
+import java.time.Instant;
+
+public class RefreshRequest {
     @NotBlank
     private String beat;
-
     @NotBlank
     private String timeframe;
-
-    private String filters;
-
-    private int page = 1;
+    private Instant from;
+    private Instant to;
 
     public String getBeat() {
         return beat;
@@ -29,19 +28,19 @@ public class ArticleSearchRequest {
         this.timeframe = timeframe;
     }
 
-    public String getFilters() {
-        return filters;
+    public Instant getFrom() {
+        return from;
     }
 
-    public void setFilters(String filters) {
-        this.filters = filters;
+    public void setFrom(Instant from) {
+        this.from = from;
     }
 
-    public int getPage() {
-        return page;
+    public Instant getTo() {
+        return to;
     }
 
-    public void setPage(int page) {
-        this.page = page;
+    public void setTo(Instant to) {
+        this.to = to;
     }
 }

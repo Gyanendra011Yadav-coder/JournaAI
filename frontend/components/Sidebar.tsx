@@ -8,7 +8,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/search", label: "Search" },
   { href: "/templates", label: "Templates" },
-  { href: "/settings/integrations", label: "Integrations" },
+  { href: "/settings", label: "Integrations" },
 ];
 
 export function Sidebar() {
@@ -22,8 +22,8 @@ export function Sidebar() {
     <aside className="w-72 bg-slate-950/80 border-r border-slate-800/80 p-6 hidden md:flex md:flex-col gap-10 backdrop-blur">
       <div className="space-y-2">
         <div className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Journa AI</div>
-        <div className="text-2xl font-semibold">PR Control Tower</div>
-        <p className="text-sm text-slate-400">All your outreach, in one calm command center.</p>
+        <div className="text-2xl font-semibold">PR News & Outreach</div>
+        <p className="text-sm text-slate-400">Cache-first news, journalist discovery, and outreach.</p>
       </div>
       <nav className="space-y-2 flex-1">
         {navItems.map((item) => (

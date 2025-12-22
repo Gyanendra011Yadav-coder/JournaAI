@@ -1,9 +1,8 @@
 package ai.journa.prcontrol.service;
 
+import ai.journa.prcontrol.config.NewsProviderProperties;
 import ai.journa.prcontrol.domain.Journalist;
 import ai.journa.prcontrol.repository.JournalistRepository;
-import ai.journa.prcontrol.service.integration.MediaDatabaseProvider;
-import ai.journa.prcontrol.service.integration.model.MediaJournalist;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,38 +10,33 @@ import java.util.stream.Collectors;
 
 @Service
 public class JournalistService {
-    private final MediaDatabaseProvider mediaDatabaseProvider;
     private final JournalistRepository journalistRepository;
     private final AuditService auditService;
     private final RateLimiterService rateLimiterService;
+    private final NewsProviderProperties newsProviderProperties;
 
-    public JournalistService(MediaDatabaseProvider mediaDatabaseProvider,
-                             JournalistRepository journalistRepository,
+    public JournalistService(JournalistRepository journalistRepository,
                              AuditService auditService,
-                             RateLimiterService rateLimiterService) {
-        this.mediaDatabaseProvider = mediaDatabaseProvider;
+                             RateLimiterService rateLimiterService,
+                             NewsProviderProperties newsProviderProperties) {
         this.journalistRepository = journalistRepository;
         this.auditService = auditService;
         this.rateLimiterService = rateLimiterService;
+        this.newsProviderProperties = newsProviderProperties;
     }
 
     public List<Journalist> search(String actor, String beat, String outlet, String location, String keywords) {
+        rateLimiterService.enforceSearchLimit(actor, newsProviderProperties.getSearchesPerMinute());
         auditService.record(actor, "SEARCH", "journalists", "{\"beat\":\"" + beat + "\"}");
-        List<MediaJournalist> results = withRetry(() -> {
-            rateLimiterService.throttle(300);
-            return mediaDatabaseProvider.searchJournalists(beat, outlet, location, keywords);
-        });
-        return results.stream().map(result -> {
-            Journalist journalist = new Journalist();
-            journalist.setName(result.getName());
-            journalist.setOutlet(result.getOutlet());
-            journalist.setBeatTags(result.getBeatTags());
-            journalist.setLocation(result.getLocation());
-            journalist.setEmail(result.getEmail());
-            journalist.setSourceProvider("mock");
-            journalist.setProviderReferenceId(result.getId());
-            return journalistRepository.save(journalist);
-        }).collect(Collectors.toList());
+        List<Journalist> results = journalistRepository.search(emptyToNull(beat), emptyToNull(outlet), emptyToNull(location));
+        if (keywords == null || keywords.isBlank()) {
+            return results;
+        }
+        String keywordLower = keywords.toLowerCase();
+        return results.stream()
+                .filter(journalist -> journalist.getName().toLowerCase().contains(keywordLower)
+                        || (journalist.getOutlet() != null && journalist.getOutlet().toLowerCase().contains(keywordLower)))
+                .collect(Collectors.toList());
     }
 
     public Journalist get(Long id) {
@@ -50,22 +44,7 @@ public class JournalistService {
                 .orElseThrow(() -> new IllegalStateException("Journalist not found"));
     }
 
-    private List<MediaJournalist> withRetry(ProviderCall call) {
-        int attempts = 0;
-        RuntimeException last = null;
-        while (attempts < 3) {
-            try {
-                return call.get();
-            } catch (RuntimeException ex) {
-                last = ex;
-                attempts++;
-            }
-        }
-        throw last != null ? last : new IllegalStateException("Unable to fetch journalists");
-    }
-
-    @FunctionalInterface
-    private interface ProviderCall {
-        List<MediaJournalist> get();
+    private String emptyToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 }

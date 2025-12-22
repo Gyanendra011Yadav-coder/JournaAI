@@ -1,7 +1,7 @@
 package ai.journa.prcontrol.web;
 
-import ai.journa.prcontrol.dto.ArticleSearchRequest;
 import ai.journa.prcontrol.dto.LoginRequest;
+import ai.journa.prcontrol.dto.ManualArticleRequest;
 import ai.journa.prcontrol.dto.OutreachComposeRequest;
 import ai.journa.prcontrol.dto.RegisterRequest;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -49,7 +49,6 @@ class WorkflowE2ETest {
         RegisterRequest registerRequest = new RegisterRequest();
         registerRequest.setEmail("admin@example.com");
         registerRequest.setPassword("password");
-        registerRequest.setWorkspaceName("Agency");
 
         String registerResponse = mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -60,24 +59,16 @@ class WorkflowE2ETest {
                 .getContentAsString();
         String token = objectMapper.readTree(registerResponse).get("token").asText();
 
-        mockMvc.perform(post("/api/admin/seed")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk());
-
-        ArticleSearchRequest searchRequest = new ArticleSearchRequest();
-        searchRequest.setBeat("Taxation");
-        searchRequest.setTimeframe("24h");
-
-        String searchResponse = mockMvc.perform(post("/api/articles/search")
+        String searchResponse = mockMvc.perform(get("/api/articles")
                 .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(searchRequest)))
+                .param("beat", "Taxation")
+                .param("timeframe", "24h"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        JsonNode articles = objectMapper.readTree(searchResponse);
+        JsonNode articles = objectMapper.readTree(searchResponse).get("items");
         long articleId = articles.get(0).get("id").asLong();
 
         mockMvc.perform(get("/api/articles/{id}", articleId)
@@ -101,6 +92,17 @@ class WorkflowE2ETest {
                 .getResponse()
                 .getContentAsString();
         long templateId = objectMapper.readTree(templatesResponse).get(0).get("id").asLong();
+
+        ManualArticleRequest manualArticleRequest = new ManualArticleRequest();
+        manualArticleRequest.setBeat("Taxation");
+        manualArticleRequest.setHeadline("Manual headline");
+        manualArticleRequest.setUrl("https://example.com/manual");
+
+        mockMvc.perform(post("/api/articles/manual")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(manualArticleRequest)))
+                .andExpect(status().isOk());
 
         OutreachComposeRequest outreachRequest = new OutreachComposeRequest();
         outreachRequest.setArticleId(articleId);
