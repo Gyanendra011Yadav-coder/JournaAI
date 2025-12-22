@@ -1,0 +1,25 @@
+#!/bin/sh
+
+set -e
+
+DIR="$(dirname "$0")"
+APP_HOME="$(cd "$DIR" && pwd)"
+
+JAVA_EXE="${JAVA_HOME}/bin/java"
+if [ ! -x "$JAVA_EXE" ]; then
+  JAVA_EXE="$(command -v java)"
+fi
+
+if [ ! -x "$JAVA_EXE" ]; then
+  echo "ERROR: Java executable not found. Please install Java 21 or set JAVA_HOME." >&2
+  exit 1
+fi
+
+CLASSPATH="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
+
+if [ ! -f "$CLASSPATH" ]; then
+  mkdir -p "$APP_HOME/gradle/wrapper"
+  curl -sSL https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar -o "$CLASSPATH"
+fi
+
+exec "$JAVA_EXE" -Xms64m -Xmx512m -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"

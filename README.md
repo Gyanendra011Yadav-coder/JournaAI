@@ -62,7 +62,7 @@ docker-compose up
 ### 2) Run Backend (Spring Boot)
 ```bash
 cd backend
-mvn spring-boot:run
+./gradlew bootRun
 ```
 
 ### 3) Run Frontend (Next.js)
@@ -79,7 +79,7 @@ npm run dev
 ### 5) Run Tests
 ```bash
 cd backend
-mvn test
+./gradlew test
 ```
 
 ## Providers & Environment Variables
