@@ -60,7 +60,7 @@ public class GNewsProvider implements NewsProvider {
                 articles.add(article);
             }
             return articles;
-        } catch (RestClientException | RuntimeException ex) {
+        } catch (RestClientException ex) {
             throw new IllegalStateException("GNews API request failed", ex);
         } catch (Exception ex) {
             throw new IllegalStateException("GNews parse failed", ex);
