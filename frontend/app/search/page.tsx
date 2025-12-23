@@ -5,6 +5,7 @@ import { BeatSelector } from "../../components/BeatSelector";
 import { TimeframePicker } from "../../components/TimeframePicker";
 import { ArticlesTable } from "../../components/ArticlesTable";
 import { apiFetch } from "../../lib/api";
+import { ErrorBanner } from "../../components/ErrorBanner";
 
 interface Article {
   id: number;
@@ -134,11 +135,7 @@ export default function SearchPage() {
         <h1 className="text-2xl font-semibold">News Search</h1>
         <p className="text-slate-400">Track cached news by beat and timeframe, then refresh on demand.</p>
       </header>
-      {error && (
-        <div className="rounded-2xl border border-rose-500/60 bg-rose-500/10 p-4 text-rose-100 text-sm">
-          {error}
-        </div>
-      )}
+      <ErrorBanner message={error} />
       {refreshStatus?.staleCache && (
         <div className="rounded-2xl border border-amber-400/60 bg-amber-500/10 p-4 text-amber-100">
           <p className="text-sm font-semibold">Stale-cache mode</p>

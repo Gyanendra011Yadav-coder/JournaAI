@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
+import { ErrorBanner } from "../../components/ErrorBanner";
 
 interface Template {
   id: number;
@@ -34,11 +35,7 @@ export default function TemplatesPage() {
           Seeded templates with variables like {"{{journalist_name}}, {{outlet}}, {{beat}}"}.
         </p>
       </header>
-      {error && (
-        <div className="rounded-2xl border border-amber-400/60 bg-amber-500/10 p-4 text-amber-100 text-sm">
-          {error}
-        </div>
-      )}
+      <ErrorBanner message={error} />
       <div className="space-y-3">
         {templates.map((template) => (
           <div key={template.id} className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-4">

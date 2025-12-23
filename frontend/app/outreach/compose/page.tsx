@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
+import { ErrorBanner } from "../../../components/ErrorBanner";
 import { EmailComposer } from "../../../components/EmailComposer";
 
 interface Template {
@@ -133,11 +134,7 @@ export default function OutreachComposePage() {
         <h1 className="text-2xl font-semibold">Compose Outreach</h1>
         <p className="text-slate-400">Draft an email and send from within the platform.</p>
       </header>
-      {error && (
-        <div className="rounded-2xl border border-rose-500/60 bg-rose-500/10 p-4 text-rose-100 text-sm">
-          {error}
-        </div>
-      )}
+      <ErrorBanner message={error} />
       <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4 shadow-[0_0_0_1px_rgba(59,130,246,0.1)]">
         <div>
           <label className="text-sm text-slate-300">Template</label>

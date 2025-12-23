@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
+import { ErrorBanner } from "../../../components/ErrorBanner";
 import { JournalistList } from "../../../components/JournalistList";
 
 interface Article {
@@ -76,11 +77,7 @@ export default function ArticleDetailPage() {
 
   return (
     <div className="space-y-6">
-      {error && (
-        <div className="rounded-2xl border border-rose-500/60 bg-rose-500/10 p-4 text-rose-100 text-sm">
-          {error}
-        </div>
-      )}
+      <ErrorBanner message={error} />
       <header>
         <h1 className="text-2xl font-semibold">{article.headline}</h1>
         <p className="text-slate-400">

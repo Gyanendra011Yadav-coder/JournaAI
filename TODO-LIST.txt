@@ -1,0 +1,18 @@
+PR News & Outreach ->> Change this to PR, News & Outreach
+
+News:
+1. We also need link of that news
+2. Need to highlight quotes of industry experts in that news
+3. Able to download in csv format to news and able to pin that so that visible
+ inside saved articles on dashbord also do provide saved article button in left
+ side bar
+4. Also, can we add on feature of trending news button parallel to search
+
+
+
+
+
+1. We need to somehow update media List of Journalist to keep the data
+refreshed and updated
+2. If we also able to feed and provide data of influencers and you tubers for
+podcast

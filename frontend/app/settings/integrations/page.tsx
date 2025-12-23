@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../../lib/api";
+import { ErrorBanner } from "../../../components/ErrorBanner";
 
 interface IntegrationStatus {
   gnewsEnabled: boolean;
@@ -30,11 +31,7 @@ export default function IntegrationsPage() {
         <h1 className="text-2xl font-semibold">Integrations</h1>
         <p className="text-slate-400">Backend-managed providers with cache-first ingestion.</p>
       </header>
-      {error && (
-        <div className="rounded-2xl border border-amber-400/60 bg-amber-500/10 p-4 text-amber-100 text-sm">
-          {error}
-        </div>
-      )}
+      <ErrorBanner message={error} />
       <div className="grid md:grid-cols-2 gap-4">
         <div className="border border-slate-800 rounded-xl p-4 bg-slate-900">
           <h2 className="font-semibold">GNews Provider</h2>
