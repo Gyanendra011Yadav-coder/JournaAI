@@ -77,4 +77,9 @@ public class ArticleService {
     return newsFetchStateRepository.findByBeatId(beatId)
         .map(state -> state.getLastSuccessAt());
   }
+
+  public Optional<Boolean> isStaleCache(Long beatId) {
+    return newsFetchStateRepository.findByBeatId(beatId)
+        .map(state -> state.getLastErrorCode() != null && !state.getLastErrorCode().isBlank());
+  }
 }
