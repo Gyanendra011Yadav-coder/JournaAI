@@ -1,65 +1,59 @@
-INSERT INTO beats (name, slug) VALUES
-  ('Law', 'law'),
-  ('Taxation', 'taxation'),
-  ('Healthcare', 'healthcare'),
-  ('Education', 'education'),
-  ('Steel', 'steel'),
-  ('Finance/BFSI', 'finance-bfsi'),
-  ('Startups/VC', 'startups-vc'),
-  ('Technology/AI', 'technology-ai'),
-  ('Telecom', 'telecom'),
-  ('Energy & Renewables', 'energy-renewables'),
-  ('Manufacturing/Industrial', 'manufacturing-industrial'),
-  ('Pharma/MedTech', 'pharma-medtech'),
-  ('Real Estate & Infra', 'real-estate-infra'),
-  ('Retail/Consumer', 'retail-consumer'),
-  ('Auto/EV', 'auto-ev'),
-  ('ESG/Sustainability', 'esg-sustainability'),
-  ('Public Policy/Regulatory', 'public-policy-regulatory');
+INSERT INTO users (email, password_hash, role)
+VALUES
+  ('admin@example.com', '{bcrypt}$2a$10$7EqJtq98hPqEX7fNZaFWoOQ2lyxY9s/6ag7ss9nKi7Lr/vEwV0y', 'ADMIN'),
+  ('member@example.com', '{bcrypt}$2a$10$7EqJtq98hPqEX7fNZaFWoOQ2lyxY9s/6ag7ss9nKi7Lr/vEwV0y', 'MEMBER');
 
-INSERT INTO outreach_templates (name, subject, body) VALUES
-  ('Breaking news hook', 'Story idea on {{beat}}: {{headline}}',
-   'Hi {{journalist_name}},\n\nI noticed your coverage at {{outlet}}. We have a data-backed perspective on {{beat}} that ties directly to this story: {{article_link}}.\n\nClient quote: "{{client_quote}}"\n\nWould you like a quick briefing?\n\nBest,\nPR News & Outreach Team'),
-  ('Rapid response', 'Quick comment for {{outlet}} on {{headline}}',
-   'Hello {{journalist_name}},\n\nWe can provide a rapid response for {{outlet}} on {{headline}}. Our spokesperson is available today.\n\nKey point: {{client_quote}}\n\nHappy to coordinate.\n\nThanks,\nPR News & Outreach Team'),
-  ('Trend pitch', 'Trend briefing: {{beat}} in focus',
-   'Hi {{journalist_name}},\n\nWe are seeing momentum across {{beat}} and can share a trend brief tailored for {{outlet}}.\n\nRelevant link: {{article_link}}\n\nQuote: "{{client_quote}}"\n\nOpen to a quick call?\n\nRegards,\nPR News & Outreach Team'),
-  ('Executive availability', 'Interview availability: {{beat}} leader',
-   'Hi {{journalist_name}},\n\nWe can offer an interview with our {{beat}} lead. Your recent piece caught our attention: {{article_link}}.\n\nSample quote: "{{client_quote}}"\n\nLet me know if this is useful.\n\nBest,\nPR News & Outreach Team'),
-  ('Data drop', 'Fresh data for {{outlet}} on {{beat}}',
-   'Hi {{journalist_name}},\n\nWe have new survey insights related to {{beat}} that could complement your coverage at {{outlet}}.\n\nLink: {{article_link}}\n\nQuote: "{{client_quote}}"\n\nWould you like the deck?\n\nBest,\nPR News & Outreach Team');
+INSERT INTO beats (name, slug, is_active)
+VALUES
+  ('Law', 'law', TRUE),
+  ('Taxation', 'taxation', TRUE),
+  ('Healthcare', 'healthcare', TRUE),
+  ('Education', 'education', TRUE),
+  ('Steel', 'steel', TRUE),
+  ('Finance/BFSI', 'finance-bfsi', TRUE),
+  ('Tech/AI', 'tech-ai', TRUE),
+  ('Telecom', 'telecom', TRUE),
+  ('Energy', 'energy', TRUE),
+  ('ESG', 'esg', TRUE),
+  ('Manufacturing', 'manufacturing', TRUE),
+  ('Startups/VC', 'startups-vc', TRUE),
+  ('Real Estate & Infra', 'real-estate-infra', TRUE),
+  ('Pharma/MedTech', 'pharma-medtech', TRUE),
+  ('Consumer/Retail', 'consumer-retail', TRUE),
+  ('Auto/EV', 'auto-ev', TRUE);
 
-INSERT INTO articles (headline, source, author, canonical_url, url, published_at, summary, provider, raw_payload)
+INSERT INTO beat_query_recipes (beat_id, endpoint_type, q, lang, country, max, sort)
+SELECT id,
+       'SEARCH',
+       name,
+       'en',
+       'us',
+       25,
+       'publishedAt'
+FROM beats;
+
+INSERT INTO integration_settings (provider_type, is_enabled, api_key_encrypted, default_lang, default_country, refresh_interval_minutes, ttl_minutes, max_per_request, updated_by)
+VALUES ('GNEWS', TRUE, NULL, 'en', 'us', 30, 15, 50, 1);
+
+INSERT INTO news_fetch_state (beat_id, consecutive_failures)
+SELECT id, 0 FROM beats;
+
+INSERT INTO articles (provider_type, provider_article_id, beat_id, title, description, content, url, image_url, published_at_utc, lang, source_id, source_name, source_url, source_country, raw_payload_jsonb, status)
 SELECT
+  'MOCK',
+  'seed-' || gs,
+  ((gs - 1) % 16) + 1,
   'Seeded article ' || gs,
-  'Outlet ' || ((gs % 20) + 1),
-  'Reporter ' || ((gs % 15) + 1),
+  'Seeded description for article ' || gs,
+  'Seeded content for article ' || gs,
   'https://news.example.com/article-' || gs,
-  'https://news.example.com/article-' || gs,
-  NOW() - ((gs % 30) || ' hours')::interval,
-  'This is a seeded summary for article ' || gs || '. It highlights key points for PR teams.',
-  'seed',
-  '{}'::jsonb
-FROM generate_series(1, 100) AS gs;
-
-INSERT INTO article_tags (article_id, beat_id)
-SELECT id, ((id - 1) % 17) + 1
-FROM articles;
-
-INSERT INTO journalists (name, outlet, location, email, phone, source_provider, provider_reference_id)
-SELECT
-  'Journalist ' || gs,
-  'Outlet ' || ((gs % 30) + 1),
-  CASE WHEN gs % 4 = 0 THEN 'New York, NY'
-       WHEN gs % 4 = 1 THEN 'London, UK'
-       WHEN gs % 4 = 2 THEN 'Singapore'
-       ELSE 'Bengaluru, IN' END,
-  'journalist' || gs || '@example.com',
-  '+1-555-01' || LPAD(gs::text, 3, '0'),
-  'seed',
-  'seed-' || gs
-FROM generate_series(1, 200) AS gs;
-
-INSERT INTO journalist_tags (journalist_id, beat_id)
-SELECT id, ((id - 1) % 17) + 1
-FROM journalists;
+  'https://images.example.com/article-' || gs || '.jpg',
+  NOW() - ((gs % 10) || ' hours')::interval,
+  'en',
+  'source-' || ((gs % 5) + 1),
+  'Source ' || ((gs % 5) + 1),
+  'https://source.example.com/' || ((gs % 5) + 1),
+  'US',
+  jsonb_build_object('seed', true),
+  'INGESTED'
+FROM generate_series(1, 50) AS gs;

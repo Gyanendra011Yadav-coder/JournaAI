@@ -1,106 +1,184 @@
 package ai.journa.prcontrol.dto;
 
-import java.time.Instant;
-import java.util.List;
-
 public class ArticleResponse {
-    private Long id;
-    private String headline;
-    private String source;
-    private String author;
-    private String canonicalUrl;
-    private String url;
-    private Instant publishedAt;
-    private String summary;
-    private String provider;
-    private List<String> beats;
-    private boolean saved;
+  private Long id;
+  private String providerType;
+  private String providerArticleId;
+  private Long beatId;
+  private String beatName;
+  private String title;
+  private String description;
+  private String content;
+  private String url;
+  private String imageUrl;
+  private String publishedAtUtc;
+  private String lang;
+  private String sourceId;
+  private String sourceName;
+  private String sourceUrl;
+  private String sourceCountry;
+  private String fetchedAtUtc;
+  private String status;
+  private String publishedBy;
+  private String internalPublishedAtUtc;
 
-    public Long getId() {
-        return id;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public String getHeadline() {
-        return headline;
-    }
+  public String getProviderType() {
+    return providerType;
+  }
 
-    public void setHeadline(String headline) {
-        this.headline = headline;
-    }
+  public void setProviderType(String providerType) {
+    this.providerType = providerType;
+  }
 
-    public String getSource() {
-        return source;
-    }
+  public String getProviderArticleId() {
+    return providerArticleId;
+  }
 
-    public void setSource(String source) {
-        this.source = source;
-    }
+  public void setProviderArticleId(String providerArticleId) {
+    this.providerArticleId = providerArticleId;
+  }
 
-    public String getAuthor() {
-        return author;
-    }
+  public Long getBeatId() {
+    return beatId;
+  }
 
-    public void setAuthor(String author) {
-        this.author = author;
-    }
+  public void setBeatId(Long beatId) {
+    this.beatId = beatId;
+  }
 
-    public String getCanonicalUrl() {
-        return canonicalUrl;
-    }
+  public String getBeatName() {
+    return beatName;
+  }
 
-    public void setCanonicalUrl(String canonicalUrl) {
-        this.canonicalUrl = canonicalUrl;
-    }
+  public void setBeatName(String beatName) {
+    this.beatName = beatName;
+  }
 
-    public String getUrl() {
-        return url;
-    }
+  public String getTitle() {
+    return title;
+  }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
+  public void setTitle(String title) {
+    this.title = title;
+  }
 
-    public Instant getPublishedAt() {
-        return publishedAt;
-    }
+  public String getDescription() {
+    return description;
+  }
 
-    public void setPublishedAt(Instant publishedAt) {
-        this.publishedAt = publishedAt;
-    }
+  public void setDescription(String description) {
+    this.description = description;
+  }
 
-    public String getSummary() {
-        return summary;
-    }
+  public String getContent() {
+    return content;
+  }
 
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
+  public void setContent(String content) {
+    this.content = content;
+  }
 
-    public String getProvider() {
-        return provider;
-    }
+  public String getUrl() {
+    return url;
+  }
 
-    public void setProvider(String provider) {
-        this.provider = provider;
-    }
+  public void setUrl(String url) {
+    this.url = url;
+  }
 
-    public List<String> getBeats() {
-        return beats;
-    }
+  public String getImageUrl() {
+    return imageUrl;
+  }
 
-    public void setBeats(List<String> beats) {
-        this.beats = beats;
-    }
+  public void setImageUrl(String imageUrl) {
+    this.imageUrl = imageUrl;
+  }
 
-    public boolean isSaved() {
-        return saved;
-    }
+  public String getPublishedAtUtc() {
+    return publishedAtUtc;
+  }
 
-    public void setSaved(boolean saved) {
-        this.saved = saved;
-    }
+  public void setPublishedAtUtc(String publishedAtUtc) {
+    this.publishedAtUtc = publishedAtUtc;
+  }
+
+  public String getLang() {
+    return lang;
+  }
+
+  public void setLang(String lang) {
+    this.lang = lang;
+  }
+
+  public String getSourceId() {
+    return sourceId;
+  }
+
+  public void setSourceId(String sourceId) {
+    this.sourceId = sourceId;
+  }
+
+  public String getSourceName() {
+    return sourceName;
+  }
+
+  public void setSourceName(String sourceName) {
+    this.sourceName = sourceName;
+  }
+
+  public String getSourceUrl() {
+    return sourceUrl;
+  }
+
+  public void setSourceUrl(String sourceUrl) {
+    this.sourceUrl = sourceUrl;
+  }
+
+  public String getSourceCountry() {
+    return sourceCountry;
+  }
+
+  public void setSourceCountry(String sourceCountry) {
+    this.sourceCountry = sourceCountry;
+  }
+
+  public String getFetchedAtUtc() {
+    return fetchedAtUtc;
+  }
+
+  public void setFetchedAtUtc(String fetchedAtUtc) {
+    this.fetchedAtUtc = fetchedAtUtc;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
+
+  public String getPublishedBy() {
+    return publishedBy;
+  }
+
+  public void setPublishedBy(String publishedBy) {
+    this.publishedBy = publishedBy;
+  }
+
+  public String getInternalPublishedAtUtc() {
+    return internalPublishedAtUtc;
+  }
+
+  public void setInternalPublishedAtUtc(String internalPublishedAtUtc) {
+    this.internalPublishedAtUtc = internalPublishedAtUtc;
+  }
 }

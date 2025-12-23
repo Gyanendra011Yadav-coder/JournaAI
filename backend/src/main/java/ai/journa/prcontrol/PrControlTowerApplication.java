@@ -1,14 +1,13 @@
 package ai.journa.prcontrol;
 
-import ai.journa.prcontrol.config.NewsProviderProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-@EnableConfigurationProperties(NewsProviderProperties.class)
+@EnableScheduling
 public class PrControlTowerApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(PrControlTowerApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(PrControlTowerApplication.class, args);
+  }
 }

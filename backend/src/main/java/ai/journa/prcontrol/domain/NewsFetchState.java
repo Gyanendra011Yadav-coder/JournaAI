@@ -7,79 +7,82 @@ import java.time.Instant;
 @Entity
 @Table(name = "news_fetch_state")
 public class NewsFetchState {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "beat_id", nullable = false)
-    private Beat beat;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "beat_id", nullable = false)
+  private Beat beat;
 
-    @Column(nullable = false)
-    private String timeframe;
+  @Column(name = "last_success_at")
+  private Instant lastSuccessAt;
 
-    private Instant lastFetchedAt;
+  @Column(name = "last_attempt_at")
+  private Instant lastAttemptAt;
 
-    @Column(nullable = false)
-    private int failureCount = 0;
+  @Column(name = "last_error_code")
+  private String lastErrorCode;
 
-    private Instant lastFailureAt;
+  @Column(name = "last_error_message")
+  private String lastErrorMessage;
 
-    private Instant circuitOpenUntil;
+  @Column(name = "consecutive_failures", nullable = false)
+  private int consecutiveFailures;
 
-    public Long getId() {
-        return id;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public Beat getBeat() {
-        return beat;
-    }
+  public Beat getBeat() {
+    return beat;
+  }
 
-    public void setBeat(Beat beat) {
-        this.beat = beat;
-    }
+  public void setBeat(Beat beat) {
+    this.beat = beat;
+  }
 
-    public String getTimeframe() {
-        return timeframe;
-    }
+  public Instant getLastSuccessAt() {
+    return lastSuccessAt;
+  }
 
-    public void setTimeframe(String timeframe) {
-        this.timeframe = timeframe;
-    }
+  public void setLastSuccessAt(Instant lastSuccessAt) {
+    this.lastSuccessAt = lastSuccessAt;
+  }
 
-    public Instant getLastFetchedAt() {
-        return lastFetchedAt;
-    }
+  public Instant getLastAttemptAt() {
+    return lastAttemptAt;
+  }
 
-    public void setLastFetchedAt(Instant lastFetchedAt) {
-        this.lastFetchedAt = lastFetchedAt;
-    }
+  public void setLastAttemptAt(Instant lastAttemptAt) {
+    this.lastAttemptAt = lastAttemptAt;
+  }
 
-    public int getFailureCount() {
-        return failureCount;
-    }
+  public String getLastErrorCode() {
+    return lastErrorCode;
+  }
 
-    public void setFailureCount(int failureCount) {
-        this.failureCount = failureCount;
-    }
+  public void setLastErrorCode(String lastErrorCode) {
+    this.lastErrorCode = lastErrorCode;
+  }
 
-    public Instant getLastFailureAt() {
-        return lastFailureAt;
-    }
+  public String getLastErrorMessage() {
+    return lastErrorMessage;
+  }
 
-    public void setLastFailureAt(Instant lastFailureAt) {
-        this.lastFailureAt = lastFailureAt;
-    }
+  public void setLastErrorMessage(String lastErrorMessage) {
+    this.lastErrorMessage = lastErrorMessage;
+  }
 
-    public Instant getCircuitOpenUntil() {
-        return circuitOpenUntil;
-    }
+  public int getConsecutiveFailures() {
+    return consecutiveFailures;
+  }
 
-    public void setCircuitOpenUntil(Instant circuitOpenUntil) {
-        this.circuitOpenUntil = circuitOpenUntil;
-    }
+  public void setConsecutiveFailures(int consecutiveFailures) {
+    this.consecutiveFailures = consecutiveFailures;
+  }
 }
