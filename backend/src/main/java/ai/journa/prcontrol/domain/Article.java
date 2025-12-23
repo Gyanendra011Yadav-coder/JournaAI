@@ -3,154 +3,229 @@ package ai.journa.prcontrol.domain;
 import jakarta.persistence.*;
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "articles")
 public class Article {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false)
-    private String headline;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "provider_type", nullable = false)
+  private ProviderType providerType;
 
-    private String source;
+  @Column(name = "provider_article_id")
+  private String providerArticleId;
 
-    private String author;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "beat_id", nullable = false)
+  private Beat beat;
 
-    @Column(nullable = false, unique = true)
-    private String canonicalUrl;
+  @Column(nullable = false)
+  private String title;
 
-    private String url;
+  private String description;
 
-    private Instant publishedAt;
+  private String content;
 
-    @Column(columnDefinition = "text")
-    private String summary;
+  @Column(nullable = false)
+  private String url;
 
-    @Column(nullable = false)
-    private String provider;
+  @Column(name = "image_url")
+  private String imageUrl;
 
-    @Column(columnDefinition = "jsonb")
-    private String rawPayload;
+  @Column(name = "published_at_utc")
+  private Instant providerPublishedAtUtc;
 
-    @Column(nullable = false)
-    private Instant fetchedAt = Instant.now();
+  private String lang;
 
-    @Column(nullable = false)
-    private boolean saved = false;
+  @Column(name = "source_id")
+  private String sourceId;
 
-    @ManyToMany
-    @JoinTable(
-            name = "article_tags",
-            joinColumns = @JoinColumn(name = "article_id"),
-            inverseJoinColumns = @JoinColumn(name = "beat_id")
-    )
-    private Set<Beat> beats = new HashSet<>();
+  @Column(name = "source_name")
+  private String sourceName;
 
-    public Long getId() {
-        return id;
-    }
+  @Column(name = "source_url")
+  private String sourceUrl;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  @Column(name = "source_country")
+  private String sourceCountry;
 
-    public String getHeadline() {
-        return headline;
-    }
+  @Column(name = "raw_payload_jsonb", columnDefinition = "jsonb")
+  private String rawPayloadJsonb;
 
-    public void setHeadline(String headline) {
-        this.headline = headline;
-    }
+  @Column(name = "fetched_at_utc", nullable = false)
+  private Instant fetchedAtUtc = Instant.now();
 
-    public String getSource() {
-        return source;
-    }
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private ArticleStatus status = ArticleStatus.INGESTED;
 
-    public void setSource(String source) {
-        this.source = source;
-    }
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "published_by")
+  private User publishedBy;
 
-    public String getAuthor() {
-        return author;
-    }
+  @Column(name = "internal_published_at_utc")
+  private Instant internalPublishedAtUtc;
 
-    public void setAuthor(String author) {
-        this.author = author;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public String getCanonicalUrl() {
-        return canonicalUrl;
-    }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public void setCanonicalUrl(String canonicalUrl) {
-        this.canonicalUrl = canonicalUrl;
-    }
+  public ProviderType getProviderType() {
+    return providerType;
+  }
 
-    public String getUrl() {
-        return url;
-    }
+  public void setProviderType(ProviderType providerType) {
+    this.providerType = providerType;
+  }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
+  public String getProviderArticleId() {
+    return providerArticleId;
+  }
 
-    public Instant getPublishedAt() {
-        return publishedAt;
-    }
+  public void setProviderArticleId(String providerArticleId) {
+    this.providerArticleId = providerArticleId;
+  }
 
-    public void setPublishedAt(Instant publishedAt) {
-        this.publishedAt = publishedAt;
-    }
+  public Beat getBeat() {
+    return beat;
+  }
 
-    public String getSummary() {
-        return summary;
-    }
+  public void setBeat(Beat beat) {
+    this.beat = beat;
+  }
 
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
+  public String getTitle() {
+    return title;
+  }
 
-    public String getProvider() {
-        return provider;
-    }
+  public void setTitle(String title) {
+    this.title = title;
+  }
 
-    public void setProvider(String provider) {
-        this.provider = provider;
-    }
+  public String getDescription() {
+    return description;
+  }
 
-    public String getRawPayload() {
-        return rawPayload;
-    }
+  public void setDescription(String description) {
+    this.description = description;
+  }
 
-    public void setRawPayload(String rawPayload) {
-        this.rawPayload = rawPayload;
-    }
+  public String getContent() {
+    return content;
+  }
 
-    public Instant getFetchedAt() {
-        return fetchedAt;
-    }
+  public void setContent(String content) {
+    this.content = content;
+  }
 
-    public void setFetchedAt(Instant fetchedAt) {
-        this.fetchedAt = fetchedAt;
-    }
+  public String getUrl() {
+    return url;
+  }
 
-    public boolean isSaved() {
-        return saved;
-    }
+  public void setUrl(String url) {
+    this.url = url;
+  }
 
-    public void setSaved(boolean saved) {
-        this.saved = saved;
-    }
+  public String getImageUrl() {
+    return imageUrl;
+  }
 
-    public Set<Beat> getBeats() {
-        return beats;
-    }
+  public void setImageUrl(String imageUrl) {
+    this.imageUrl = imageUrl;
+  }
 
-    public void setBeats(Set<Beat> beats) {
-        this.beats = beats;
-    }
+  public Instant getProviderPublishedAtUtc() {
+    return providerPublishedAtUtc;
+  }
+
+  public void setProviderPublishedAtUtc(Instant publishedAtUtc) {
+    this.providerPublishedAtUtc = publishedAtUtc;
+  }
+
+  public String getLang() {
+    return lang;
+  }
+
+  public void setLang(String lang) {
+    this.lang = lang;
+  }
+
+  public String getSourceId() {
+    return sourceId;
+  }
+
+  public void setSourceId(String sourceId) {
+    this.sourceId = sourceId;
+  }
+
+  public String getSourceName() {
+    return sourceName;
+  }
+
+  public void setSourceName(String sourceName) {
+    this.sourceName = sourceName;
+  }
+
+  public String getSourceUrl() {
+    return sourceUrl;
+  }
+
+  public void setSourceUrl(String sourceUrl) {
+    this.sourceUrl = sourceUrl;
+  }
+
+  public String getSourceCountry() {
+    return sourceCountry;
+  }
+
+  public void setSourceCountry(String sourceCountry) {
+    this.sourceCountry = sourceCountry;
+  }
+
+  public String getRawPayloadJsonb() {
+    return rawPayloadJsonb;
+  }
+
+  public void setRawPayloadJsonb(String rawPayloadJsonb) {
+    this.rawPayloadJsonb = rawPayloadJsonb;
+  }
+
+  public Instant getFetchedAtUtc() {
+    return fetchedAtUtc;
+  }
+
+  public void setFetchedAtUtc(Instant fetchedAtUtc) {
+    this.fetchedAtUtc = fetchedAtUtc;
+  }
+
+  public ArticleStatus getStatus() {
+    return status;
+  }
+
+  public void setStatus(ArticleStatus status) {
+    this.status = status;
+  }
+
+  public User getPublishedBy() {
+    return publishedBy;
+  }
+
+  public void setPublishedBy(User publishedBy) {
+    this.publishedBy = publishedBy;
+  }
+
+  public Instant getInternalPublishedAtUtc() {
+    return internalPublishedAtUtc;
+  }
+
+  public void setInternalPublishedAtUtc(Instant internalPublishedAtUtc) {
+    this.internalPublishedAtUtc = internalPublishedAtUtc;
+  }
 }

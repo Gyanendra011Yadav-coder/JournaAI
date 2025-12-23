@@ -1,109 +1,98 @@
 DROP TABLE IF EXISTS audit_log CASCADE;
-DROP TABLE IF EXISTS outreach_emails CASCADE;
-DROP TABLE IF EXISTS outreach_templates CASCADE;
-DROP TABLE IF EXISTS journalist_tags CASCADE;
-DROP TABLE IF EXISTS journalists CASCADE;
-DROP TABLE IF EXISTS news_fetch_state CASCADE;
-DROP TABLE IF EXISTS article_tags CASCADE;
 DROP TABLE IF EXISTS articles CASCADE;
+DROP TABLE IF EXISTS news_fetch_state CASCADE;
+DROP TABLE IF EXISTS integration_settings CASCADE;
+DROP TABLE IF EXISTS beat_query_recipes CASCADE;
 DROP TABLE IF EXISTS beats CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
-DROP TABLE IF EXISTS saved_searches CASCADE;
-DROP TABLE IF EXISTS workspaces CASCADE;
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    role TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('ADMIN', 'MEMBER')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE beats (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
-    slug TEXT NOT NULL UNIQUE
+    slug TEXT NOT NULL UNIQUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
-CREATE TABLE articles (
+CREATE TABLE beat_query_recipes (
     id SERIAL PRIMARY KEY,
-    headline TEXT NOT NULL,
-    source TEXT,
-    author TEXT,
-    canonical_url TEXT NOT NULL,
-    url TEXT,
-    published_at TIMESTAMPTZ,
-    summary TEXT,
-    provider TEXT NOT NULL,
-    raw_payload JSONB,
-    fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    saved BOOLEAN NOT NULL DEFAULT FALSE
-);
-
-CREATE UNIQUE INDEX articles_canonical_url_idx ON articles (canonical_url);
-
-CREATE TABLE article_tags (
-    id SERIAL PRIMARY KEY,
-    article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
     beat_id INTEGER NOT NULL REFERENCES beats(id) ON DELETE CASCADE,
-    UNIQUE (article_id, beat_id)
+    endpoint_type TEXT NOT NULL CHECK (endpoint_type IN ('SEARCH', 'TOP_HEADLINES')),
+    q TEXT,
+    category TEXT,
+    lang TEXT,
+    country TEXT,
+    in_fields TEXT,
+    nullable_fields TEXT,
+    max INTEGER,
+    sort TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE integration_settings (
+    id SERIAL PRIMARY KEY,
+    provider_type TEXT NOT NULL,
+    is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    api_key_encrypted TEXT,
+    default_lang TEXT,
+    default_country TEXT,
+    refresh_interval_minutes INTEGER NOT NULL DEFAULT 30,
+    ttl_minutes INTEGER NOT NULL DEFAULT 15,
+    max_per_request INTEGER NOT NULL DEFAULT 50,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_by INTEGER REFERENCES users(id)
 );
 
 CREATE TABLE news_fetch_state (
     id SERIAL PRIMARY KEY,
     beat_id INTEGER NOT NULL REFERENCES beats(id) ON DELETE CASCADE,
-    timeframe TEXT NOT NULL,
-    last_fetched_at TIMESTAMPTZ,
-    failure_count INTEGER NOT NULL DEFAULT 0,
-    last_failure_at TIMESTAMPTZ,
-    circuit_open_until TIMESTAMPTZ,
-    UNIQUE (beat_id, timeframe)
+    last_success_at TIMESTAMPTZ,
+    last_attempt_at TIMESTAMPTZ,
+    last_error_code TEXT,
+    last_error_message TEXT,
+    consecutive_failures INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE TABLE journalists (
+CREATE TABLE articles (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    outlet TEXT,
-    location TEXT,
-    email TEXT,
-    phone TEXT,
-    source_provider TEXT NOT NULL,
-    provider_reference_id TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE journalist_tags (
-    id SERIAL PRIMARY KEY,
-    journalist_id INTEGER NOT NULL REFERENCES journalists(id) ON DELETE CASCADE,
+    provider_type TEXT NOT NULL,
+    provider_article_id TEXT,
     beat_id INTEGER NOT NULL REFERENCES beats(id) ON DELETE CASCADE,
-    UNIQUE (journalist_id, beat_id)
+    title TEXT NOT NULL,
+    description TEXT,
+    content TEXT,
+    url TEXT NOT NULL,
+    image_url TEXT,
+    published_at_utc TIMESTAMPTZ,
+    lang TEXT,
+    source_id TEXT,
+    source_name TEXT,
+    source_url TEXT,
+    source_country TEXT,
+    raw_payload_jsonb JSONB,
+    fetched_at_utc TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    status TEXT NOT NULL CHECK (status IN ('INGESTED', 'PUBLISHED')),
+    published_by INTEGER REFERENCES users(id),
+    internal_published_at_utc TIMESTAMPTZ
 );
 
-CREATE TABLE outreach_templates (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    subject TEXT NOT NULL,
-    body TEXT NOT NULL
-);
-
-CREATE TABLE outreach_emails (
-    id SERIAL PRIMARY KEY,
-    article_id INTEGER REFERENCES articles(id),
-    journalist_id INTEGER REFERENCES journalists(id),
-    template_id INTEGER REFERENCES outreach_templates(id),
-    final_subject TEXT NOT NULL,
-    final_body TEXT NOT NULL,
-    status TEXT NOT NULL,
-    sent_at TIMESTAMPTZ,
-    provider_message_id TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+CREATE UNIQUE INDEX articles_url_idx ON articles (url);
+CREATE UNIQUE INDEX articles_provider_idx ON articles (provider_type, provider_article_id);
 
 CREATE TABLE audit_log (
     id SERIAL PRIMARY KEY,
-    actor TEXT NOT NULL,
+    actor_user_id INTEGER REFERENCES users(id),
     action TEXT NOT NULL,
-    entity TEXT NOT NULL,
-    timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    metadata JSONB
+    entity_type TEXT NOT NULL,
+    entity_id TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    metadata_jsonb JSONB
 );

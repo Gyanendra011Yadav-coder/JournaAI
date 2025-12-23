@@ -7,70 +7,82 @@ import java.time.Instant;
 @Entity
 @Table(name = "audit_log")
 public class AuditLog {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false)
-    private String actor;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "actor_user_id")
+  private User actorUser;
 
-    @Column(nullable = false)
-    private String action;
+  @Column(nullable = false)
+  private String action;
 
-    @Column(nullable = false)
-    private String entity;
+  @Column(name = "entity_type", nullable = false)
+  private String entityType;
 
-    @Column(nullable = false)
-    private Instant timestamp = Instant.now();
+  @Column(name = "entity_id")
+  private String entityId;
 
-    @Column(columnDefinition = "jsonb")
-    private String metadata;
+  @Column(name = "created_at", nullable = false)
+  private Instant createdAt = Instant.now();
 
-    public Long getId() {
-        return id;
-    }
+  @Column(name = "metadata_jsonb", columnDefinition = "jsonb")
+  private String metadataJsonb;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public String getActor() {
-        return actor;
-    }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public void setActor(String actor) {
-        this.actor = actor;
-    }
+  public User getActorUser() {
+    return actorUser;
+  }
 
-    public String getAction() {
-        return action;
-    }
+  public void setActorUser(User actorUser) {
+    this.actorUser = actorUser;
+  }
 
-    public void setAction(String action) {
-        this.action = action;
-    }
+  public String getAction() {
+    return action;
+  }
 
-    public String getEntity() {
-        return entity;
-    }
+  public void setAction(String action) {
+    this.action = action;
+  }
 
-    public void setEntity(String entity) {
-        this.entity = entity;
-    }
+  public String getEntityType() {
+    return entityType;
+  }
 
-    public Instant getTimestamp() {
-        return timestamp;
-    }
+  public void setEntityType(String entityType) {
+    this.entityType = entityType;
+  }
 
-    public void setTimestamp(Instant timestamp) {
-        this.timestamp = timestamp;
-    }
+  public String getEntityId() {
+    return entityId;
+  }
 
-    public String getMetadata() {
-        return metadata;
-    }
+  public void setEntityId(String entityId) {
+    this.entityId = entityId;
+  }
 
-    public void setMetadata(String metadata) {
-        this.metadata = metadata;
-    }
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(Instant createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  public String getMetadataJsonb() {
+    return metadataJsonb;
+  }
+
+  public void setMetadataJsonb(String metadataJsonb) {
+    this.metadataJsonb = metadataJsonb;
+  }
 }

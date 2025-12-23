@@ -12,6 +12,8 @@ spring:
           time_zone: UTC
   flyway:
     enabled: true
+  jackson:
+    time-zone: UTC
 app:
   jwt:
     secret: "change-me-change-me-change-me-change-me"
@@ -20,64 +22,16 @@ app:
     ttlMinutes: 15
     failureThreshold: 3
     circuitMinutes: 30
-    searchesPerMinute: 30
+    searchesPerMinute: 60
+    refreshIntervalMinutes: 30
     gnews:
-      apiKey: ${GNEWS_API_KEY:}
-    rss:
-      feeds:
-        "Law":
-          - "https://www.law.com/feed/"
-          - "https://www.abajournal.com/feed/"
-        "Taxation":
-          - "https://www.irs.gov/rss"
-          - "https://taxfoundation.org/feed/"
-        "Healthcare":
-          - "https://www.healthcareitnews.com/feed"
-          - "https://www.modernhealthcare.com/feed/rss"
-        "Education":
-          - "https://www.edweek.org/education/rss"
-          - "https://hechingerreport.org/feed/"
-        "Steel":
-          - "https://www.worldsteel.org/rss.xml"
-          - "https://www.steel.org/feed/"
-        "Finance/BFSI":
-          - "https://www.reuters.com/finance/rss"
-          - "https://www.finextra.com/rss/"
-        "Startups/VC":
-          - "https://techcrunch.com/startups/feed/"
-          - "https://venturebeat.com/category/business/venture-capital/feed/"
-        "Technology/AI":
-          - "https://www.technologyreview.com/feed/"
-          - "https://venturebeat.com/category/ai/feed/"
-        "Telecom":
-          - "https://www.lightreading.com/rss"
-          - "https://www.telecoms.com/feed/"
-        "Energy & Renewables":
-          - "https://www.renewableenergyworld.com/feed/"
-          - "https://www.energy.gov/rss.xml"
-        "Manufacturing/Industrial":
-          - "https://www.industryweek.com/rss.xml"
-          - "https://www.manufacturing.net/rss.xml"
-        "Pharma/MedTech":
-          - "https://www.fiercepharma.com/rss/xml"
-          - "https://www.medtechdive.com/feeds/news/"
-        "Real Estate & Infra":
-          - "https://www.globest.com/feed/"
-          - "https://www.infrastructureinvestor.com/feed/"
-        "Retail/Consumer":
-          - "https://www.retaildive.com/feeds/news/"
-          - "https://www.consumergoods.com/rss.xml"
-        "Auto/EV":
-          - "https://electrek.co/feed/"
-          - "https://www.autonews.com/rss"
-        "ESG/Sustainability":
-          - "https://www.greenbiz.com/rss.xml"
-          - "https://www.esgtoday.com/feed/"
-        "Public Policy/Regulatory":
-          - "https://www.regulations.gov/rss/"
-          - "https://www.govtrack.us/rss"
-  providers:
-    email: mock
+      baseUrl: "https://gnews.io/api/v4"
+      requestTimeoutSeconds: 10
+      maxBackoffSeconds: 30
+  security:
+    integrationMasterKey: ${INTEGRATION_MASTER_KEY:change-me-please}
 springdoc:
+  api-docs:
+    path: /api/docs
   swagger-ui:
     path: /swagger-ui

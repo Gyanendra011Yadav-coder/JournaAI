@@ -1,42 +1,40 @@
 package ai.journa.prcontrol.dto;
 
-import java.time.Instant;
-
 public class RefreshResponse {
-    private String status;
-    private boolean staleCache;
-    private Instant lastRefreshedAt;
-    private String message;
+  private String status;
+  private boolean staleCache;
+  private String lastRefreshedAt;
+  private String message;
 
-    public String getStatus() {
-        return status;
-    }
+  public String getStatus() {
+    return status;
+  }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+  public void setStatus(String status) {
+    this.status = status;
+  }
 
-    public boolean isStaleCache() {
-        return staleCache;
-    }
+  public boolean isStaleCache() {
+    return staleCache;
+  }
 
-    public void setStaleCache(boolean staleCache) {
-        this.staleCache = staleCache;
-    }
+  public void setStaleCache(boolean staleCache) {
+    this.staleCache = staleCache;
+  }
 
-    public Instant getLastRefreshedAt() {
-        return lastRefreshedAt;
-    }
+  public String getLastRefreshedAt() {
+    return lastRefreshedAt;
+  }
 
-    public void setLastRefreshedAt(Instant lastRefreshedAt) {
-        this.lastRefreshedAt = lastRefreshedAt;
-    }
+  public void setLastRefreshedAt(String lastRefreshedAt) {
+    this.lastRefreshedAt = lastRefreshedAt;
+  }
 
-    public String getMessage() {
-        return message;
-    }
+  public String getMessage() {
+    return message;
+  }
 
-    public void setMessage(String message) {
-        this.message = message;
-    }
+  public void setMessage(String message) {
+    this.message = message;
+  }
 }

@@ -1,10 +1,9 @@
 package ai.journa.prcontrol.service.integration;
 
-import ai.journa.prcontrol.service.integration.model.NewsArticle;
-import ai.journa.prcontrol.service.integration.model.NewsFetchRequest;
-
-import java.util.List;
+import ai.journa.prcontrol.domain.ProviderType;
 
 public interface NewsProvider {
-    List<NewsArticle> fetchArticles(NewsFetchRequest request);
+  ProviderType type();
+
+  FetchResult fetch(FetchRequest request, String apiKey) throws ProviderException;
 }
