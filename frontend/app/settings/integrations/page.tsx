@@ -11,9 +11,17 @@ interface IntegrationStatus {
 
 export default function IntegrationsPage() {
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    apiFetch<IntegrationStatus>("/api/settings/integrations").then(setStatus);
+    apiFetch<IntegrationStatus>("/api/settings/integrations")
+      .then((data) => {
+        setStatus(data);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Unable to load integration status.");
+      });
   }, []);
 
   return (
@@ -22,6 +30,11 @@ export default function IntegrationsPage() {
         <h1 className="text-2xl font-semibold">Integrations</h1>
         <p className="text-slate-400">Backend-managed providers with cache-first ingestion.</p>
       </header>
+      {error && (
+        <div className="rounded-2xl border border-amber-400/60 bg-amber-500/10 p-4 text-amber-100 text-sm">
+          {error}
+        </div>
+      )}
       <div className="grid md:grid-cols-2 gap-4">
         <div className="border border-slate-800 rounded-xl p-4 bg-slate-900">
           <h2 className="font-semibold">GNews Provider</h2>

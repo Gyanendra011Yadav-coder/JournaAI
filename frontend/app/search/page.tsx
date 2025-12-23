@@ -45,19 +45,26 @@ export default function SearchPage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshStatus, setRefreshStatus] = useState<RefreshResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    apiFetch<Beat[]>("/api/beats").then((data) => {
-      setBeats(data);
-      if (data.length > 0) {
-        setBeat(data[0].name);
-      }
-    });
+    apiFetch<Beat[]>("/api/beats")
+      .then((data) => {
+        setBeats(data);
+        if (data.length > 0) {
+          setBeat(data[0].name);
+        }
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Unable to load beats.");
+      });
   }, []);
 
   const handleSearch = async () => {
     if (!beat) return;
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         beat,
@@ -70,6 +77,8 @@ export default function SearchPage() {
       }
       const result = await apiFetch<ArticleSearchResponse>(`/api/articles?${params.toString()}`);
       setArticles(result.items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load articles.");
     } finally {
       setLoading(false);
     }
@@ -77,20 +86,26 @@ export default function SearchPage() {
 
   const handleRefresh = async () => {
     if (!beat) return;
+    setError(null);
     const payload: { beat: string; timeframe: string; from?: string } = { beat, timeframe };
     if (timeframe.toLowerCase() === "custom" && customFrom) {
       payload.from = new Date(customFrom).toISOString();
     }
-    const response = await apiFetch<RefreshResponse>("/api/articles/refresh", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    setRefreshStatus(response);
-    await handleSearch();
+    try {
+      const response = await apiFetch<RefreshResponse>("/api/articles/refresh", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      setRefreshStatus(response);
+      await handleSearch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to refresh articles.");
+    }
   };
 
   const handleManualAdd = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError(null);
     const formData = new FormData(event.currentTarget);
     const payload = {
       beat,
@@ -100,12 +115,16 @@ export default function SearchPage() {
       author: String(formData.get("author")),
       summary: String(formData.get("summary")),
     };
-    await apiFetch("/api/articles/manual", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    event.currentTarget.reset();
-    await handleSearch();
+    try {
+      await apiFetch("/api/articles/manual", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      event.currentTarget.reset();
+      await handleSearch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to add article.");
+    }
   };
 
   return (
@@ -115,6 +134,11 @@ export default function SearchPage() {
         <h1 className="text-2xl font-semibold">News Search</h1>
         <p className="text-slate-400">Track cached news by beat and timeframe, then refresh on demand.</p>
       </header>
+      {error && (
+        <div className="rounded-2xl border border-rose-500/60 bg-rose-500/10 p-4 text-rose-100 text-sm">
+          {error}
+        </div>
+      )}
       {refreshStatus?.staleCache && (
         <div className="rounded-2xl border border-amber-400/60 bg-amber-500/10 p-4 text-amber-100">
           <p className="text-sm font-semibold">Stale-cache mode</p>

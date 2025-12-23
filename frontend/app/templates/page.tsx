@@ -12,9 +12,17 @@ interface Template {
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    apiFetch<Template[]>("/api/templates").then(setTemplates);
+    apiFetch<Template[]>("/api/templates")
+      .then((data) => {
+        setTemplates(data);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Unable to load templates.");
+      });
   }, []);
 
   return (
@@ -26,6 +34,11 @@ export default function TemplatesPage() {
           Seeded templates with variables like {"{{journalist_name}}, {{outlet}}, {{beat}}"}.
         </p>
       </header>
+      {error && (
+        <div className="rounded-2xl border border-amber-400/60 bg-amber-500/10 p-4 text-amber-100 text-sm">
+          {error}
+        </div>
+      )}
       <div className="space-y-3">
         {templates.map((template) => (
           <div key={template.id} className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-4">

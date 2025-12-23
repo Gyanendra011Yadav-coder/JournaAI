@@ -34,17 +34,24 @@ export default function ArticleDetailPage() {
   const [journalists, setJournalists] = useState<Journalist[]>([]);
   const [saved, setSaved] = useState(false);
   const [filters, setFilters] = useState({ outlet: "", location: "" });
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!params.id) return;
-    apiFetch<Article>(`/api/articles/${params.id}`).then((data) => {
-      setArticle(data);
-      setSaved(data.saved ?? false);
-    });
+    apiFetch<Article>(`/api/articles/${params.id}`)
+      .then((data) => {
+        setArticle(data);
+        setSaved(data.saved ?? false);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Unable to load article.");
+      });
   }, [params.id]);
 
   const handleFindJournalists = async () => {
     if (!article) return;
+    setError(null);
     const params = new URLSearchParams();
     if (article.beats?.[0]) {
       params.set("beat", article.beats[0]);
@@ -55,16 +62,25 @@ export default function ArticleDetailPage() {
     if (filters.location) {
       params.set("location", filters.location);
     }
-    const result = await apiFetch<Journalist[]>(`/api/journalists/search?${params.toString()}`);
-    setJournalists(result);
+    try {
+      const result = await apiFetch<Journalist[]>(`/api/journalists/search?${params.toString()}`);
+      setJournalists(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load journalists.");
+    }
   };
 
   if (!article) {
-    return <div>Loading...</div>;
+    return <div className="text-slate-400">{error ?? "Loading..."}</div>;
   }
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="rounded-2xl border border-rose-500/60 bg-rose-500/10 p-4 text-rose-100 text-sm">
+          {error}
+        </div>
+      )}
       <header>
         <h1 className="text-2xl font-semibold">{article.headline}</h1>
         <p className="text-slate-400">
@@ -86,8 +102,13 @@ export default function ArticleDetailPage() {
         </div>
         <button
           onClick={async () => {
-            await apiFetch<Article>(`/api/articles/${article.id}/save?saved=${!saved}`, { method: "POST" });
-            setSaved(!saved);
+            setError(null);
+            try {
+              await apiFetch<Article>(`/api/articles/${article.id}/save?saved=${!saved}`, { method: "POST" });
+              setSaved(!saved);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Unable to update saved status.");
+            }
           }}
           className="px-3 py-2 bg-slate-800 rounded-lg text-sm"
         >

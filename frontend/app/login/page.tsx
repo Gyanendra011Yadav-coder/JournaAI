@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { API_BASE } from "../../lib/api";
+import { apiFetch } from "../../lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,18 +15,16 @@ export default function LoginPage() {
     setError(null);
     const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
     const payload = { email, password };
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) {
-      setError("Authentication failed.");
-      return;
+    try {
+      const data = await apiFetch<{ token: string }>(endpoint, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      localStorage.setItem("token", data.token);
+      router.push("/dashboard");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Authentication failed.");
     }
-    const data = await response.json();
-    localStorage.setItem("token", data.token);
-    router.push("/dashboard");
   };
 
   return (
