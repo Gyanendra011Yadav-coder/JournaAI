@@ -146,6 +146,12 @@ export default function SearchPage() {
         <div>
           <p className="text-sm text-slate-400 mb-2">Select beat</p>
           <BeatSelector value={beat} beats={beats.map((item) => item.name)} onChange={setBeat} />
+          {error && (
+            <p className="mt-2 text-xs text-amber-300">
+              Backend offline — start <span className="font-semibold">./gradlew bootRun</span> or set{" "}
+              <span className="font-semibold">NEXT_PUBLIC_API_BASE</span>.
+            </p>
+          )}
         </div>
         <div>
           <p className="text-sm text-slate-400 mb-2">Timeframe</p>
