@@ -1,6 +1,8 @@
 package ai.journa.prcontrol.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -53,6 +55,7 @@ public class Article {
   private String sourceCountry;
 
   @Column(name = "raw_payload_jsonb", columnDefinition = "jsonb")
+  @JdbcTypeCode(SqlTypes.JSON)
   private String rawPayloadJsonb;
 
   @Column(name = "fetched_at_utc", nullable = false)

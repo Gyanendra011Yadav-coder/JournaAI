@@ -1,6 +1,8 @@
 package ai.journa.prcontrol.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -28,6 +30,7 @@ public class AuditLog {
   private Instant createdAt = Instant.now();
 
   @Column(name = "metadata_jsonb", columnDefinition = "jsonb")
+  @JdbcTypeCode(SqlTypes.JSON)
   private String metadataJsonb;
 
   public Long getId() {
