@@ -4,6 +4,8 @@ import ai.journa.prcontrol.domain.Role;
 import ai.journa.prcontrol.domain.User;
 import ai.journa.prcontrol.dto.LoginRequest;
 import ai.journa.prcontrol.dto.RegisterRequest;
+import ai.journa.prcontrol.exception.EmailAlreadyRegisteredException;
+import ai.journa.prcontrol.exception.InvalidCredentialsException;
 import ai.journa.prcontrol.repository.UserRepository;
 import ai.journa.prcontrol.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,7 +27,7 @@ public class AuthService {
 
     public String register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new IllegalStateException("Email already registered");
+            throw new EmailAlreadyRegisteredException(request.getEmail());
         }
 
         User user = new User();
@@ -39,9 +41,9 @@ public class AuthService {
 
     public String login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalStateException("Invalid credentials"));
+                .orElseThrow(InvalidCredentialsException::new);
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new IllegalStateException("Invalid credentials");
+            throw new InvalidCredentialsException();
         }
         return jwtService.generateToken(user.getEmail(), user.getRole());
     }

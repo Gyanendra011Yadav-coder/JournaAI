@@ -22,7 +22,9 @@ export default function TemplatesPage() {
       <header className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
         <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Outreach Studio</p>
         <h1 className="text-2xl font-semibold">Outreach Templates</h1>
-        <p className="text-slate-400">Seeded templates with variables like {{journalist_name}}, {{outlet}}, {{beat}}.</p>
+        <p className="text-slate-400">
+          Seeded templates with variables like {"{{journalist_name}}, {{outlet}}, {{beat}}"}.
+        </p>
       </header>
       <div className="space-y-3">
         {templates.map((template) => (
