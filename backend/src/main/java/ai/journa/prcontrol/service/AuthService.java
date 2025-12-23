@@ -36,4 +36,3 @@ public class AuthService {
   public record LoginResult(String token, User user) {
   }
 }
-}
