@@ -56,8 +56,10 @@ public class ArticleController {
     response.setTotal(results.getTotalElements());
     response.setPage(results.getNumber());
     response.setSize(results.getSize());
-    articleService.getLastRefreshedAt(beatId).ifPresent(last -> response.setLastRefreshedAt(last.toString()));
-    response.setStaleCache(false);
+    if (beatId != null) {
+      articleService.getLastRefreshedAt(beatId).ifPresent(last -> response.setLastRefreshedAt(last.toString()));
+      articleService.isStaleCache(beatId).ifPresent(response::setStaleCache);
+    }
     return response;
   }
 
