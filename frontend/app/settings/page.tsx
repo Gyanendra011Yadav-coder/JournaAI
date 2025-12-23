@@ -1,3 +1,5 @@
-import IntegrationsPage from "./integrations/page";
+import { redirect } from "next/navigation";
 
-export default IntegrationsPage;
+export default function SettingsPage() {
+  redirect("/admin/integrations");
+}

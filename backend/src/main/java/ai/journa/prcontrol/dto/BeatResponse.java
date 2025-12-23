@@ -1,31 +1,50 @@
 package ai.journa.prcontrol.dto;
 
 public class BeatResponse {
-    private Long id;
-    private String name;
-    private String slug;
+  private Long id;
+  private String name;
+  private String slug;
+  private boolean active;
 
-    public Long getId() {
-        return id;
-    }
+  public BeatResponse() {
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public BeatResponse(Long id, String name, String slug, boolean active) {
+    this.id = id;
+    this.name = name;
+    this.slug = slug;
+    this.active = active;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public String getSlug() {
-        return slug;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setSlug(String slug) {
-        this.slug = slug;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String getSlug() {
+    return slug;
+  }
+
+  public void setSlug(String slug) {
+    this.slug = slug;
+  }
+
+  public boolean isActive() {
+    return active;
+  }
+
+  public void setActive(boolean active) {
+    this.active = active;
+  }
 }

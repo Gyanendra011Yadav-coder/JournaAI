@@ -9,12 +9,11 @@ import { ErrorBanner } from "../../components/ErrorBanner";
 
 interface Article {
   id: number;
-  headline: string;
-  source: string;
-  author: string;
-  publishedAt: string;
-  summary: string;
-  beats: string[];
+  title: string;
+  sourceName: string | null;
+  publishedAtUtc: string | null;
+  status: string;
+  beatName: string;
 }
 
 interface ArticleSearchResponse {
@@ -23,6 +22,7 @@ interface ArticleSearchResponse {
   page: number;
   size: number;
   lastRefreshedAt?: string;
+  staleCache?: boolean;
 }
 
 interface Beat {
@@ -40,12 +40,13 @@ interface RefreshResponse {
 
 export default function SearchPage() {
   const [beats, setBeats] = useState<Beat[]>([]);
-  const [beat, setBeat] = useState<string>("");
+  const [beatId, setBeatId] = useState<number | null>(null);
   const [timeframe, setTimeframe] = useState("24h");
   const [customFrom, setCustomFrom] = useState<string>("");
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshStatus, setRefreshStatus] = useState<RefreshResponse | null>(null);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,7 +54,7 @@ export default function SearchPage() {
       .then((data) => {
         setBeats(data);
         if (data.length > 0) {
-          setBeat(data[0].name);
+          setBeatId(data[0].id);
         }
         setError(null);
       })
@@ -62,22 +63,39 @@ export default function SearchPage() {
       });
   }, []);
 
+  const resolveFrom = () => {
+    const now = new Date();
+    if (timeframe === "7d") {
+      return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    }
+    if (timeframe === "30d") {
+      return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    }
+    if (timeframe === "24h") {
+      return new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    }
+    return null;
+  };
+
   const handleSearch = async () => {
-    if (!beat) return;
+    if (!beatId) return;
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({
-        beat,
-        timeframe,
-        page: "0",
-        size: "20",
-      });
+      const params = new URLSearchParams();
+      params.set("beatId", String(beatId));
+      params.set("page", "0");
+      params.set("size", "20");
+      const from = resolveFrom();
+      if (from) {
+        params.set("from", from);
+      }
       if (timeframe.toLowerCase() === "custom" && customFrom) {
         params.set("from", new Date(customFrom).toISOString());
       }
       const result = await apiFetch<ArticleSearchResponse>(`/api/articles?${params.toString()}`);
       setArticles(result.items);
+      setLastRefreshedAt(result.lastRefreshedAt ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load articles.");
     } finally {
@@ -86,47 +104,19 @@ export default function SearchPage() {
   };
 
   const handleRefresh = async () => {
-    if (!beat) return;
+    if (!beatId) return;
     setError(null);
-    const payload: { beat: string; timeframe: string; from?: string } = { beat, timeframe };
-    if (timeframe.toLowerCase() === "custom" && customFrom) {
-      payload.from = new Date(customFrom).toISOString();
-    }
     try {
-      const response = await apiFetch<RefreshResponse>("/api/articles/refresh", {
+      const response = await apiFetch<RefreshResponse>(`/api/ingest/refresh?beatId=${beatId}`, {
         method: "POST",
-        body: JSON.stringify(payload),
       });
       setRefreshStatus(response);
       await handleSearch();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to refresh articles.");
+      setError(err instanceof Error ? err.message : "Unable to refresh cache.");
     }
   };
 
-  const handleManualAdd = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-    const formData = new FormData(event.currentTarget);
-    const payload = {
-      beat,
-      headline: String(formData.get("headline")),
-      url: String(formData.get("url")),
-      source: String(formData.get("source")),
-      author: String(formData.get("author")),
-      summary: String(formData.get("summary")),
-    };
-    try {
-      await apiFetch("/api/articles/manual", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-      event.currentTarget.reset();
-      await handleSearch();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to add article.");
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -142,10 +132,15 @@ export default function SearchPage() {
           <p className="text-sm text-amber-200">{refreshStatus.message}</p>
         </div>
       )}
+      {lastRefreshedAt && (
+        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 text-sm text-slate-300">
+          Last refreshed at {new Date(lastRefreshedAt).toLocaleString()}
+        </div>
+      )}
       <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4 shadow-[0_0_0_1px_rgba(59,130,246,0.1)]">
         <div>
           <p className="text-sm text-slate-400 mb-2">Select beat</p>
-          <BeatSelector value={beat} beats={beats.map((item) => item.name)} onChange={setBeat} />
+          <BeatSelector value={beatId} beats={beats} onChange={setBeatId} />
           {error && (
             <p className="mt-2 text-xs text-amber-300">
               Backend offline — start <span className="font-semibold">./gradlew bootRun</span> or set{" "}
@@ -181,22 +176,6 @@ export default function SearchPage() {
         </div>
       </div>
       <ArticlesTable articles={articles} />
-      <section className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Add article URL (manual ingestion)</h2>
-        <form className="grid gap-3 md:grid-cols-2" onSubmit={handleManualAdd}>
-          <input name="headline" required placeholder="Headline" className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3" />
-          <input name="url" required placeholder="Canonical URL" className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3" />
-          <input name="source" placeholder="Source" className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3" />
-          <input name="author" placeholder="Author" className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3" />
-          <textarea name="summary" placeholder="Summary" className="md:col-span-2 rounded-xl bg-slate-900/60 border border-slate-700/80 p-3" />
-          <button
-            type="submit"
-            className="md:col-span-2 px-4 py-2 rounded-xl bg-emerald-500 text-slate-900 font-semibold"
-          >
-            Add article
-          </button>
-        </form>
-      </section>
     </div>
   );
 }

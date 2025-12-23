@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface NewsFetchStateRepository extends JpaRepository<NewsFetchState, Long> {
-    Optional<NewsFetchState> findByBeat_NameIgnoreCaseAndTimeframe(String beat, String timeframe);
+  Optional<NewsFetchState> findByBeatId(Long beatId);
 }

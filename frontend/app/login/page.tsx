@@ -9,15 +9,13 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("admin@example.com");
   const [password, setPassword] = useState("password");
-  const [mode, setMode] = useState<"login" | "register">("register");
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     setError(null);
-    const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
     const payload = { email, password };
     try {
-      const data = await apiFetch<{ token: string }>(endpoint, {
+      const data = await apiFetch<{ token: string }>("/api/auth/login", {
         method: "POST",
         body: JSON.stringify(payload),
       });
@@ -42,9 +40,9 @@ export default function LoginPage() {
             </p>
             <div className="space-y-3 text-sm text-slate-300">
               {[
-                "Curated beat coverage from compliant sources.",
-                "Journalist discovery with seeded data.",
-                "Audit trails for every search and send.",
+                "Admin-configurable beats and query recipes.",
+                "Cache-first refresh with stale-mode protection.",
+                "Publish workflows with audit trails.",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-100">
@@ -59,23 +57,9 @@ export default function LoginPage() {
         <div className="rounded-2xl border border-slate-800/80 bg-slate-950/80 p-8">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Welcome back</h2>
-            <div className="flex rounded-full border border-slate-800/80 bg-slate-900/60 p-1 text-sm">
-              <button
-                className={`px-4 py-1.5 rounded-full transition ${mode === "register" ? "bg-cyan-500 text-slate-900" : "text-slate-300"}`}
-                onClick={() => setMode("register")}
-              >
-                Register
-              </button>
-              <button
-                className={`px-4 py-1.5 rounded-full transition ${mode === "login" ? "bg-cyan-500 text-slate-900" : "text-slate-300"}`}
-                onClick={() => setMode("login")}
-              >
-                Login
-              </button>
-            </div>
           </div>
           <p className="text-slate-400 mt-2">
-            {mode === "login" ? "Sign in to review your cached coverage." : "Create an account and start tracking beats."}
+            Sign in to review your cached coverage.
           </p>
           <div className="mt-6 space-y-4">
             <div>
@@ -104,7 +88,7 @@ export default function LoginPage() {
             </button>
           </div>
           <div className="mt-6 rounded-xl border border-slate-800/80 bg-slate-900/60 p-4 text-sm text-slate-300">
-            Primary workflow: search beats, refresh cache, find journalists, compose outreach.
+            Primary workflow: search beats, refresh cache, publish coverage.
           </div>
         </div>
       </div>

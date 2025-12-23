@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
-import { ErrorBanner } from "../../../components/ErrorBanner";
 import { EmailComposer } from "../../../components/EmailComposer";
 
 interface Template {
@@ -35,47 +34,27 @@ export default function OutreachComposePage() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [status, setStatus] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [article, setArticle] = useState<Article | null>(null);
   const [journalist, setJournalist] = useState<Journalist | null>(null);
   const [clientQuote, setClientQuote] = useState("We can share fresh data and executive commentary.");
 
   useEffect(() => {
-    apiFetch<Template[]>("/api/templates")
-      .then((data) => {
-        setTemplates(data);
-        if (data.length > 0) {
-          setTemplateId(String(data[0].id));
-          setSubject(data[0].subject);
-          setBody(data[0].body);
-        }
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : "Unable to load templates.");
-      });
+    apiFetch<Template[]>("/api/templates").then((data) => {
+      setTemplates(data);
+      if (data.length > 0) {
+        setTemplateId(String(data[0].id));
+        setSubject(data[0].subject);
+        setBody(data[0].body);
+      }
+    });
   }, []);
 
   useEffect(() => {
     if (articleId) {
-      apiFetch<Article>(`/api/articles/${articleId}`)
-        .then((data) => {
-          setArticle(data);
-          setError(null);
-        })
-        .catch((err) => {
-          setError(err instanceof Error ? err.message : "Unable to load article.");
-        });
+      apiFetch<Article>(`/api/articles/${articleId}`).then(setArticle);
     }
     if (journalistId) {
-      apiFetch<Journalist>(`/api/journalists/${journalistId}`)
-        .then((data) => {
-          setJournalist(data);
-          setError(null);
-        })
-        .catch((err) => {
-          setError(err instanceof Error ? err.message : "Unable to load journalist.");
-        });
+      apiFetch<Journalist>(`/api/journalists/${journalistId}`).then(setJournalist);
     }
   }, [articleId, journalistId]);
 
@@ -109,22 +88,17 @@ export default function OutreachComposePage() {
 
   const handleSend = async () => {
     if (!articleId || !journalistId || !templateId) return;
-    setError(null);
-    try {
-      const response = await apiFetch<{ status: string }>("/api/outreach/send", {
-        method: "POST",
-        body: JSON.stringify({
-          articleId: Number(articleId),
-          journalistId: Number(journalistId),
-          templateId: Number(templateId),
-          finalSubject: subject,
-          finalBody: body,
-        }),
-      });
-      setStatus(response.status);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to send outreach.");
-    }
+    const response = await apiFetch<{ status: string }>("/api/outreach/send", {
+      method: "POST",
+      body: JSON.stringify({
+        articleId: Number(articleId),
+        journalistId: Number(journalistId),
+        templateId: Number(templateId),
+        finalSubject: subject,
+        finalBody: body,
+      }),
+    });
+    setStatus(response.status);
   };
 
   return (
@@ -134,7 +108,6 @@ export default function OutreachComposePage() {
         <h1 className="text-2xl font-semibold">Compose Outreach</h1>
         <p className="text-slate-400">Draft an email and send from within the platform.</p>
       </header>
-      <ErrorBanner message={error} />
       <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4 shadow-[0_0_0_1px_rgba(59,130,246,0.1)]">
         <div>
           <label className="text-sm text-slate-300">Template</label>

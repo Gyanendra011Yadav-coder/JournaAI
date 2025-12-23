@@ -17,9 +17,10 @@ public class BeatProperties {
         this.beats = beats;
     }
 
-    public static class BeatDefinition {
-        private String name;
-        private String slug;
+  public static class BeatDefinition {
+    private String name;
+    private String slug;
+    private Boolean active;
 
         public String getName() {
             return name;
@@ -29,12 +30,20 @@ public class BeatProperties {
             this.name = name;
         }
 
-        public String getSlug() {
-            return slug;
-        }
-
-        public void setSlug(String slug) {
-            this.slug = slug;
-        }
+    public String getSlug() {
+      return slug;
     }
+
+    public void setSlug(String slug) {
+      this.slug = slug;
+    }
+
+    public Boolean getActive() {
+      return active;
+    }
+
+    public void setActive(Boolean active) {
+      this.active = active;
+    }
+  }
 }
