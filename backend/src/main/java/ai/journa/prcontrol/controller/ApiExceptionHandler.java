@@ -1,6 +1,7 @@
 package ai.journa.prcontrol.controller;
 
 import ai.journa.prcontrol.dto.ErrorResponse;
+import ai.journa.prcontrol.exception.EmailAlreadyRegisteredException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+  @ExceptionHandler(EmailAlreadyRegisteredException.class)
+  public ResponseEntity<ErrorResponse> handleEmailConflict(EmailAlreadyRegisteredException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(new ErrorResponse(ex.getMessage(), "EMAIL_ALREADY_REGISTERED"));
+  }
+
   @ExceptionHandler(IllegalStateException.class)
   public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
     return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage(), "BAD_REQUEST"));

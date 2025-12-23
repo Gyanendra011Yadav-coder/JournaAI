@@ -2,29 +2,27 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { API_BASE } from "../../lib/api";
+import { apiFetch } from "../../lib/api";
+import { ErrorBanner } from "../../components/ErrorBanner";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     setError(null);
-    const payload = { email, password };
-    const response = await fetch(`${API_BASE}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) {
-      setError("Authentication failed.");
-      return;
+    try {
+      const data = await apiFetch<{ token: string }>("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      localStorage.setItem("token", data.token);
+      router.push("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed.");
     }
-    const data = await response.json();
-    localStorage.setItem("token", data.token);
-    router.push("/dashboard");
   };
 
   return (
@@ -35,15 +33,15 @@ export default function LoginPage() {
           <div className="absolute bottom-0 left-10 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
           <div className="relative space-y-6">
             <div className="text-xs uppercase tracking-[0.3em] text-cyan-300/80">Journa AI</div>
-            <h1 className="text-3xl font-semibold">PR News & Outreach</h1>
+            <h1 className="text-3xl font-semibold">Create your workspace</h1>
             <p className="text-slate-300">
-              Cache-first newsroom intelligence and outreach workflows that keep your team aligned.
+              Set up your PR News & Outreach account to start tracking beats and outreach.
             </p>
             <div className="space-y-3 text-sm text-slate-300">
               {[
-                "Admin-configurable beats and query recipes.",
-                "Cache-first refresh with stale-mode protection.",
-                "Publish workflows with audit trails.",
+                "Seeded beats and templates ready on day one.",
+                "Cache-first workflow for faster research.",
+                "Audit trail baked into every action.",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-100">
@@ -57,17 +55,17 @@ export default function LoginPage() {
         </div>
         <div className="rounded-2xl border border-slate-800/80 bg-slate-950/80 p-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Welcome back</h2>
+            <h2 className="text-xl font-semibold">Sign up</h2>
             <button
               type="button"
-              onClick={() => router.push("/register")}
+              onClick={() => router.push("/login")}
               className="text-sm text-cyan-300 hover:underline"
             >
-              Create account
+              Already have an account?
             </button>
           </div>
           <p className="text-slate-400 mt-2">
-            Sign in to review your cached coverage.
+            Create your admin account to manage integrations and outreach.
           </p>
           <div className="mt-6 space-y-4">
             <div>
@@ -87,16 +85,16 @@ export default function LoginPage() {
                 onChange={(event) => setPassword(event.target.value)}
               />
             </div>
-            {error && <p className="text-red-400 text-sm">{error}</p>}
+            <ErrorBanner message={error} />
             <button
               onClick={handleSubmit}
               className="w-full rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 py-3 font-semibold text-slate-900 shadow-lg shadow-cyan-500/20 transition hover:translate-y-[-1px]"
             >
-              Continue
+              Create account
             </button>
           </div>
           <div className="mt-6 rounded-xl border border-slate-800/80 bg-slate-900/60 p-4 text-sm text-slate-300">
-            Primary workflow: search beats, refresh cache, publish coverage.
+            Already running locally? Use <span className="font-semibold">admin@example.com</span> / <span className="font-semibold">password</span>.
           </div>
         </div>
       </div>

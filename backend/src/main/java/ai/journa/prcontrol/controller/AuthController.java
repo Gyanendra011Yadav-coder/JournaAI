@@ -4,6 +4,7 @@ import ai.journa.prcontrol.domain.User;
 import ai.journa.prcontrol.dto.LoginRequest;
 import ai.journa.prcontrol.dto.LoginResponse;
 import ai.journa.prcontrol.dto.MeResponse;
+import ai.journa.prcontrol.dto.RegisterRequest;
 import ai.journa.prcontrol.service.AuthService;
 import ai.journa.prcontrol.service.CurrentUserService;
 import jakarta.validation.Valid;
@@ -24,6 +25,13 @@ public class AuthController {
   @PostMapping("/login")
   public LoginResponse login(@Valid @RequestBody LoginRequest request) {
     AuthService.LoginResult result = authService.login(request);
+    User user = result.user();
+    return new LoginResponse(result.token(), user.getRole().name(), user.getEmail());
+  }
+
+  @PostMapping("/register")
+  public LoginResponse register(@Valid @RequestBody RegisterRequest request) {
+    AuthService.LoginResult result = authService.register(request);
     User user = result.user();
     return new LoginResponse(result.token(), user.getRole().name(), user.getEmail());
   }

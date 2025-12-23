@@ -1,7 +1,10 @@
 package ai.journa.prcontrol.service;
 
+import ai.journa.prcontrol.domain.Role;
 import ai.journa.prcontrol.domain.User;
 import ai.journa.prcontrol.dto.LoginRequest;
+import ai.journa.prcontrol.dto.RegisterRequest;
+import ai.journa.prcontrol.exception.EmailAlreadyRegisteredException;
 import ai.journa.prcontrol.repository.UserRepository;
 import ai.journa.prcontrol.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +32,19 @@ public class AuthService {
       throw new org.springframework.web.server.ResponseStatusException(
           org.springframework.http.HttpStatus.UNAUTHORIZED, "Invalid credentials");
     }
+    String token = jwtService.generateToken(user.getEmail(), user.getRole());
+    return new LoginResult(token, user);
+  }
+
+  public LoginResult register(RegisterRequest request) {
+    if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+      throw new EmailAlreadyRegisteredException(request.getEmail());
+    }
+    User user = new User();
+    user.setEmail(request.getEmail());
+    user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+    user.setRole(Role.ADMIN);
+    userRepository.save(user);
     String token = jwtService.generateToken(user.getEmail(), user.getRole());
     return new LoginResult(token, user);
   }
