@@ -5,6 +5,7 @@ import { BeatSelector } from "../../components/BeatSelector";
 import { TimeframePicker } from "../../components/TimeframePicker";
 import { ArticlesTable } from "../../components/ArticlesTable";
 import { apiFetch } from "../../lib/api";
+import { ErrorBanner } from "../../components/ErrorBanner";
 
 interface Article {
   id: number;
@@ -46,14 +47,20 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [refreshStatus, setRefreshStatus] = useState<RefreshResponse | null>(null);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    apiFetch<Beat[]>("/api/beats").then((data) => {
-      setBeats(data);
-      if (data.length > 0) {
-        setBeatId(data[0].id);
-      }
-    });
+    apiFetch<Beat[]>("/api/beats")
+      .then((data) => {
+        setBeats(data);
+        if (data.length > 0) {
+          setBeatId(data[0].id);
+        }
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Unable to load beats.");
+      });
   }, []);
 
   const resolveFrom = () => {
@@ -73,6 +80,7 @@ export default function SearchPage() {
   const handleSearch = async () => {
     if (!beatId) return;
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams();
       params.set("beatId", String(beatId));
@@ -88,6 +96,8 @@ export default function SearchPage() {
       const result = await apiFetch<ArticleSearchResponse>(`/api/articles?${params.toString()}`);
       setArticles(result.items);
       setLastRefreshedAt(result.lastRefreshedAt ?? null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load articles.");
     } finally {
       setLoading(false);
     }
@@ -95,11 +105,16 @@ export default function SearchPage() {
 
   const handleRefresh = async () => {
     if (!beatId) return;
-    const response = await apiFetch<RefreshResponse>(`/api/ingest/refresh?beatId=${beatId}`, {
-      method: "POST",
-    });
-    setRefreshStatus(response);
-    await handleSearch();
+    setError(null);
+    try {
+      const response = await apiFetch<RefreshResponse>(`/api/ingest/refresh?beatId=${beatId}`, {
+        method: "POST",
+      });
+      setRefreshStatus(response);
+      await handleSearch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to refresh cache.");
+    }
   };
 
 
@@ -110,6 +125,7 @@ export default function SearchPage() {
         <h1 className="text-2xl font-semibold">News Search</h1>
         <p className="text-slate-400">Track cached news by beat and timeframe, then refresh on demand.</p>
       </header>
+      <ErrorBanner message={error} />
       {refreshStatus?.staleCache && (
         <div className="rounded-2xl border border-amber-400/60 bg-amber-500/10 p-4 text-amber-100">
           <p className="text-sm font-semibold">Stale-cache mode</p>
@@ -125,6 +141,12 @@ export default function SearchPage() {
         <div>
           <p className="text-sm text-slate-400 mb-2">Select beat</p>
           <BeatSelector value={beatId} beats={beats} onChange={setBeatId} />
+          {error && (
+            <p className="mt-2 text-xs text-amber-300">
+              Backend offline — start <span className="font-semibold">./gradlew bootRun</span> or set{" "}
+              <span className="font-semibold">NEXT_PUBLIC_API_BASE</span>.
+            </p>
+          )}
         </div>
         <div>
           <p className="text-sm text-slate-400 mb-2">Timeframe</p>

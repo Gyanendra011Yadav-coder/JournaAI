@@ -15,6 +15,45 @@ spring:
   jackson:
     time-zone: UTC
 app:
+  cors:
+    allowedOrigins:
+      - "http://localhost:*"
+      - "http://127.0.0.1:*"
+  beats:
+    - name: "Law"
+      slug: "law"
+    - name: "Taxation"
+      slug: "taxation"
+    - name: "Healthcare"
+      slug: "healthcare"
+    - name: "Education"
+      slug: "education"
+    - name: "Steel"
+      slug: "steel"
+    - name: "Finance/BFSI"
+      slug: "finance-bfsi"
+    - name: "Startups/VC"
+      slug: "startups-vc"
+    - name: "Technology/AI"
+      slug: "tech-ai"
+    - name: "Telecom"
+      slug: "telecom"
+    - name: "Energy & Renewables"
+      slug: "energy"
+    - name: "ESG/Sustainability"
+      slug: "esg"
+    - name: "Manufacturing/Industrial"
+      slug: "manufacturing"
+    - name: "Pharma/MedTech"
+      slug: "pharma-medtech"
+    - name: "Real Estate & Infra"
+      slug: "real-estate-infra"
+    - name: "Retail/Consumer"
+      slug: "consumer-retail"
+    - name: "Auto/EV"
+      slug: "auto-ev"
+    - name: "Public Policy/Regulatory"
+      slug: "public-policy-regulatory"
   jwt:
     secret: "change-me-change-me-change-me-change-me"
     expirationSeconds: 3600

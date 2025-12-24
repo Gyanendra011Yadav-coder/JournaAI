@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { API_BASE } from "../../lib/api";
+import { apiFetch } from "../../lib/api";
+import { ErrorBanner } from "../../components/ErrorBanner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,18 +14,16 @@ export default function LoginPage() {
   const handleSubmit = async () => {
     setError(null);
     const payload = { email, password };
-    const response = await fetch(`${API_BASE}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) {
-      setError("Authentication failed.");
-      return;
+    try {
+      const data = await apiFetch<{ token: string }>("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      localStorage.setItem("token", data.token);
+      router.push("/dashboard");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Authentication failed.");
     }
-    const data = await response.json();
-    localStorage.setItem("token", data.token);
-    router.push("/dashboard");
   };
 
   return (
@@ -87,7 +86,7 @@ export default function LoginPage() {
                 onChange={(event) => setPassword(event.target.value)}
               />
             </div>
-            {error && <p className="text-red-400 text-sm">{error}</p>}
+            <ErrorBanner message={error} />
             <button
               onClick={handleSubmit}
               className="w-full rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 py-3 font-semibold text-slate-900 shadow-lg shadow-cyan-500/20 transition hover:translate-y-[-1px]"
