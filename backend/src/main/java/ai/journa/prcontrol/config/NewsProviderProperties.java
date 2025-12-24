@@ -2,6 +2,9 @@ package ai.journa.prcontrol.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 @ConfigurationProperties(prefix = "app.news")
 public class NewsProviderProperties {
   private int ttlMinutes = 15;
@@ -60,9 +63,30 @@ public class NewsProviderProperties {
   }
 
   public static class Gnews {
+    private String apiKeyBase64;
     private String baseUrl = "https://gnews.io/api/v4";
     private int requestTimeoutSeconds = 10;
     private int maxBackoffSeconds = 30;
+
+    public String getApiKeyBase64() {
+      return apiKeyBase64;
+    }
+
+    public void setApiKeyBase64(String apiKeyBase64) {
+      this.apiKeyBase64 = apiKeyBase64;
+    }
+
+    public String getDecodedApiKey() {
+      if (apiKeyBase64 == null || apiKeyBase64.isBlank()) {
+        return null;
+      }
+      try {
+        byte[] decoded = Base64.getDecoder().decode(apiKeyBase64);
+        return new String(decoded, StandardCharsets.UTF_8).trim();
+      } catch (IllegalArgumentException ex) {
+        return null;
+      }
+    }
 
     public String getBaseUrl() {
       return baseUrl;

@@ -6,6 +6,7 @@ import ai.journa.prcontrol.domain.User;
 import ai.journa.prcontrol.dto.IntegrationKeyRequest;
 import ai.journa.prcontrol.dto.IntegrationSettingsUpdateRequest;
 import ai.journa.prcontrol.repository.IntegrationSettingsRepository;
+import ai.journa.prcontrol.config.NewsProviderProperties;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -14,11 +15,14 @@ import java.time.Instant;
 public class IntegrationSettingsService {
   private final IntegrationSettingsRepository integrationSettingsRepository;
   private final EncryptionService encryptionService;
+  private final NewsProviderProperties newsProviderProperties;
 
   public IntegrationSettingsService(IntegrationSettingsRepository integrationSettingsRepository,
-                                    EncryptionService encryptionService) {
+                                    EncryptionService encryptionService,
+                                    NewsProviderProperties newsProviderProperties) {
     this.integrationSettingsRepository = integrationSettingsRepository;
     this.encryptionService = encryptionService;
+    this.newsProviderProperties = newsProviderProperties;
   }
 
   public IntegrationSettings getSettings(ProviderType providerType) {
@@ -56,7 +60,25 @@ public class IntegrationSettingsService {
     return encryptionService.decrypt(settings.getApiKeyEncrypted());
   }
 
+  public String resolveApiKey(IntegrationSettings settings) {
+    String encrypted = settings.getApiKeyEncrypted();
+    if (encrypted != null && !encrypted.isBlank()) {
+      return encryptionService.decrypt(encrypted);
+    }
+    if (settings.getProviderType() == ProviderType.GNEWS) {
+      return newsProviderProperties.getGnews().getDecodedApiKey();
+    }
+    return null;
+  }
+
   public boolean isConfigured(IntegrationSettings settings) {
-    return settings.getApiKeyEncrypted() != null && !settings.getApiKeyEncrypted().isBlank();
+    if (settings.getApiKeyEncrypted() != null && !settings.getApiKeyEncrypted().isBlank()) {
+      return true;
+    }
+    if (settings.getProviderType() == ProviderType.GNEWS) {
+      String apiKey = newsProviderProperties.getGnews().getDecodedApiKey();
+      return apiKey != null && !apiKey.isBlank();
+    }
+    return false;
   }
 }

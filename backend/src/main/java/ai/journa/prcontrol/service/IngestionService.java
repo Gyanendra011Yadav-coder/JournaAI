@@ -79,7 +79,7 @@ public class IngestionService {
       return RefreshResult.failed("Integration disabled", state.getLastSuccessAt());
     }
 
-    String apiKey = integrationSettingsService.decryptApiKey(settings);
+    String apiKey = integrationSettingsService.resolveApiKey(settings);
     if (apiKey == null || apiKey.isBlank()) {
       updateFailure(state, now, "MISSING_KEY", "API key not configured");
       auditService.record(actor, "INGEST_FAILED", "beat", Map.of("reason", "missing_key"), beatId.toString());

@@ -65,10 +65,11 @@ app:
     refreshIntervalMinutes: 30
     gnews:
       baseUrl: "https://gnews.io/api/v4"
+      apiKeyBase64: "MDlmZjdmNjJlNDQyYmViZTc2YzYzNjc4OTB0Z2hqa3l1aW9naDY3ODkw"
       requestTimeoutSeconds: 10
       maxBackoffSeconds: 30
   security:
-    integrationMasterKey: ${INTEGRATION_MASTER_KEY:change-me-please}
+    integrationMasterKey: ${INTEGRATION_MASTER_KEY:2b5d3a9c1f7e4d8a6c0e9b1f5d7c3a2b8e6f4c1a9d7b5e3c2f8a1e6d4c0b9f2a}
 springdoc:
   api-docs:
     path: /api/docs
