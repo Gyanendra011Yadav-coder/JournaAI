@@ -9,12 +9,16 @@ import org.springframework.http.*;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GNewsProvider implements NewsProvider {
+  private static final Logger logger = LoggerFactory.getLogger(GNewsProvider.class);
+
   private final RestTemplate restTemplate;
   private final ObjectMapper objectMapper;
   private final NewsProviderProperties properties;
@@ -92,6 +96,9 @@ public class GNewsProvider implements NewsProvider {
       builder.queryParam("apikey", apiKey);
     }
 
+    String requestUrl = builder.toUriString();
+    logger.info("GNews request url={} headerAuth={}", sanitizeUrl(requestUrl), useHeader);
+
     HttpHeaders headers = new HttpHeaders();
     headers.setAccept(List.of(MediaType.APPLICATION_JSON));
     if (useHeader) {
@@ -160,5 +167,20 @@ public class GNewsProvider implements NewsProvider {
       return body != null ? body : "GNews error";
     }
     return body != null ? body : "GNews error";
+  }
+
+  private String sanitizeUrl(String url) {
+    if (url == null) {
+      return null;
+    }
+    int idx = url.indexOf("apikey=");
+    if (idx == -1) {
+      return url;
+    }
+    int end = url.indexOf('&', idx);
+    if (end == -1) {
+      end = url.length();
+    }
+    return url.substring(0, idx) + "apikey=***" + url.substring(end);
   }
 }

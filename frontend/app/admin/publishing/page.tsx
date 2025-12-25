@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../../lib/api";
+import { ErrorBanner } from "../../../components/ErrorBanner";
 
 interface Article {
   id: number;
@@ -12,9 +13,24 @@ interface Article {
   status: string;
 }
 
+interface Beat {
+  id: number;
+  name: string;
+}
+
 export default function AdminPublishingPage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [view, setView] = useState<"INGESTED" | "PUBLISHED">("INGESTED");
+  const [beats, setBeats] = useState<Beat[]>([]);
+  const [manualBeatId, setManualBeatId] = useState<number | null>(null);
+  const [manualTitle, setManualTitle] = useState("");
+  const [manualUrl, setManualUrl] = useState("");
+  const [manualSource, setManualSource] = useState("");
+  const [manualAuthor, setManualAuthor] = useState("");
+  const [manualSummary, setManualSummary] = useState("");
+  const [manualPublishedAt, setManualPublishedAt] = useState("");
+  const [manualStatus, setManualStatus] = useState<string | null>(null);
+  const [manualError, setManualError] = useState<string | null>(null);
 
   const load = async () => {
     const response = await apiFetch<{ items: Article[] }>(`/api/articles?status=${view}&page=0&size=50`);
@@ -25,10 +41,55 @@ export default function AdminPublishingPage() {
     load();
   }, [view]);
 
+  useEffect(() => {
+    apiFetch<Beat[]>("/api/beats").then((data) => {
+      setBeats(data);
+      if (data.length > 0) {
+        setManualBeatId(data[0].id);
+      }
+    });
+  }, []);
+
   const handlePublishToggle = async (article: Article) => {
     const endpoint = article.status === "PUBLISHED" ? "unpublish" : "publish";
     await apiFetch(`/api/admin/articles/${article.id}/${endpoint}`, { method: "POST" });
     await load();
+  };
+
+  const handleManualSubmit = async () => {
+    if (!manualBeatId) {
+      setManualError("Select a beat before adding an article.");
+      return;
+    }
+    if (!manualTitle.trim() || !manualUrl.trim()) {
+      setManualError("Headline and URL are required.");
+      return;
+    }
+    setManualError(null);
+    try {
+      await apiFetch("/api/admin/articles/manual", {
+        method: "POST",
+        body: JSON.stringify({
+          beatId: manualBeatId,
+          title: manualTitle,
+          url: manualUrl,
+          sourceName: manualSource || null,
+          author: manualAuthor || null,
+          summary: manualSummary || null,
+          publishedAtUtc: manualPublishedAt ? new Date(manualPublishedAt).toISOString() : null,
+        }),
+      });
+      setManualStatus("Manual article added.");
+      setManualTitle("");
+      setManualUrl("");
+      setManualSource("");
+      setManualAuthor("");
+      setManualSummary("");
+      setManualPublishedAt("");
+      await load();
+    } catch (err) {
+      setManualError(err instanceof Error ? err.message : "Unable to add article.");
+    }
   };
 
   return (
@@ -38,6 +99,91 @@ export default function AdminPublishingPage() {
         <h1 className="text-2xl font-semibold">Publishing</h1>
         <p className="text-slate-400">Review ingested articles and control what is published.</p>
       </header>
+
+      <section className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Manual feed</h2>
+          <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Admin only</span>
+        </div>
+        <ErrorBanner message={manualError} />
+        {manualStatus && (
+          <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+            {manualStatus}
+          </div>
+        )}
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Beat</label>
+            <select
+              value={manualBeatId ?? ""}
+              onChange={(event) => setManualBeatId(Number(event.target.value))}
+              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+            >
+              {beats.map((beat) => (
+                <option key={beat.id} value={beat.id}>
+                  {beat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Headline</label>
+            <input
+              value={manualTitle}
+              onChange={(event) => setManualTitle(event.target.value)}
+              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+            />
+          </div>
+          <div>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">URL</label>
+            <input
+              value={manualUrl}
+              onChange={(event) => setManualUrl(event.target.value)}
+              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+            />
+          </div>
+          <div>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Source</label>
+            <input
+              value={manualSource}
+              onChange={(event) => setManualSource(event.target.value)}
+              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+            />
+          </div>
+          <div>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Author</label>
+            <input
+              value={manualAuthor}
+              onChange={(event) => setManualAuthor(event.target.value)}
+              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+            />
+          </div>
+          <div>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Published at</label>
+            <input
+              type="datetime-local"
+              value={manualPublishedAt}
+              onChange={(event) => setManualPublishedAt(event.target.value)}
+              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Summary</label>
+            <textarea
+              value={manualSummary}
+              onChange={(event) => setManualSummary(event.target.value)}
+              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              rows={3}
+            />
+          </div>
+        </div>
+        <button
+          onClick={handleManualSubmit}
+          className="rounded-xl bg-cyan-500 text-slate-900 px-4 py-2 font-semibold"
+        >
+          Add manual article
+        </button>
+      </section>
 
       <div className="flex gap-3">
         {(["INGESTED", "PUBLISHED"] as const).map((item) => (

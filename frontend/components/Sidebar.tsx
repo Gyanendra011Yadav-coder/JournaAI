@@ -15,21 +15,27 @@ const adminItems = [
   { href: "/admin/integrations", label: "Admin Integrations" },
   { href: "/admin/beats", label: "Admin Beats" },
   { href: "/admin/publishing", label: "Publishing" },
+  { href: "/admin/audit", label: "Audit Log" },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const [role, setRole] = useState<string | null>(null);
-
-  if (pathname === "/login") {
-    return null;
-  }
+  const isAuthPage = pathname === "/login" || pathname === "/register";
 
   useEffect(() => {
+    if (isAuthPage) {
+      setRole(null);
+      return;
+    }
     apiFetch<{ role: string }>("/api/auth/me")
       .then((data) => setRole(data.role))
       .catch(() => setRole(null));
-  }, []);
+  }, [isAuthPage]);
+
+  if (isAuthPage) {
+    return null;
+  }
 
   return (
     <aside className="w-72 bg-slate-950/80 border-r border-slate-800/80 p-6 hidden md:flex md:flex-col gap-10 backdrop-blur">

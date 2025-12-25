@@ -11,6 +11,8 @@ import ai.journa.prcontrol.service.integration.FetchResult;
 import ai.journa.prcontrol.service.integration.NewsProvider;
 import ai.journa.prcontrol.service.integration.ProviderArticle;
 import ai.journa.prcontrol.service.integration.ProviderException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class IngestionService {
+  private static final Logger logger = LoggerFactory.getLogger(IngestionService.class);
+
   private final BeatRepository beatRepository;
   private final BeatQueryRecipeRepository recipeRepository;
   private final IntegrationSettingsService integrationSettingsService;
@@ -62,20 +66,32 @@ public class IngestionService {
         .orElseGet(() -> createState(beat));
 
     Instant now = Instant.now();
+    logger.info("Ingest start beatId={} beat={} actor={} respectTtl={}",
+        beatId,
+        beat.getName(),
+        actor != null ? actor.getEmail() : "anonymous",
+        respectTtl);
     if (respectTtl && state.getLastSuccessAt() != null) {
       int ttlMinutes = settings.getTtlMinutes() != null ? settings.getTtlMinutes() : properties.getTtlMinutes();
       if (state.getLastSuccessAt().isAfter(now.minus(Duration.ofMinutes(ttlMinutes)))) {
+        logger.info("Ingest skipped beatId={} reason=TTL_NOT_EXPIRED lastSuccessAt={}",
+            beatId,
+            state.getLastSuccessAt());
         return RefreshResult.skipped("TTL not expired", state.getLastSuccessAt());
       }
     }
 
     if (isCircuitOpen(state, now)) {
+      logger.warn("Ingest skipped beatId={} reason=CIRCUIT_OPEN lastSuccessAt={}",
+          beatId,
+          state.getLastSuccessAt());
       return RefreshResult.skipped("Circuit breaker open", state.getLastSuccessAt());
     }
 
     if (!settings.isEnabled()) {
       updateFailure(state, now, "DISABLED", "Integration disabled");
       auditService.record(actor, "INGEST_FAILED", "beat", Map.of("reason", "disabled"), beatId.toString());
+      logger.warn("Ingest failed beatId={} reason=INTEGRATION_DISABLED", beatId);
       return RefreshResult.failed("Integration disabled", state.getLastSuccessAt());
     }
 
@@ -83,6 +99,7 @@ public class IngestionService {
     if (apiKey == null || apiKey.isBlank()) {
       updateFailure(state, now, "MISSING_KEY", "API key not configured");
       auditService.record(actor, "INGEST_FAILED", "beat", Map.of("reason", "missing_key"), beatId.toString());
+      logger.warn("Ingest failed beatId={} reason=MISSING_API_KEY", beatId);
       return RefreshResult.failed("API key not configured", state.getLastSuccessAt());
     }
 
@@ -92,8 +109,19 @@ public class IngestionService {
     FetchRequest fetchRequest = buildFetchRequest(recipe, settings);
     FetchResult result;
     try {
+      logger.info("Ingest fetch beatId={} provider={} endpoint={} query={} category={}",
+          beatId,
+          settings.getProviderType(),
+          fetchRequest.getEndpointType(),
+          fetchRequest.getQuery(),
+          fetchRequest.getCategory());
       result = fetchWithRetry(fetchRequest, settings.getProviderType(), apiKey);
-      persistArticles(result.getArticles(), beat, settings.getProviderType());
+      int savedCount = persistArticles(result.getArticles(), beat, settings.getProviderType());
+      logger.info("Ingest success beatId={} provider={} fetched={} saved={}",
+          beatId,
+          settings.getProviderType(),
+          result.getArticles().size(),
+          savedCount);
       state.setLastSuccessAt(now);
       state.setLastAttemptAt(now);
       state.setLastErrorCode(null);
@@ -105,10 +133,15 @@ public class IngestionService {
     } catch (ProviderException ex) {
       updateFailure(state, now, String.valueOf(ex.getStatusCode()), ex.getMessage());
       auditService.record(actor, "INGEST_FAILED", "beat", Map.of("status", ex.getStatusCode()), beatId.toString());
+      logger.warn("Ingest failed beatId={} status={} message={}",
+          beatId,
+          ex.getStatusCode(),
+          ex.getMessage());
       return RefreshResult.failed(ex.getMessage(), state.getLastSuccessAt());
     } catch (Exception ex) {
       updateFailure(state, now, "UNKNOWN", "Unexpected ingestion error");
       auditService.record(actor, "INGEST_FAILED", "beat", Map.of("reason", "unexpected"), beatId.toString());
+      logger.error("Ingest failed beatId={} reason=UNEXPECTED", beatId, ex);
       return RefreshResult.failed("Unexpected ingestion error", state.getLastSuccessAt());
     }
   }
@@ -138,9 +171,18 @@ public class IngestionService {
     while (true) {
       attempts++;
       try {
+        logger.info("Ingest provider call provider={} attempt={} query={}",
+            providerType,
+            attempts,
+            request.getQuery());
         outboundRateLimiter.acquire();
         return provider.fetch(request, apiKey);
       } catch (ProviderException ex) {
+        logger.warn("Ingest provider error provider={} attempt={} status={} retryable={}",
+            providerType,
+            attempts,
+            ex.getStatusCode(),
+            ex.isRetryable());
         if (!ex.isRetryable() || attempts >= maxAttempts) {
           throw ex;
         }
@@ -150,7 +192,8 @@ public class IngestionService {
     }
   }
 
-  private void persistArticles(List<ProviderArticle> articles, Beat beat, ProviderType providerType) {
+  private int persistArticles(List<ProviderArticle> articles, Beat beat, ProviderType providerType) {
+    int saved = 0;
     for (ProviderArticle article : articles) {
       if (article.getUrl() == null || article.getUrl().isBlank()) {
         continue;
@@ -177,10 +220,12 @@ public class IngestionService {
       entity.setStatus(ArticleStatus.INGESTED);
       try {
         articleRepository.save(entity);
+        saved++;
       } catch (DataIntegrityViolationException ignored) {
         // dedupe conflicts
       }
     }
+    return saved;
   }
 
   private NewsFetchState createState(Beat beat) {

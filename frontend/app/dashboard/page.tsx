@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
+import { AuditTimeline } from "../../components/AuditTimeline";
+import { ErrorBanner } from "../../components/ErrorBanner";
 interface Beat {
   id: number;
   name: string;
@@ -13,14 +15,47 @@ interface BeatStatus {
   lastRefreshedAt: string | null;
 }
 
+interface ArticleSummary {
+  id: number;
+  title: string;
+  beatName: string;
+  publishedAtUtc: string | null;
+  status: string;
+}
+
+interface ArticleListResponse {
+  items: ArticleSummary[];
+}
+
+interface MeResponse {
+  email: string;
+  role: string;
+}
+
+interface AuditResponse {
+  id: number;
+  action: string;
+  entityType: string;
+  entityId?: string;
+  createdAt?: string;
+  actorEmail?: string;
+}
+
 export default function DashboardPage() {
   const [beats, setBeats] = useState<BeatStatus[]>([]);
+  const [savedArticles, setSavedArticles] = useState<ArticleSummary[]>([]);
+  const [auditEvents, setAuditEvents] = useState<AuditResponse[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      setError(null);
       try {
+        const me = await apiFetch<MeResponse>("/api/auth/me");
+        setRole(me.role);
         const beatList = await apiFetch<Beat[]>("/api/beats");
         const statusList = await Promise.all(
           beatList.map(async (beat) => {
@@ -35,6 +70,16 @@ export default function DashboardPage() {
           })
         );
         setBeats(statusList);
+        const published = await apiFetch<ArticleListResponse>("/api/articles?status=PUBLISHED&page=0&size=5");
+        setSavedArticles(published.items);
+        if (me.role === "ADMIN") {
+          const audit = await apiFetch<AuditResponse[]>("/api/admin/audit");
+          setAuditEvents(audit.slice(0, 8));
+        } else {
+          setAuditEvents([]);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unable to load dashboard data.");
       } finally {
         setLoading(false);
       }
@@ -56,6 +101,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </header>
+      <ErrorBanner message={error} />
       <section className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Beat refresh status</h2>
@@ -95,6 +141,56 @@ export default function DashboardPage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+      <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Saved articles</h2>
+            <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
+              {savedArticles.length} recent
+            </span>
+          </div>
+          <div className="mt-4 space-y-3">
+            {savedArticles.length === 0 && (
+              <p className="text-sm text-slate-400">No saved articles yet.</p>
+            )}
+            {savedArticles.map((article) => (
+              <div key={article.id} className="rounded-xl border border-slate-800/80 bg-slate-950/60 p-4">
+                <p className="text-sm font-semibold">{article.title}</p>
+                <p className="text-xs text-slate-400">{article.beatName}</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {article.publishedAtUtc ? new Date(article.publishedAtUtc).toLocaleString() : "Not published"}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Audit log</h2>
+            <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
+              {role === "ADMIN" ? "Admin view" : "Restricted"}
+            </span>
+          </div>
+          <div className="mt-4">
+            {role !== "ADMIN" && (
+              <p className="text-sm text-slate-400">Audit log is available to admins only.</p>
+            )}
+            {role === "ADMIN" && auditEvents.length === 0 && (
+              <p className="text-sm text-slate-400">No audit events yet.</p>
+            )}
+            {role === "ADMIN" && auditEvents.length > 0 && (
+              <AuditTimeline
+                events={auditEvents.map((event) => ({
+                  id: event.id,
+                  action: event.action,
+                  entity: event.entityId ? `${event.entityType}:${event.entityId}` : event.entityType,
+                  timestamp: event.createdAt ?? new Date().toISOString(),
+                }))}
+              />
+            )}
+          </div>
         </div>
       </section>
     </div>

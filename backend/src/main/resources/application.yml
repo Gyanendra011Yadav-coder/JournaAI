@@ -65,7 +65,7 @@ app:
     refreshIntervalMinutes: 30
     gnews:
       baseUrl: "https://gnews.io/api/v4"
-      apiKeyBase64: "MDlmZjdmNjJlNDQyYmViZTc2YzYzNjc4OTB0Z2hqa3l1aW9naDY3ODkw"
+      apiKeyBase64: "MDlmZjdmNjJlNDQyYmViZTc2YzYzMDJmYWUzZTc4ZmI="
       requestTimeoutSeconds: 10
       maxBackoffSeconds: 30
   security:
