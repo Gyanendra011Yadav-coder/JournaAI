@@ -5,11 +5,6 @@ import { apiFetch } from "../../lib/api";
 import { AuditTimeline } from "../../components/AuditTimeline";
 import { ErrorBanner } from "../../components/ErrorBanner";
 import Link from "next/link";
-interface Beat {
-  id: number;
-  name: string;
-}
-
 interface BeatStatus {
   id: number;
   name: string;
@@ -58,19 +53,7 @@ export default function DashboardPage() {
       try {
         const me = await apiFetch<MeResponse>("/api/auth/me");
         setRole(me.role);
-        const beatList = await apiFetch<Beat[]>("/api/beats");
-        const statusList = await Promise.all(
-          beatList.map(async (beat) => {
-            const result = await apiFetch<{ lastRefreshedAt?: string }>(
-              `/api/articles?mode=SEARCH&lens=BEAT&beatId=${beat.id}&page=0&size=1`
-            );
-            return {
-              id: beat.id,
-              name: beat.name,
-              lastRefreshedAt: result.lastRefreshedAt ?? null,
-            };
-          })
-        );
+        const statusList = await apiFetch<BeatStatus[]>("/api/beats/status");
         setBeats(statusList);
         const saved = await apiFetch<SavedArticle[]>("/api/saved-articles");
         setSavedArticles(saved.sort((a, b) => Number(b.pinned) - Number(a.pinned)));
@@ -125,12 +108,13 @@ export default function DashboardPage() {
                 <button
                   onClick={async () => {
                     setRefreshingBeat(beat.id);
+                    setError(null);
                     try {
-                      await apiFetch(`/api/ingest/refresh?mode=SEARCH&beatId=${beat.id}&lensOrTrack=BEAT`, {
-                        method: "POST",
-                      });
                       const response = await apiFetch<{ lastRefreshedAt?: string }>(
-                        `/api/articles?mode=SEARCH&lens=BEAT&beatId=${beat.id}&page=0&size=1`
+                        `/api/ingest/refresh?mode=SEARCH&beatId=${beat.id}&lensOrTrack=BEAT`,
+                        {
+                          method: "POST",
+                        }
                       );
                       setBeats((prev) =>
                         prev.map((item) =>

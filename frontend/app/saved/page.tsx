@@ -24,15 +24,18 @@ export default function SavedPage() {
   const [items, setItems] = useState<SavedArticle[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [showPinnedOnly, setShowPinnedOnly] = useState(false);
 
   useEffect(() => {
     apiFetch<SavedArticle[]>("/api/saved-articles")
       .then((data) => {
-        const sorted = data.filter((item) => item.pinned).sort((a, b) => Number(b.pinned) - Number(a.pinned));
+        const sorted = [...data].sort((a, b) => Number(b.pinned) - Number(a.pinned));
         setItems(sorted);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Unable to load saved articles."));
   }, []);
+
+  const visibleItems = showPinnedOnly ? items.filter((item) => item.pinned) : items;
 
   return (
     <div className="space-y-6">
@@ -42,10 +45,28 @@ export default function SavedPage() {
         <p className="text-slate-400">Review pinned highlights and saved clips.</p>
       </header>
       <ErrorBanner message={error} />
+      <div className="flex flex-wrap gap-2">
+        {[
+          { key: "all", label: "All saved" },
+          { key: "pinned", label: "Pinned only" },
+        ].map((option) => (
+          <button
+            key={option.key}
+            onClick={() => setShowPinnedOnly(option.key === "pinned")}
+            className={`rounded-full border px-3 py-1 text-xs ${
+              (option.key === "pinned") === showPinnedOnly
+                ? "border-cyan-500/60 bg-cyan-500/10 text-cyan-100"
+                : "border-slate-700 text-slate-300"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
       <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
-        {items.length === 0 && <p className="text-sm text-slate-400">No saved articles yet.</p>}
+        {visibleItems.length === 0 && <p className="text-sm text-slate-400">No saved articles yet.</p>}
         <div className="space-y-3">
-          {items.map((item) => (
+          {visibleItems.map((item) => (
             <div
               key={item.articleId}
               className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-800/80 bg-slate-950/60 p-4"
@@ -69,7 +90,7 @@ export default function SavedPage() {
                     setError(null);
                     try {
                       await apiFetch(`/api/articles/${item.articleId}/pin?pinned=${!item.pinned}`, { method: "POST" });
-                      if (item.pinned) {
+                      if (item.pinned && showPinnedOnly) {
                         setItems((prev) => prev.filter((entry) => entry.articleId !== item.articleId));
                       } else {
                         setItems((prev) => {
