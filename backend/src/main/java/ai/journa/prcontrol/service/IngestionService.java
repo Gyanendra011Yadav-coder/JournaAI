@@ -32,6 +32,7 @@ public class IngestionService {
   private final NewsFetchStateRepository newsFetchStateRepository;
   private final NewsCacheRepository newsCacheRepository;
   private final ArticleRepository articleRepository;
+  private final EnrichmentTaskRunner enrichmentTaskRunner;
   private final AuditService auditService;
   private final OutboundRateLimiter outboundRateLimiter;
   private final NewsProviderProperties properties;
@@ -44,6 +45,7 @@ public class IngestionService {
                           NewsFetchStateRepository newsFetchStateRepository,
                           NewsCacheRepository newsCacheRepository,
                           ArticleRepository articleRepository,
+                          EnrichmentTaskRunner enrichmentTaskRunner,
                           AuditService auditService,
                           OutboundRateLimiter outboundRateLimiter,
                           NewsProviderProperties properties,
@@ -55,6 +57,7 @@ public class IngestionService {
     this.newsFetchStateRepository = newsFetchStateRepository;
     this.newsCacheRepository = newsCacheRepository;
     this.articleRepository = articleRepository;
+    this.enrichmentTaskRunner = enrichmentTaskRunner;
     this.auditService = auditService;
     this.outboundRateLimiter = outboundRateLimiter;
     this.properties = properties;
@@ -219,8 +222,10 @@ public class IngestionService {
         continue;
       }
       Article entity = articleRepository.findByUrl(article.getUrl()).orElse(null);
+      boolean isNew = false;
       if (entity == null) {
         entity = new Article();
+        isNew = true;
         entity.setProviderType(providerType);
         entity.setProviderArticleId(article.getId());
         if (request.getBeatId() != null) {
@@ -249,6 +254,9 @@ public class IngestionService {
       }
       try {
         articleRepository.save(entity);
+        if (isNew) {
+          enrichmentTaskRunner.enqueueTask(EnrichmentTaskType.EXTRACT_AUTHOR, entity);
+        }
         saved++;
       } catch (DataIntegrityViolationException ignored) {
       }
