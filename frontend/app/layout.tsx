@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Sidebar } from "../components/Sidebar";
 import { TopBar } from "../components/TopBar";
+import { GlobalErrorBanner } from "../components/GlobalErrorBanner";
 
 export const metadata: Metadata = {
   title: "PR News & Outreach",
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="pointer-events-none absolute bottom-0 left-20 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl" />
             <div className="relative">
               <TopBar />
+              <GlobalErrorBanner />
               {children}
             </div>
           </main>

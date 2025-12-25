@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
+import { ErrorBanner } from "../../../components/ErrorBanner";
 interface Article {
   id: number;
   title: string;
@@ -25,17 +26,25 @@ interface Article {
 export default function ArticleDetailPage() {
   const params = useParams();
   const [article, setArticle] = useState<Article | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [pinning, setPinning] = useState(false);
 
   useEffect(() => {
     if (!params.id) return;
-    apiFetch<Article>(`/api/articles/${params.id}`).then((data) => {
-      setArticle(data);
-    });
+    apiFetch<Article>(`/api/articles/${params.id}`)
+      .then((data) => {
+        setArticle(data);
+        setError(null);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Unable to load article."));
   }, [params.id]);
 
   if (!article) {
     return <div>Loading...</div>;
   }
+
+  const externalUrl = article.url || article.sourceUrl;
 
   return (
     <div className="space-y-6">
@@ -47,6 +56,7 @@ export default function ArticleDetailPage() {
         </p>
         <p className="text-xs text-cyan-300">Provider: {article.providerType}</p>
       </header>
+      <ErrorBanner message={error} />
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
         {article.imageUrl && (
           <img src={article.imageUrl} alt={article.title} className="w-full rounded-xl border border-slate-800" />
@@ -82,21 +92,51 @@ export default function ArticleDetailPage() {
         </div>
         <div className="flex flex-wrap gap-3">
           <button
-            onClick={() => apiFetch(`/api/articles/${article.id}/save`, { method: "POST" })}
-            className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-cyan-500/60"
+            onClick={async () => {
+              setSaving(true);
+              setError(null);
+              try {
+                await apiFetch(`/api/articles/${article.id}/save`, { method: "POST" });
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Unable to save article.");
+              } finally {
+                setSaving(false);
+              }
+            }}
+            disabled={saving}
+            className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-cyan-500/60 disabled:opacity-60"
           >
-            Save
+            <span className="inline-flex items-center gap-2">
+              {saving && <span className="h-3 w-3 animate-spin rounded-full border border-slate-400 border-t-transparent" />}
+              Save
+            </span>
           </button>
           <button
-            onClick={() => apiFetch(`/api/articles/${article.id}/pin`, { method: "POST" })}
-            className="rounded-lg border border-emerald-500/60 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-100"
+            onClick={async () => {
+              setPinning(true);
+              setError(null);
+              try {
+                await apiFetch(`/api/articles/${article.id}/pin`, { method: "POST" });
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Unable to pin article.");
+              } finally {
+                setPinning(false);
+              }
+            }}
+            disabled={pinning}
+            className="rounded-lg border border-emerald-500/60 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-100 disabled:opacity-60"
           >
-            Pin
+            <span className="inline-flex items-center gap-2">
+              {pinning && <span className="h-3 w-3 animate-spin rounded-full border border-emerald-200 border-t-transparent" />}
+              Pin
+            </span>
           </button>
         </div>
-        <a href={article.sourceUrl ?? article.url} className="text-cyan-300 hover:underline" target="_blank">
-          View original article
-        </a>
+        {externalUrl && (
+          <a href={externalUrl} className="text-cyan-300 hover:underline" target="_blank" rel="noreferrer">
+            View original article
+          </a>
+        )}
       </div>
     </div>
   );

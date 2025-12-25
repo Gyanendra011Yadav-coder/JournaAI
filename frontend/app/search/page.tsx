@@ -50,6 +50,8 @@ export default function SearchPage() {
   const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
   const [staleCache, setStaleCache] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const showOfflineHint = error?.includes("Unable to reach API");
 
   useEffect(() => {
     apiFetch<Beat[]>("/api/beats")
@@ -111,6 +113,7 @@ export default function SearchPage() {
   const handleRefresh = async () => {
     if (!beatId) return;
     setError(null);
+    setRefreshing(true);
     try {
       if (lens === "ALL") {
         await apiFetch(`/api/ingest/refresh?mode=SEARCH&beatId=${beatId}&lensOrTrack=CLIENT`, { method: "POST" });
@@ -131,6 +134,8 @@ export default function SearchPage() {
       await handleSearch();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to refresh cache.");
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -160,7 +165,7 @@ export default function SearchPage() {
         <div>
           <p className="text-sm text-slate-400 mb-2">Select beat</p>
           <BeatSelector value={beatId} beats={beats} onChange={setBeatId} />
-          {error && (
+          {showOfflineHint && (
             <p className="mt-2 text-xs text-amber-300">
               Backend offline — start <span className="font-semibold">./gradlew bootRun</span> or set{" "}
               <span className="font-semibold">NEXT_PUBLIC_API_BASE</span>.
@@ -175,7 +180,8 @@ export default function SearchPage() {
               type="datetime-local"
               value={customFrom}
               onChange={(event) => setCustomFrom(event.target.value)}
-              className="mt-3 rounded-xl bg-slate-900/60 border border-slate-700/80 p-3 text-sm"
+              className="mt-3 rounded-xl bg-slate-900/60 border border-slate-700/80 p-3 text-sm text-slate-200"
+              style={{ colorScheme: "dark" }}
             />
           )}
         </div>
@@ -200,15 +206,20 @@ export default function SearchPage() {
         <div className="flex flex-wrap gap-3">
           <button
             onClick={handleSearch}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 text-slate-900 font-semibold shadow-lg shadow-cyan-500/20"
+            disabled={loading || refreshing}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 text-slate-900 font-semibold shadow-lg shadow-cyan-500/20 disabled:opacity-60"
           >
             {loading ? "Searching..." : "Search"}
           </button>
           <button
             onClick={handleRefresh}
-            className="px-4 py-2 rounded-xl border border-slate-700 text-slate-200"
+            disabled={refreshing || loading}
+            className="px-4 py-2 rounded-xl border border-slate-700 text-slate-200 disabled:opacity-60"
           >
-            Refresh cache
+            <span className="inline-flex items-center gap-2">
+              {refreshing && <span className="h-3 w-3 animate-spin rounded-full border border-slate-400 border-t-transparent" />}
+              {refreshing ? "Refreshing..." : "Refresh cache"}
+            </span>
           </button>
         </div>
       </div>

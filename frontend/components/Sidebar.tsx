@@ -7,11 +7,11 @@ import { apiFetch } from "../lib/api";
 import { LogoutButton } from "./LogoutButton";
 
 const navItems = [
-  { href: "/trending", label: "Trending" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/search", label: "Search" },
+  { href: "/trending", label: "Trending" },
   { href: "/saved", label: "Saved Articles" },
   { href: "/profile", label: "Profile" },
-  { href: "/dashboard", label: "Dashboard" },
 ];
 
 const adminItems = [

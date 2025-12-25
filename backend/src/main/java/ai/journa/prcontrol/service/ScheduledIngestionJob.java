@@ -4,12 +4,14 @@ import ai.journa.prcontrol.domain.Beat;
 import ai.journa.prcontrol.domain.IngestMode;
 import ai.journa.prcontrol.domain.IntegrationSettings;
 import ai.journa.prcontrol.repository.BeatRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@ConditionalOnProperty(prefix = "app.news.scheduled", name = "enabled", havingValue = "true")
 public class ScheduledIngestionJob {
   private final BeatRepository beatRepository;
   private final IntegrationSettingsService integrationSettingsService;
@@ -26,7 +28,7 @@ public class ScheduledIngestionJob {
     this.localeResolver = localeResolver;
   }
 
-  @Scheduled(fixedDelayString = "60000")
+  @Scheduled(fixedDelayString = "${app.news.scheduled.fixedDelayMs:600000}")
   public void refreshBeats() {
     IntegrationSettings settings = integrationSettingsService.getActiveSettings();
     if (!settings.isEnabled()) {

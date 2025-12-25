@@ -31,10 +31,18 @@ export default function AdminPublishingPage() {
   const [manualPublishedAt, setManualPublishedAt] = useState("");
   const [manualStatus, setManualStatus] = useState<string | null>(null);
   const [manualError, setManualError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [manualSubmitting, setManualSubmitting] = useState(false);
+  const [publishingId, setPublishingId] = useState<number | null>(null);
 
   const load = async () => {
-    const response = await apiFetch<{ items: Article[] }>(`/api/articles?status=${view}&page=0&size=50`);
-    setArticles(response.items);
+    try {
+      const response = await apiFetch<{ items: Article[] }>(`/api/articles?status=${view}&page=0&size=50`);
+      setArticles(response.items);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load articles.");
+    }
   };
 
   useEffect(() => {
@@ -42,18 +50,27 @@ export default function AdminPublishingPage() {
   }, [view]);
 
   useEffect(() => {
-    apiFetch<Beat[]>("/api/beats").then((data) => {
-      setBeats(data);
-      if (data.length > 0) {
-        setManualBeatId(data[0].id);
-      }
-    });
+    apiFetch<Beat[]>("/api/beats")
+      .then((data) => {
+        setBeats(data);
+        if (data.length > 0) {
+          setManualBeatId(data[0].id);
+        }
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Unable to load beats."));
   }, []);
 
   const handlePublishToggle = async (article: Article) => {
     const endpoint = article.status === "PUBLISHED" ? "unpublish" : "publish";
-    await apiFetch(`/api/admin/articles/${article.id}/${endpoint}`, { method: "POST" });
-    await load();
+    setPublishingId(article.id);
+    try {
+      await apiFetch(`/api/admin/articles/${article.id}/${endpoint}`, { method: "POST" });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update article.");
+    } finally {
+      setPublishingId(null);
+    }
   };
 
   const handleManualSubmit = async () => {
@@ -66,6 +83,7 @@ export default function AdminPublishingPage() {
       return;
     }
     setManualError(null);
+    setManualSubmitting(true);
     try {
       await apiFetch("/api/admin/articles/manual", {
         method: "POST",
@@ -89,6 +107,8 @@ export default function AdminPublishingPage() {
       await load();
     } catch (err) {
       setManualError(err instanceof Error ? err.message : "Unable to add article.");
+    } finally {
+      setManualSubmitting(false);
     }
   };
 
@@ -99,6 +119,7 @@ export default function AdminPublishingPage() {
         <h1 className="text-2xl font-semibold">Publishing</h1>
         <p className="text-slate-400">Review ingested articles and control what is published.</p>
       </header>
+      <ErrorBanner message={error} />
 
       <section className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
         <div className="flex items-center justify-between">
@@ -164,7 +185,8 @@ export default function AdminPublishingPage() {
               type="datetime-local"
               value={manualPublishedAt}
               onChange={(event) => setManualPublishedAt(event.target.value)}
-              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3 text-slate-200"
+              style={{ colorScheme: "dark" }}
             />
           </div>
           <div className="md:col-span-2">
@@ -179,9 +201,15 @@ export default function AdminPublishingPage() {
         </div>
         <button
           onClick={handleManualSubmit}
-          className="rounded-xl bg-cyan-500 text-slate-900 px-4 py-2 font-semibold"
+          disabled={manualSubmitting}
+          className="rounded-xl bg-cyan-500 text-slate-900 px-4 py-2 font-semibold disabled:opacity-60"
         >
-          Add manual article
+          <span className="inline-flex items-center gap-2">
+            {manualSubmitting && (
+              <span className="h-3 w-3 animate-spin rounded-full border border-slate-900 border-t-transparent" />
+            )}
+            Add manual article
+          </span>
         </button>
       </section>
 
@@ -222,13 +250,19 @@ export default function AdminPublishingPage() {
                 <td className="py-3">
                   <button
                     onClick={() => handlePublishToggle(article)}
-                    className={`rounded-lg px-3 py-1 text-xs ${
+                    disabled={publishingId === article.id}
+                    className={`rounded-lg px-3 py-1 text-xs disabled:opacity-60 ${
                       article.status === "PUBLISHED"
                         ? "border border-amber-400/60 text-amber-200"
                         : "bg-emerald-500 text-slate-900"
                     }`}
                   >
-                    {article.status === "PUBLISHED" ? "Unpublish" : "Publish"}
+                    <span className="inline-flex items-center gap-2">
+                      {publishingId === article.id && (
+                        <span className="h-3 w-3 animate-spin rounded-full border border-slate-200 border-t-transparent" />
+                      )}
+                      {article.status === "PUBLISHED" ? "Unpublish" : "Publish"}
+                    </span>
                   </button>
                 </td>
               </tr>

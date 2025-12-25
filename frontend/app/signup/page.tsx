@@ -1,25 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "../../lib/api";
 import { ErrorBanner } from "../../components/ErrorBanner";
+import { getCountryOptions, getLanguageOptions } from "../../lib/locale";
 
 interface Beat {
   id: number;
   name: string;
 }
-
-const countries = [
-  { code: "us", label: "United States" },
-  { code: "in", label: "India" },
-  { code: "gb", label: "United Kingdom" },
-];
-
-const languages = [
-  { code: "en", label: "English" },
-  { code: "hi", label: "Hindi" },
-];
 
 export default function SignupPage() {
   const router = useRouter();
@@ -34,6 +24,9 @@ export default function SignupPage() {
   const [excludeKeywords, setExcludeKeywords] = useState("");
   const [clients, setClients] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const countryOptions = useMemo(() => getCountryOptions(), []);
+  const languageOptions = useMemo(() => getLanguageOptions(), []);
 
   useEffect(() => {
     apiFetch<Beat[]>("/api/beats")
@@ -49,6 +42,7 @@ export default function SignupPage() {
 
   const handleSubmit = async () => {
     setError(null);
+    setSubmitting(true);
     try {
       const payload = {
         email,
@@ -78,6 +72,8 @@ export default function SignupPage() {
       router.push("/trending");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -158,7 +154,7 @@ export default function SignupPage() {
                     onChange={(event) => setCountry(event.target.value)}
                     className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
                   >
-                    {countries.map((option) => (
+                    {countryOptions.map((option) => (
                       <option key={option.code} value={option.code}>
                         {option.label}
                       </option>
@@ -172,7 +168,7 @@ export default function SignupPage() {
                     onChange={(event) => setLanguage(event.target.value)}
                     className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
                   >
-                    {languages.map((option) => (
+                    {languageOptions.map((option) => (
                       <option key={option.code} value={option.code}>
                         {option.label}
                       </option>
@@ -242,9 +238,15 @@ export default function SignupPage() {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="w-full rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 py-3 font-semibold text-slate-900 shadow-lg shadow-cyan-500/20 transition hover:translate-y-[-1px]"
+                  disabled={submitting}
+                  className="w-full rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 py-3 font-semibold text-slate-900 shadow-lg shadow-cyan-500/20 transition hover:translate-y-[-1px] disabled:opacity-60"
                 >
-                  Finish setup
+                  <span className="inline-flex items-center gap-2">
+                    {submitting && (
+                      <span className="h-3 w-3 animate-spin rounded-full border border-slate-700 border-t-transparent" />
+                    )}
+                    Finish setup
+                  </span>
                 </button>
               </div>
             </div>

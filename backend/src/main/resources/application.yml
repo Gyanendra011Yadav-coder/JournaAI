@@ -61,6 +61,9 @@ app:
     circuitMinutes: 30
     searchesPerMinute: 60
     refreshIntervalMinutes: 30
+    scheduled:
+      enabled: false
+      fixedDelayMs: 600000
     gnews:
       baseUrl: "https://gnews.io/api/v4"
       apiKeyBase64: "MDlmZjdmNjJlNDQyYmViZTc2YzYzMDJmYWUzZTc4ZmI="

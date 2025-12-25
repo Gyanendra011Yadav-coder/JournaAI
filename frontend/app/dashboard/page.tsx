@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { AuditTimeline } from "../../components/AuditTimeline";
 import { ErrorBanner } from "../../components/ErrorBanner";
+import Link from "next/link";
 interface Beat {
   id: number;
   name: string;
@@ -46,6 +47,7 @@ export default function DashboardPage() {
   const [savedArticles, setSavedArticles] = useState<SavedArticle[]>([]);
   const [auditEvents, setAuditEvents] = useState<AuditResponse[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshingBeat, setRefreshingBeat] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
 
@@ -122,23 +124,36 @@ export default function DashboardPage() {
                 </div>
                 <button
                   onClick={async () => {
-                    await apiFetch(`/api/ingest/refresh?mode=SEARCH&beatId=${beat.id}&lensOrTrack=BEAT`, {
-                      method: "POST",
-                    });
-                    const response = await apiFetch<{ lastRefreshedAt?: string }>(
-                      `/api/articles?mode=SEARCH&lens=BEAT&beatId=${beat.id}&page=0&size=1`
-                    );
-                    setBeats((prev) =>
-                      prev.map((item) =>
-                        item.id === beat.id
-                          ? { ...item, lastRefreshedAt: response.lastRefreshedAt ?? null }
-                          : item
-                      )
-                    );
+                    setRefreshingBeat(beat.id);
+                    try {
+                      await apiFetch(`/api/ingest/refresh?mode=SEARCH&beatId=${beat.id}&lensOrTrack=BEAT`, {
+                        method: "POST",
+                      });
+                      const response = await apiFetch<{ lastRefreshedAt?: string }>(
+                        `/api/articles?mode=SEARCH&lens=BEAT&beatId=${beat.id}&page=0&size=1`
+                      );
+                      setBeats((prev) =>
+                        prev.map((item) =>
+                          item.id === beat.id
+                            ? { ...item, lastRefreshedAt: response.lastRefreshedAt ?? null }
+                            : item
+                        )
+                      );
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : "Unable to refresh beat.");
+                    } finally {
+                      setRefreshingBeat(null);
+                    }
                   }}
-                  className="rounded-lg border border-cyan-500/60 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-100"
+                  disabled={refreshingBeat === beat.id}
+                  className="rounded-lg border border-cyan-500/60 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-100 disabled:opacity-60"
                 >
-                  Refresh
+                  <span className="inline-flex items-center gap-2">
+                    {refreshingBeat === beat.id && (
+                      <span className="h-3 w-3 animate-spin rounded-full border border-cyan-200 border-t-transparent" />
+                    )}
+                    {refreshingBeat === beat.id ? "Refreshing..." : "Refresh"}
+                  </span>
                 </button>
               </div>
             </div>
@@ -158,7 +173,11 @@ export default function DashboardPage() {
               <p className="text-sm text-slate-400">No saved articles yet.</p>
             )}
             {savedArticles.map((article) => (
-              <div key={article.articleId} className="rounded-xl border border-slate-800/80 bg-slate-950/60 p-4">
+              <Link
+                key={article.articleId}
+                href={`/articles/${article.articleId}`}
+                className="block rounded-xl border border-slate-800/80 bg-slate-950/60 p-4 transition hover:border-cyan-500/60"
+              >
                 <p className="text-sm font-semibold">{article.article.title}</p>
                 <p className="text-xs text-slate-400">{article.article.beatName ?? "Trending"}</p>
                 <p className="text-xs text-slate-500 mt-1">
@@ -166,7 +185,7 @@ export default function DashboardPage() {
                     ? new Date(article.article.publishedAtUtc).toLocaleString()
                     : "Not published"}
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

@@ -10,10 +10,12 @@ export default function LoginPage() {
   const [email, setEmail] = useState("admin@example.com");
   const [password, setPassword] = useState("password");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     setError(null);
     const payload = { email, password };
+    setSubmitting(true);
     try {
       const data = await apiFetch<{ token: string }>("/api/auth/login", {
         method: "POST",
@@ -25,6 +27,8 @@ export default function LoginPage() {
       router.push(defaultMode);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Authentication failed.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -91,9 +95,15 @@ export default function LoginPage() {
             <ErrorBanner message={error} />
             <button
               onClick={handleSubmit}
-              className="w-full rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 py-3 font-semibold text-slate-900 shadow-lg shadow-cyan-500/20 transition hover:translate-y-[-1px]"
+              disabled={submitting}
+              className="w-full rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 py-3 font-semibold text-slate-900 shadow-lg shadow-cyan-500/20 transition hover:translate-y-[-1px] disabled:opacity-60"
             >
-              Continue
+              <span className="inline-flex items-center gap-2">
+                {submitting && (
+                  <span className="h-3 w-3 animate-spin rounded-full border border-slate-700 border-t-transparent" />
+                )}
+                Continue
+              </span>
             </button>
           </div>
           <div className="mt-6 rounded-xl border border-slate-800/80 bg-slate-900/60 p-4 text-sm text-slate-300">

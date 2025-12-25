@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../../lib/api";
+import { ErrorBanner } from "../../../components/ErrorBanner";
+import { getCountryOptions, getLanguageOptions } from "../../../lib/locale";
 
 interface Beat {
   id: number;
@@ -39,14 +41,28 @@ export default function AdminBeatsPage() {
     maxDefault: 25,
     sortbyDefault: "publishedAt",
   });
+  const [error, setError] = useState<string | null>(null);
+  const [creatingBeat, setCreatingBeat] = useState(false);
+  const [updatingBeatId, setUpdatingBeatId] = useState<number | null>(null);
+  const [deletingBeatId, setDeletingBeatId] = useState<number | null>(null);
+  const [creatingTemplate, setCreatingTemplate] = useState(false);
+  const [updatingTemplateId, setUpdatingTemplateId] = useState<number | null>(null);
+  const [deletingTemplateId, setDeletingTemplateId] = useState<number | null>(null);
+  const countryOptions = useMemo(() => getCountryOptions(), []);
+  const languageOptions = useMemo(() => getLanguageOptions(), []);
 
   const loadData = async () => {
-    const beatsData = await apiFetch<Beat[]>("/api/admin/beats");
-    const templatesData = await apiFetch<Template[]>("/api/admin/beat-query-templates");
-    setBeats(beatsData);
-    setTemplates(templatesData);
-    if (beatsData.length && templateForm.beatId === 0) {
-      setTemplateForm((prev) => ({ ...prev, beatId: beatsData[0].id }));
+    try {
+      const beatsData = await apiFetch<Beat[]>("/api/admin/beats");
+      const templatesData = await apiFetch<Template[]>("/api/admin/beat-query-templates");
+      setBeats(beatsData);
+      setTemplates(templatesData);
+      if (beatsData.length && templateForm.beatId === 0) {
+        setTemplateForm((prev) => ({ ...prev, beatId: beatsData[0].id }));
+      }
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load admin beats.");
     }
   };
 
@@ -55,57 +71,105 @@ export default function AdminBeatsPage() {
   }, []);
 
   const handleCreateBeat = async () => {
-    await apiFetch("/api/admin/beats", {
-      method: "POST",
-      body: JSON.stringify(beatForm),
-    });
-    setBeatForm({ name: "", slug: "", active: true });
-    await loadData();
+    setCreatingBeat(true);
+    setError(null);
+    try {
+      await apiFetch("/api/admin/beats", {
+        method: "POST",
+        body: JSON.stringify(beatForm),
+      });
+      setBeatForm({ name: "", slug: "", active: true });
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to create beat.");
+    } finally {
+      setCreatingBeat(false);
+    }
   };
 
   const handleUpdateBeat = async (beat: Beat) => {
-    await apiFetch(`/api/admin/beats/${beat.id}`, {
-      method: "PUT",
-      body: JSON.stringify({ name: beat.name, slug: beat.slug, active: beat.active }),
-    });
-    await loadData();
+    setUpdatingBeatId(beat.id);
+    setError(null);
+    try {
+      await apiFetch(`/api/admin/beats/${beat.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ name: beat.name, slug: beat.slug, active: beat.active }),
+      });
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update beat.");
+    } finally {
+      setUpdatingBeatId(null);
+    }
   };
 
   const handleDeleteBeat = async (id: number) => {
-    await apiFetch(`/api/admin/beats/${id}`, { method: "DELETE" });
-    await loadData();
+    setDeletingBeatId(id);
+    setError(null);
+    try {
+      await apiFetch(`/api/admin/beats/${id}`, { method: "DELETE" });
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to delete beat.");
+    } finally {
+      setDeletingBeatId(null);
+    }
   };
 
   const handleCreateTemplate = async () => {
-    await apiFetch("/api/admin/beat-query-templates", {
-      method: "POST",
-      body: JSON.stringify({
-        beatId: templateForm.beatId,
-        endpointType: templateForm.endpointType,
-        category: templateForm.category,
-        beatTerms: templateForm.beatTerms,
-        langDefault: templateForm.langDefault,
-        countryDefault: templateForm.countryDefault,
-        inDefault: templateForm.inDefault,
-        nullableFields: templateForm.nullableFields,
-        maxDefault: templateForm.maxDefault,
-        sortbyDefault: templateForm.sortbyDefault,
-      }),
-    });
-    await loadData();
+    setCreatingTemplate(true);
+    setError(null);
+    try {
+      await apiFetch("/api/admin/beat-query-templates", {
+        method: "POST",
+        body: JSON.stringify({
+          beatId: templateForm.beatId,
+          endpointType: templateForm.endpointType,
+          category: templateForm.category,
+          beatTerms: templateForm.beatTerms,
+          langDefault: templateForm.langDefault,
+          countryDefault: templateForm.countryDefault,
+          inDefault: templateForm.inDefault,
+          nullableFields: templateForm.nullableFields,
+          maxDefault: templateForm.maxDefault,
+          sortbyDefault: templateForm.sortbyDefault,
+        }),
+      });
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to create template.");
+    } finally {
+      setCreatingTemplate(false);
+    }
   };
 
   const handleUpdateTemplate = async (template: Template) => {
-    await apiFetch(`/api/admin/beat-query-templates/${template.id}`, {
-      method: "PUT",
-      body: JSON.stringify(template),
-    });
-    await loadData();
+    setUpdatingTemplateId(template.id);
+    setError(null);
+    try {
+      await apiFetch(`/api/admin/beat-query-templates/${template.id}`, {
+        method: "PUT",
+        body: JSON.stringify(template),
+      });
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update template.");
+    } finally {
+      setUpdatingTemplateId(null);
+    }
   };
 
   const handleDeleteTemplate = async (id: number) => {
-    await apiFetch(`/api/admin/beat-query-templates/${id}`, { method: "DELETE" });
-    await loadData();
+    setDeletingTemplateId(id);
+    setError(null);
+    try {
+      await apiFetch(`/api/admin/beat-query-templates/${id}`, { method: "DELETE" });
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to delete template.");
+    } finally {
+      setDeletingTemplateId(null);
+    }
   };
 
   return (
@@ -115,6 +179,7 @@ export default function AdminBeatsPage() {
         <h1 className="text-2xl font-semibold">Beat Management</h1>
         <p className="text-slate-400">Define beats and their query templates for GNews ingestion.</p>
       </header>
+      <ErrorBanner message={error} />
 
       <section className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
@@ -139,8 +204,17 @@ export default function AdminBeatsPage() {
             />
             Active
           </label>
-          <button onClick={handleCreateBeat} className="rounded-xl bg-cyan-500 px-4 py-2 font-semibold text-slate-900">
-            Add beat
+          <button
+            onClick={handleCreateBeat}
+            disabled={creatingBeat}
+            className="rounded-xl bg-cyan-500 px-4 py-2 font-semibold text-slate-900 disabled:opacity-60"
+          >
+            <span className="inline-flex items-center gap-2">
+              {creatingBeat && (
+                <span className="h-3 w-3 animate-spin rounded-full border border-slate-900 border-t-transparent" />
+              )}
+              Add beat
+            </span>
           </button>
         </div>
         <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
@@ -186,12 +260,14 @@ export default function AdminBeatsPage() {
               value={templateForm.langDefault}
               onChange={(event) => setTemplateForm({ ...templateForm, langDefault: event.target.value })}
               className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              list="lang-options"
             />
             <input
               placeholder="Country"
               value={templateForm.countryDefault}
               onChange={(event) => setTemplateForm({ ...templateForm, countryDefault: event.target.value })}
               className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              list="country-options"
             />
             <input
               placeholder="Max"
@@ -201,8 +277,17 @@ export default function AdminBeatsPage() {
               className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
             />
           </div>
-          <button onClick={handleCreateTemplate} className="rounded-xl bg-emerald-500 px-4 py-2 font-semibold text-slate-900">
-            Add template
+          <button
+            onClick={handleCreateTemplate}
+            disabled={creatingTemplate}
+            className="rounded-xl bg-emerald-500 px-4 py-2 font-semibold text-slate-900 disabled:opacity-60"
+          >
+            <span className="inline-flex items-center gap-2">
+              {creatingTemplate && (
+                <span className="h-3 w-3 animate-spin rounded-full border border-slate-900 border-t-transparent" />
+              )}
+              Add template
+            </span>
           </button>
         </div>
       </section>
@@ -236,11 +321,29 @@ export default function AdminBeatsPage() {
                 />
                 Active
               </label>
-              <button onClick={() => handleUpdateBeat(beat)} className="rounded-lg bg-cyan-500 px-3 py-1 text-xs text-slate-900">
-                Update
+              <button
+                onClick={() => handleUpdateBeat(beat)}
+                disabled={updatingBeatId === beat.id}
+                className="rounded-lg bg-cyan-500 px-3 py-1 text-xs text-slate-900 disabled:opacity-60"
+              >
+                <span className="inline-flex items-center gap-2">
+                  {updatingBeatId === beat.id && (
+                    <span className="h-3 w-3 animate-spin rounded-full border border-slate-900 border-t-transparent" />
+                  )}
+                  Update
+                </span>
               </button>
-              <button onClick={() => handleDeleteBeat(beat.id)} className="rounded-lg border border-red-500/60 px-3 py-1 text-xs text-red-200">
-                Delete
+              <button
+                onClick={() => handleDeleteBeat(beat.id)}
+                disabled={deletingBeatId === beat.id}
+                className="rounded-lg border border-red-500/60 px-3 py-1 text-xs text-red-200 disabled:opacity-60"
+              >
+                <span className="inline-flex items-center gap-2">
+                  {deletingBeatId === beat.id && (
+                    <span className="h-3 w-3 animate-spin rounded-full border border-red-200 border-t-transparent" />
+                  )}
+                  Delete
+                </span>
               </button>
             </div>
           ))}
@@ -308,6 +411,7 @@ export default function AdminBeatsPage() {
                 }
                 placeholder="Lang"
                 className="rounded-lg bg-slate-900/60 border border-slate-700/80 p-2"
+                list="lang-options"
               />
               <input
                 value={template.countryDefault ?? ""}
@@ -320,19 +424,52 @@ export default function AdminBeatsPage() {
                 }
                 placeholder="Country"
                 className="rounded-lg bg-slate-900/60 border border-slate-700/80 p-2"
+                list="country-options"
               />
               <div className="flex items-center gap-2">
-                <button onClick={() => handleUpdateTemplate(template)} className="rounded-lg bg-emerald-500 px-3 py-1 text-xs text-slate-900">
-                  Update
+                <button
+                  onClick={() => handleUpdateTemplate(template)}
+                  disabled={updatingTemplateId === template.id}
+                  className="rounded-lg bg-emerald-500 px-3 py-1 text-xs text-slate-900 disabled:opacity-60"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    {updatingTemplateId === template.id && (
+                      <span className="h-3 w-3 animate-spin rounded-full border border-slate-900 border-t-transparent" />
+                    )}
+                    Update
+                  </span>
                 </button>
-                <button onClick={() => handleDeleteTemplate(template.id)} className="rounded-lg border border-red-500/60 px-3 py-1 text-xs text-red-200">
-                  Delete
+                <button
+                  onClick={() => handleDeleteTemplate(template.id)}
+                  disabled={deletingTemplateId === template.id}
+                  className="rounded-lg border border-red-500/60 px-3 py-1 text-xs text-red-200 disabled:opacity-60"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    {deletingTemplateId === template.id && (
+                      <span className="h-3 w-3 animate-spin rounded-full border border-red-200 border-t-transparent" />
+                    )}
+                    Delete
+                  </span>
                 </button>
               </div>
             </div>
           ))}
         </div>
       </section>
+      <datalist id="country-options">
+        {countryOptions.map((option) => (
+          <option key={option.code} value={option.code}>
+            {option.label}
+          </option>
+        ))}
+      </datalist>
+      <datalist id="lang-options">
+        {languageOptions.map((option) => (
+          <option key={option.code} value={option.code}>
+            {option.label}
+          </option>
+        ))}
+      </datalist>
     </div>
   );
 }

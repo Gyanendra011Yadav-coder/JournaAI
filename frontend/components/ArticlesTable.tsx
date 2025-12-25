@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { apiFetch } from "../lib/api";
 
 interface Article {
@@ -17,8 +18,17 @@ interface ArticlesTableProps {
 }
 
 export function ArticlesTable({ articles }: ArticlesTableProps) {
+  const [savingId, setSavingId] = useState<number | null>(null);
+
   const handleSave = async (id: number) => {
-    await apiFetch(`/api/articles/${id}/save`, { method: "POST" });
+    setSavingId(id);
+    try {
+      await apiFetch(`/api/articles/${id}/save`, { method: "POST" });
+    } catch {
+      // Errors are surfaced via the global API error banner.
+    } finally {
+      setSavingId(null);
+    }
   };
 
   return (
@@ -61,9 +71,15 @@ export function ArticlesTable({ articles }: ArticlesTableProps) {
               <td className="p-3">
                 <button
                   onClick={() => handleSave(article.id)}
-                  className="rounded-lg border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:border-cyan-500/60"
+                  disabled={savingId === article.id}
+                  className="rounded-lg border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:border-cyan-500/60 disabled:opacity-60"
                 >
-                  Save
+                  <span className="inline-flex items-center gap-2">
+                    {savingId === article.id && (
+                      <span className="h-3 w-3 animate-spin rounded-full border border-slate-400 border-t-transparent" />
+                    )}
+                    Save
+                  </span>
                 </button>
               </td>
             </tr>

@@ -23,11 +23,12 @@ interface SavedArticle {
 export default function SavedPage() {
   const [items, setItems] = useState<SavedArticle[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   useEffect(() => {
     apiFetch<SavedArticle[]>("/api/saved-articles")
       .then((data) => {
-        const sorted = [...data].sort((a, b) => Number(b.pinned) - Number(a.pinned));
+        const sorted = data.filter((item) => item.pinned).sort((a, b) => Number(b.pinned) - Number(a.pinned));
         setItems(sorted);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Unable to load saved articles."));
@@ -63,19 +64,36 @@ export default function SavedPage() {
               <div className="flex items-center gap-2 text-xs">
                 {item.pinned && <span className="rounded-full bg-emerald-500/20 px-2 py-1 text-emerald-200">Pinned</span>}
                 <button
-                  onClick={() =>
-                    apiFetch(`/api/articles/${item.articleId}/pin?pinned=${!item.pinned}`, { method: "POST" }).then(
-                      () =>
-                        setItems((prev) =>
-                          prev.map((entry) =>
+                  onClick={async () => {
+                    setUpdatingId(item.articleId);
+                    setError(null);
+                    try {
+                      await apiFetch(`/api/articles/${item.articleId}/pin?pinned=${!item.pinned}`, { method: "POST" });
+                      if (item.pinned) {
+                        setItems((prev) => prev.filter((entry) => entry.articleId !== item.articleId));
+                      } else {
+                        setItems((prev) => {
+                          const updated = prev.map((entry) =>
                             entry.articleId === item.articleId ? { ...entry, pinned: !item.pinned } : entry
-                          )
-                        )
-                    )
-                  }
-                  className="rounded-full border border-slate-700 px-2 py-1 text-slate-200"
+                          );
+                          return [...updated].sort((a, b) => Number(b.pinned) - Number(a.pinned));
+                        });
+                      }
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : "Unable to update pin.");
+                    } finally {
+                      setUpdatingId(null);
+                    }
+                  }}
+                  disabled={updatingId === item.articleId}
+                  className="rounded-full border border-slate-700 px-2 py-1 text-slate-200 disabled:opacity-60"
                 >
-                  {item.pinned ? "Unpin" : "Pin"}
+                  <span className="inline-flex items-center gap-2">
+                    {updatingId === item.articleId && (
+                      <span className="h-3 w-3 animate-spin rounded-full border border-slate-400 border-t-transparent" />
+                    )}
+                    {item.pinned ? "Unpin" : "Pin"}
+                  </span>
                 </button>
               </div>
             </div>

@@ -10,6 +10,17 @@ export class ApiError extends Error {
   }
 }
 
+function emitApiError(message: string, status: number) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.dispatchEvent(
+    new CustomEvent("api-error", {
+      detail: { message, status },
+    })
+  );
+}
+
 async function readErrorMessage(response: Response): Promise<string> {
   const contentType = response.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {
@@ -40,10 +51,13 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       headers,
     });
   } catch (error) {
-    throw new ApiError(`Unable to reach API at ${API_BASE}. Is the backend running?`, 0);
+    const message = `Unable to reach API at ${API_BASE}. Is the backend running?`;
+    emitApiError(message, 0);
+    throw new ApiError(message, 0);
   }
   if (!response.ok) {
     const message = await readErrorMessage(response);
+    emitApiError(message, response.status);
     throw new ApiError(message, response.status);
   }
   if (response.status === 204) {

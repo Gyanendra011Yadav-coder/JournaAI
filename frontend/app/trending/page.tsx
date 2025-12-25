@@ -50,6 +50,7 @@ export default function TrendingPage() {
   const [staleCache, setStaleCache] = useState(false);
   const [refreshStatus, setRefreshStatus] = useState<RefreshResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadTrending = async () => {
     setError(null);
@@ -75,6 +76,7 @@ export default function TrendingPage() {
 
   const handleRefresh = async () => {
     setError(null);
+    setRefreshing(true);
     try {
       if (view === "MIX") {
         await apiFetch(`/api/ingest/refresh?mode=TRENDING&lensOrTrack=LOCAL&category=${category}`, { method: "POST" });
@@ -93,6 +95,8 @@ export default function TrendingPage() {
       await loadTrending();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to refresh trending cache.");
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -149,9 +153,13 @@ export default function TrendingPage() {
           </select>
           <button
             onClick={handleRefresh}
-            className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-200"
+            disabled={refreshing}
+            className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-200 disabled:opacity-60"
           >
-            Refresh cache
+            <span className="inline-flex items-center gap-2">
+              {refreshing && <span className="h-3 w-3 animate-spin rounded-full border border-slate-400 border-t-transparent" />}
+              {refreshing ? "Refreshing..." : "Refresh cache"}
+            </span>
           </button>
         </div>
       </div>

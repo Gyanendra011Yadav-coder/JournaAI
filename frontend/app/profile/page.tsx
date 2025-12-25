@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { ErrorBanner } from "../../components/ErrorBanner";
+import { getCountryOptions, getLanguageOptions } from "../../lib/locale";
 
 interface Beat {
   id: number;
@@ -34,6 +35,11 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [clientName, setClientName] = useState("");
   const [clientAliases, setClientAliases] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [addingClient, setAddingClient] = useState(false);
+  const [clientBeatIds, setClientBeatIds] = useState<number[]>([]);
+  const countryOptions = useMemo(() => getCountryOptions(), []);
+  const languageOptions = useMemo(() => getLanguageOptions(), []);
 
   useEffect(() => {
     const load = async () => {
@@ -46,6 +52,7 @@ export default function ProfilePage() {
         setProfile(profileData);
         setBeats(beatsData);
         setClients(clientsData);
+        setClientBeatIds(profileData.beatIds ?? []);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unable to load profile.");
       }
@@ -59,11 +66,19 @@ export default function ProfilePage() {
       ? profile.beatIds.filter((id) => id !== beatId)
       : [...profile.beatIds, beatId];
     setProfile({ ...profile, beatIds: next });
+    setClientBeatIds(next);
+  };
+
+  const toggleClientBeat = (beatId: number) => {
+    setClientBeatIds((prev) =>
+      prev.includes(beatId) ? prev.filter((id) => id !== beatId) : [...prev, beatId]
+    );
   };
 
   const saveProfile = async () => {
     if (!profile) return;
     setError(null);
+    setSavingProfile(true);
     try {
       await apiFetch("/api/me/profile", {
         method: "PUT",
@@ -71,11 +86,14 @@ export default function ProfilePage() {
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save profile.");
+    } finally {
+      setSavingProfile(false);
     }
   };
 
   const addClient = async () => {
     setError(null);
+    setAddingClient(true);
     try {
       const response = await apiFetch<Client>("/api/me/clients", {
         method: "POST",
@@ -90,8 +108,19 @@ export default function ProfilePage() {
       setClients((prev) => [...prev, response]);
       setClientName("");
       setClientAliases("");
+      if (profile && clientBeatIds.length > 0) {
+        const nextBeatIds = Array.from(new Set([...profile.beatIds, ...clientBeatIds]));
+        const nextProfile = { ...profile, beatIds: nextBeatIds };
+        setProfile(nextProfile);
+        await apiFetch("/api/me/profile", {
+          method: "PUT",
+          body: JSON.stringify(nextProfile),
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to add client.");
+    } finally {
+      setAddingClient(false);
     }
   };
 
@@ -112,21 +141,33 @@ export default function ProfilePage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Country</label>
-              <input
+              <select
                 className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
                 value={profile.preferredCountries?.[0] ?? ""}
                 onChange={(event) =>
                   setProfile({ ...profile, preferredCountries: [event.target.value] })
                 }
-              />
+              >
+                {countryOptions.map((option) => (
+                  <option key={option.code} value={option.code}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Language</label>
-              <input
+              <select
                 className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
                 value={profile.preferredLangs?.[0] ?? ""}
                 onChange={(event) => setProfile({ ...profile, preferredLangs: [event.target.value] })}
-              />
+              >
+                {languageOptions.map((option) => (
+                  <option key={option.code} value={option.code}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div>
@@ -201,9 +242,15 @@ export default function ProfilePage() {
           </div>
           <button
             onClick={saveProfile}
-            className="rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-slate-900"
+            disabled={savingProfile}
+            className="rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-slate-900 disabled:opacity-60"
           >
-            Save preferences
+            <span className="inline-flex items-center gap-2">
+              {savingProfile && (
+                <span className="h-3 w-3 animate-spin rounded-full border border-slate-700 border-t-transparent" />
+              )}
+              Save preferences
+            </span>
           </button>
         </div>
         <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
@@ -233,11 +280,36 @@ export default function ProfilePage() {
               onChange={(event) => setClientAliases(event.target.value)}
               placeholder="Aliases (comma-separated)"
             />
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Client beats (optional)</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {beats.map((beat) => (
+                  <button
+                    key={beat.id}
+                    type="button"
+                    onClick={() => toggleClientBeat(beat.id)}
+                    className={`rounded-full border px-3 py-1 text-xs ${
+                      clientBeatIds.includes(beat.id)
+                        ? "border-cyan-500/60 bg-cyan-500/10 text-cyan-100"
+                        : "border-slate-700 text-slate-300"
+                    }`}
+                  >
+                    {beat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
             <button
               onClick={addClient}
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-200"
+              disabled={addingClient}
+              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-200 disabled:opacity-60"
             >
-              Add client
+              <span className="inline-flex items-center gap-2">
+                {addingClient && (
+                  <span className="h-3 w-3 animate-spin rounded-full border border-slate-400 border-t-transparent" />
+                )}
+                Add client
+              </span>
             </button>
           </div>
         </div>
