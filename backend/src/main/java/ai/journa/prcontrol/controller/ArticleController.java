@@ -13,7 +13,7 @@ import ai.journa.prcontrol.dto.ArticleResponse;
 import ai.journa.prcontrol.service.CacheKeyService;
 import ai.journa.prcontrol.service.ArticleService;
 import ai.journa.prcontrol.service.CurrentUserService;
-import ai.journa.prcontrol.service.LocaleResolver;
+import ai.journa.prcontrol.service.AppLocaleResolver;
 import ai.journa.prcontrol.service.QueryBuilderService;
 import ai.journa.prcontrol.repository.UserProfileRepository;
 import ai.journa.prcontrol.repository.BeatRepository;
@@ -33,7 +33,7 @@ public class ArticleController {
   private final ArticleService articleService;
   private final CurrentUserService currentUserService;
   private final NewsProviderProperties newsProviderProperties;
-  private final LocaleResolver localeResolver;
+  private final AppLocaleResolver localeResolver;
   private final CacheKeyService cacheKeyService;
   private final UserProfileRepository userProfileRepository;
   private final QueryBuilderService queryBuilderService;
@@ -42,7 +42,7 @@ public class ArticleController {
   public ArticleController(ArticleService articleService,
                            CurrentUserService currentUserService,
                            NewsProviderProperties newsProviderProperties,
-                           LocaleResolver localeResolver,
+                           AppLocaleResolver localeResolver,
                            CacheKeyService cacheKeyService,
                            UserProfileRepository userProfileRepository,
                            QueryBuilderService queryBuilderService,
@@ -71,7 +71,7 @@ public class ArticleController {
     User actor = currentUserService.requireCurrentUser();
     ArticleStatus effectiveStatus = actor.getRole() == Role.ADMIN ? status : ArticleStatus.PUBLISHED;
     LensSource lensSource = resolveLens(mode, lens);
-    LocaleResolver.Resolution locale = localeResolver.resolve(actor, servletRequest);
+    AppLocaleResolver.Resolution locale = localeResolver.resolve(actor, servletRequest);
 
     ArticleListResponse response = new ArticleListResponse();
     if (mode == IngestMode.TRENDING && (lens == null || lens.equalsIgnoreCase("MIX") || lens.equalsIgnoreCase("ALL"))) {

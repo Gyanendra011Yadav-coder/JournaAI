@@ -12,13 +12,13 @@ import java.util.Locale;
 import java.util.Optional;
 
 @Service
-public class LocaleResolver {
+public class AppLocaleResolver {
   private static final String[] COUNTRY_HEADERS = {"CF-IPCountry", "X-Country-Code"};
 
   private final IntegrationSettingsService integrationSettingsService;
   private final UserProfileRepository userProfileRepository;
 
-  public LocaleResolver(IntegrationSettingsService integrationSettingsService, UserProfileRepository userProfileRepository) {
+  public AppLocaleResolver(IntegrationSettingsService integrationSettingsService, UserProfileRepository userProfileRepository) {
     this.integrationSettingsService = integrationSettingsService;
     this.userProfileRepository = userProfileRepository;
   }

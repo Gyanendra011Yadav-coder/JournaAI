@@ -14,12 +14,12 @@ public class ScheduledIngestionJob {
   private final BeatRepository beatRepository;
   private final IntegrationSettingsService integrationSettingsService;
   private final IngestionService ingestionService;
-  private final LocaleResolver localeResolver;
+  private final AppLocaleResolver localeResolver;
 
   public ScheduledIngestionJob(BeatRepository beatRepository,
                                IntegrationSettingsService integrationSettingsService,
                                IngestionService ingestionService,
-                               LocaleResolver localeResolver) {
+                               AppLocaleResolver localeResolver) {
     this.beatRepository = beatRepository;
     this.integrationSettingsService = integrationSettingsService;
     this.ingestionService = ingestionService;
@@ -32,7 +32,7 @@ public class ScheduledIngestionJob {
     if (!settings.isEnabled()) {
       return;
     }
-    LocaleResolver.Resolution locale = localeResolver.resolveDefaults();
+    AppLocaleResolver.Resolution locale = localeResolver.resolveDefaults();
     List<Beat> beats = beatRepository.findAll().stream().filter(Beat::isActive).toList();
     for (Beat beat : beats) {
       IngestionService.IngestRequest request = new IngestionService.IngestRequest(

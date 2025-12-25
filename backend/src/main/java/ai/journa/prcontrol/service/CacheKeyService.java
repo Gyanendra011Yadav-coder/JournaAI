@@ -10,7 +10,7 @@ public class CacheKeyService {
                       Long beatId,
                       String category,
                       String query,
-                      LocaleResolver.Resolution locale) {
+                      AppLocaleResolver.Resolution locale) {
     return String.join(":",
         mode.name(),
         lensOrTrack != null ? lensOrTrack : "ALL",

@@ -64,7 +64,7 @@ public class IngestionService {
   }
 
   @Transactional
-  public RefreshResult refresh(IngestRequest request, LocaleResolver.Resolution locale, User actor, boolean respectTtl) {
+  public RefreshResult refresh(IngestRequest request, AppLocaleResolver.Resolution locale, User actor, boolean respectTtl) {
     IntegrationSettings settings = integrationSettingsService.getActiveSettings();
     Instant now = Instant.now();
     FetchRequest fetchRequest = buildFetchRequest(request, locale, settings);
@@ -87,16 +87,23 @@ public class IngestionService {
 
     NewsCache cached = newsCacheRepository.findByCacheKey(cacheKey).orElse(null);
     if (respectTtl && cached != null && cached.getExpiresAtUtc() != null && cached.getExpiresAtUtc().isAfter(now)) {
+      logger.info("Ingest skipped cacheKey={} reason=TTL_NOT_EXPIRED expiresAtUtc={}",
+          cacheKey,
+          cached.getExpiresAtUtc());
       return RefreshResult.skipped("TTL not expired", cached.getLastSuccessAtUtc());
     }
 
     if (isCircuitOpen(state, now)) {
+      logger.warn("Ingest skipped cacheKey={} reason=CIRCUIT_OPEN lastSuccessAt={}",
+          cacheKey,
+          state.getLastSuccessAt());
       return RefreshResult.skipped("Circuit breaker open", state.getLastSuccessAt());
     }
 
     if (!settings.isEnabled()) {
       updateFailure(state, now, "DISABLED", "Integration disabled");
       auditService.record(actor, "INGEST_FAILED", "news", Map.of("reason", "disabled"), cacheKey);
+      logger.warn("Ingest failed cacheKey={} reason=INTEGRATION_DISABLED", cacheKey);
       return RefreshResult.failed("Integration disabled", state.getLastSuccessAt());
     }
 
@@ -104,11 +111,21 @@ public class IngestionService {
     if (apiKey == null || apiKey.isBlank()) {
       updateFailure(state, now, "MISSING_KEY", "API key not configured");
       auditService.record(actor, "INGEST_FAILED", "news", Map.of("reason", "missing_key"), cacheKey);
+      logger.warn("Ingest failed cacheKey={} reason=MISSING_API_KEY", cacheKey);
       return RefreshResult.failed("API key not configured", state.getLastSuccessAt());
     }
 
     FetchResult result;
     try {
+      logger.info("Ingest fetch cacheKey={} provider={} endpoint={} query={} category={} lang={} country={} lens={}",
+          cacheKey,
+          settings.getProviderType(),
+          fetchRequest.getEndpointType(),
+          fetchRequest.getQuery(),
+          fetchRequest.getCategory(),
+          fetchRequest.getLang(),
+          fetchRequest.getCountry(),
+          request.getLensOrTrack());
       result = fetchWithRetry(fetchRequest, settings.getProviderType(), apiKey);
       int savedCount = persistArticles(result.getArticles(), request, fetchRequest, settings.getProviderType());
       state.setLastSuccessAt(now);
@@ -136,7 +153,7 @@ public class IngestionService {
     }
   }
 
-  private FetchRequest buildFetchRequest(IngestRequest request, LocaleResolver.Resolution locale, IntegrationSettings settings) {
+  private FetchRequest buildFetchRequest(IngestRequest request, AppLocaleResolver.Resolution locale, IntegrationSettings settings) {
     FetchRequest fetchRequest = new FetchRequest();
     if (request.getMode() == IngestMode.SEARCH) {
       Beat beat = beatRepository.findById(request.getBeatId())

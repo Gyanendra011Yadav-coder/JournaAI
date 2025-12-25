@@ -4,7 +4,7 @@ import ai.journa.prcontrol.domain.IngestMode;
 import ai.journa.prcontrol.dto.RefreshResponse;
 import ai.journa.prcontrol.service.CurrentUserService;
 import ai.journa.prcontrol.service.IngestionService;
-import ai.journa.prcontrol.service.LocaleResolver;
+import ai.journa.prcontrol.service.AppLocaleResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class IngestController {
   private final IngestionService ingestionService;
   private final CurrentUserService currentUserService;
-  private final LocaleResolver localeResolver;
+  private final AppLocaleResolver localeResolver;
 
-  public IngestController(IngestionService ingestionService, CurrentUserService currentUserService, LocaleResolver localeResolver) {
+  public IngestController(IngestionService ingestionService, CurrentUserService currentUserService, AppLocaleResolver localeResolver) {
     this.ingestionService = ingestionService;
     this.currentUserService = currentUserService;
     this.localeResolver = localeResolver;
