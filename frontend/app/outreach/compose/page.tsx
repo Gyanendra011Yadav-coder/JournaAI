@@ -22,8 +22,8 @@ interface Article {
 
 interface Journalist {
   id: number;
-  name: string;
-  outlet: string;
+  fullName: string;
+  publicationName?: string;
 }
 
 function OutreachComposeInner() {
@@ -70,8 +70,8 @@ function OutreachComposeInner() {
 
   const context = useMemo(() => {
     return {
-      journalist_name: journalist?.name ?? "",
-      outlet: journalist?.outlet ?? "",
+      journalist_name: journalist?.fullName ?? "",
+      outlet: journalist?.publicationName ?? "",
       beat: article?.beats?.[0] ?? "",
       article_link: article?.canonicalUrl ?? "",
       headline: article?.headline ?? "",

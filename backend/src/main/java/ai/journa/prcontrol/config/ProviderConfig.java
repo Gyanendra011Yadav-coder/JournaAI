@@ -25,6 +25,15 @@ public class ProviderConfig {
   }
 
   @Bean
+  public RestTemplate htmlRestTemplate(EnrichmentProperties properties) {
+    SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+    int timeoutMs = properties.getRequestTimeoutSeconds() * 1000;
+    factory.setConnectTimeout(timeoutMs);
+    factory.setReadTimeout(timeoutMs);
+    return new RestTemplate(factory);
+  }
+
+  @Bean
   public NewsProvider gNewsProvider(RestTemplate restTemplate,
                                     ObjectMapper objectMapper,
                                     NewsProviderProperties properties) {

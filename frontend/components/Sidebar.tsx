@@ -16,6 +16,9 @@ const adminItems = [
   { href: "/admin/integrations", label: "Admin Integrations" },
   { href: "/admin/beats", label: "Admin Beats" },
   { href: "/admin/publishing", label: "Publishing" },
+  { href: "/admin/enrichment", label: "Enrichment Queue" },
+  { href: "/admin/journalists", label: "Journalists" },
+  { href: "/admin/journalists/import", label: "CSV Import" },
   { href: "/admin/audit", label: "Audit Log" },
 ];
 
