@@ -20,7 +20,9 @@ export default function LoginPage() {
         body: JSON.stringify(payload),
       });
       localStorage.setItem("token", data.token);
-      router.push("/dashboard");
+      const profile = await apiFetch<{ defaultSidebarMode?: string }>("/api/me/profile");
+      const defaultMode = profile.defaultSidebarMode === "SEARCH" ? "/search" : "/trending";
+      router.push(defaultMode);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Authentication failed.");
     }
@@ -59,7 +61,7 @@ export default function LoginPage() {
             <h2 className="text-xl font-semibold">Welcome back</h2>
             <button
               type="button"
-              onClick={() => router.push("/register")}
+              onClick={() => router.push("/signup")}
               className="text-sm text-cyan-300 hover:underline"
             >
               Create account

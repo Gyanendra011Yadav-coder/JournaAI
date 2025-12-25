@@ -13,9 +13,11 @@ public class FetchRequest {
   private String inFields;
   private String nullableFields;
   private Integer max;
+  private Integer page;
   private String sort;
   private Instant from;
   private Instant to;
+  private Boolean truncate;
 
   public EndpointType getEndpointType() {
     return endpointType;
@@ -81,6 +83,14 @@ public class FetchRequest {
     this.max = max;
   }
 
+  public Integer getPage() {
+    return page;
+  }
+
+  public void setPage(Integer page) {
+    this.page = page;
+  }
+
   public String getSort() {
     return sort;
   }
@@ -103,5 +113,13 @@ public class FetchRequest {
 
   public void setTo(Instant to) {
     this.to = to;
+  }
+
+  public Boolean getTruncate() {
+    return truncate;
+  }
+
+  public void setTruncate(Boolean truncate) {
+    this.truncate = truncate;
   }
 }

@@ -2,12 +2,10 @@ package ai.journa.prcontrol.seed;
 
 import ai.journa.prcontrol.config.BeatProperties;
 import ai.journa.prcontrol.domain.Beat;
-import ai.journa.prcontrol.domain.BeatQueryRecipe;
+import ai.journa.prcontrol.domain.BeatQueryTemplate;
 import ai.journa.prcontrol.domain.EndpointType;
-import ai.journa.prcontrol.domain.NewsFetchState;
-import ai.journa.prcontrol.repository.BeatQueryRecipeRepository;
+import ai.journa.prcontrol.repository.BeatQueryTemplateRepository;
 import ai.journa.prcontrol.repository.BeatRepository;
-import ai.journa.prcontrol.repository.NewsFetchStateRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -28,17 +26,14 @@ public class BeatSeeder implements ApplicationRunner {
   private static final Logger logger = LoggerFactory.getLogger(BeatSeeder.class);
 
   private final BeatRepository beatRepository;
-  private final BeatQueryRecipeRepository beatQueryRecipeRepository;
-  private final NewsFetchStateRepository newsFetchStateRepository;
+  private final BeatQueryTemplateRepository beatQueryTemplateRepository;
   private final BeatProperties beatProperties;
 
   public BeatSeeder(BeatRepository beatRepository,
-                    BeatQueryRecipeRepository beatQueryRecipeRepository,
-                    NewsFetchStateRepository newsFetchStateRepository,
+                    BeatQueryTemplateRepository beatQueryTemplateRepository,
                     BeatProperties beatProperties) {
     this.beatRepository = beatRepository;
-    this.beatQueryRecipeRepository = beatQueryRecipeRepository;
-    this.newsFetchStateRepository = newsFetchStateRepository;
+    this.beatQueryTemplateRepository = beatQueryTemplateRepository;
     this.beatProperties = beatProperties;
   }
 
@@ -62,7 +57,6 @@ public class BeatSeeder implements ApplicationRunner {
     int created = 0;
     int updated = 0;
     int recipesCreated = 0;
-    int statesCreated = 0;
     Set<String> seen = new HashSet<>();
 
     for (BeatProperties.BeatDefinition definition : definitions) {
@@ -101,27 +95,19 @@ public class BeatSeeder implements ApplicationRunner {
         updated++;
       }
 
-      if (beatQueryRecipeRepository.findByBeatId(beat.getId()).isEmpty()) {
-        BeatQueryRecipe recipe = new BeatQueryRecipe();
-        recipe.setBeat(beat);
-        recipe.setEndpointType(EndpointType.SEARCH);
-        recipe.setQuery(beat.getName());
-        recipe.setSort("publishedAt");
-        beatQueryRecipeRepository.save(recipe);
+      if (beatQueryTemplateRepository.findByBeatId(beat.getId()).isEmpty()) {
+        BeatQueryTemplate template = new BeatQueryTemplate();
+        template.setBeat(beat);
+        template.setEndpointType(EndpointType.SEARCH);
+        template.setBeatTerms(List.of(beat.getName()));
+        template.setSortbyDefault("publishedAt");
+        beatQueryTemplateRepository.save(template);
         recipesCreated++;
-      }
-
-      if (newsFetchStateRepository.findByBeatId(beat.getId()).isEmpty()) {
-        NewsFetchState state = new NewsFetchState();
-        state.setBeat(beat);
-        state.setConsecutiveFailures(0);
-        newsFetchStateRepository.save(state);
-        statesCreated++;
       }
     }
 
-    logger.info("Beat seeding complete. Created: {}, Updated: {}, Recipes: {}, States: {}.",
-        created, updated, recipesCreated, statesCreated);
+    logger.info("Beat seeding complete. Created: {}, Updated: {}, Templates: {}.",
+        created, updated, recipesCreated);
   }
 
   private String normalize(String value) {

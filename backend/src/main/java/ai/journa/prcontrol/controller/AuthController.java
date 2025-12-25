@@ -36,6 +36,11 @@ public class AuthController {
     return new LoginResponse(result.token(), user.getRole().name(), user.getEmail());
   }
 
+  @PostMapping("/signup")
+  public LoginResponse signup(@Valid @RequestBody RegisterRequest request) {
+    return register(request);
+  }
+
   @PostMapping("/logout")
   public ResponseEntity<Void> logout() {
     return ResponseEntity.noContent().build();

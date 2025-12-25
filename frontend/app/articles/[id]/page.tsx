@@ -13,7 +13,10 @@ interface Article {
   publishedAtUtc: string | null;
   sourceName: string | null;
   sourceUrl: string | null;
-  beatName: string;
+  beatName: string | null;
+  category?: string | null;
+  lensSource?: string;
+  clientMatch?: boolean;
   providerType: string;
   status: string;
   internalPublishedAtUtc?: string | null;
@@ -52,6 +55,11 @@ export default function ArticleDetailPage() {
           <p className="text-sm text-slate-400">Beat</p>
           <p className="text-slate-200 mt-2">{article.beatName}</p>
         </div>
+        <div className="flex flex-wrap gap-2 text-xs">
+          {article.category && <span className="rounded-full bg-slate-800 px-2 py-1">Category: {article.category}</span>}
+          {article.lensSource && <span className="rounded-full bg-slate-800 px-2 py-1">Lens: {article.lensSource}</span>}
+          {article.clientMatch && <span className="rounded-full bg-cyan-500/20 px-2 py-1 text-cyan-200">Client match</span>}
+        </div>
         {article.description && (
           <div>
             <p className="text-sm text-slate-400">Description</p>
@@ -71,6 +79,20 @@ export default function ArticleDetailPage() {
               Published {new Date(article.internalPublishedAtUtc).toLocaleString()}
             </span>
           )}
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => apiFetch(`/api/articles/${article.id}/save`, { method: "POST" })}
+            className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-cyan-500/60"
+          >
+            Save
+          </button>
+          <button
+            onClick={() => apiFetch(`/api/articles/${article.id}/pin`, { method: "POST" })}
+            className="rounded-lg border border-emerald-500/60 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-100"
+          >
+            Pin
+          </button>
         </div>
         <a href={article.sourceUrl ?? article.url} className="text-cyan-300 hover:underline" target="_blank">
           View original article

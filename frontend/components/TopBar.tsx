@@ -6,7 +6,7 @@ import { LogoutButton } from "./LogoutButton";
 export function TopBar() {
   const pathname = usePathname();
 
-  if (pathname === "/login") {
+  if (pathname === "/login" || pathname === "/signup" || pathname === "/register") {
     return null;
   }
 

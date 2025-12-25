@@ -15,16 +15,16 @@ interface BeatStatus {
   lastRefreshedAt: string | null;
 }
 
-interface ArticleSummary {
-  id: number;
-  title: string;
-  beatName: string;
-  publishedAtUtc: string | null;
-  status: string;
-}
-
-interface ArticleListResponse {
-  items: ArticleSummary[];
+interface SavedArticle {
+  articleId: number;
+  pinned: boolean;
+  article: {
+    id: number;
+    title: string;
+    beatName: string | null;
+    publishedAtUtc: string | null;
+    status: string;
+  };
 }
 
 interface MeResponse {
@@ -43,7 +43,7 @@ interface AuditResponse {
 
 export default function DashboardPage() {
   const [beats, setBeats] = useState<BeatStatus[]>([]);
-  const [savedArticles, setSavedArticles] = useState<ArticleSummary[]>([]);
+  const [savedArticles, setSavedArticles] = useState<SavedArticle[]>([]);
   const [auditEvents, setAuditEvents] = useState<AuditResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +60,7 @@ export default function DashboardPage() {
         const statusList = await Promise.all(
           beatList.map(async (beat) => {
             const result = await apiFetch<{ lastRefreshedAt?: string }>(
-              `/api/articles?beatId=${beat.id}&page=0&size=1`
+              `/api/articles?mode=SEARCH&lens=BEAT&beatId=${beat.id}&page=0&size=1`
             );
             return {
               id: beat.id,
@@ -70,8 +70,8 @@ export default function DashboardPage() {
           })
         );
         setBeats(statusList);
-        const published = await apiFetch<ArticleListResponse>("/api/articles?status=PUBLISHED&page=0&size=5");
-        setSavedArticles(published.items);
+        const saved = await apiFetch<SavedArticle[]>("/api/saved-articles");
+        setSavedArticles(saved.sort((a, b) => Number(b.pinned) - Number(a.pinned)));
         if (me.role === "ADMIN") {
           const audit = await apiFetch<AuditResponse[]>("/api/admin/audit");
           setAuditEvents(audit.slice(0, 8));
@@ -122,9 +122,11 @@ export default function DashboardPage() {
                 </div>
                 <button
                   onClick={async () => {
-                    await apiFetch(`/api/ingest/refresh?beatId=${beat.id}`, { method: "POST" });
+                    await apiFetch(`/api/ingest/refresh?mode=SEARCH&beatId=${beat.id}&lensOrTrack=BEAT`, {
+                      method: "POST",
+                    });
                     const response = await apiFetch<{ lastRefreshedAt?: string }>(
-                      `/api/articles?beatId=${beat.id}&page=0&size=1`
+                      `/api/articles?mode=SEARCH&lens=BEAT&beatId=${beat.id}&page=0&size=1`
                     );
                     setBeats((prev) =>
                       prev.map((item) =>
@@ -156,11 +158,13 @@ export default function DashboardPage() {
               <p className="text-sm text-slate-400">No saved articles yet.</p>
             )}
             {savedArticles.map((article) => (
-              <div key={article.id} className="rounded-xl border border-slate-800/80 bg-slate-950/60 p-4">
-                <p className="text-sm font-semibold">{article.title}</p>
-                <p className="text-xs text-slate-400">{article.beatName}</p>
+              <div key={article.articleId} className="rounded-xl border border-slate-800/80 bg-slate-950/60 p-4">
+                <p className="text-sm font-semibold">{article.article.title}</p>
+                <p className="text-xs text-slate-400">{article.article.beatName ?? "Trending"}</p>
                 <p className="text-xs text-slate-500 mt-1">
-                  {article.publishedAtUtc ? new Date(article.publishedAtUtc).toLocaleString() : "Not published"}
+                  {article.article.publishedAtUtc
+                    ? new Date(article.article.publishedAtUtc).toLocaleString()
+                    : "Not published"}
                 </p>
               </div>
             ))}

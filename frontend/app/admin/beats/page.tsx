@@ -10,43 +10,43 @@ interface Beat {
   active: boolean;
 }
 
-interface Recipe {
+interface Template {
   id: number;
   beatId: number;
   endpointType: "SEARCH" | "TOP_HEADLINES";
-  query?: string;
   category?: string;
-  lang?: string;
-  country?: string;
-  inFields?: string;
+  beatTerms?: string[];
+  langDefault?: string;
+  countryDefault?: string;
+  inDefault?: string;
   nullableFields?: string;
-  max?: number;
-  sort?: string;
+  maxDefault?: number;
+  sortbyDefault?: string;
 }
 
 export default function AdminBeatsPage() {
   const [beats, setBeats] = useState<Beat[]>([]);
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [beatForm, setBeatForm] = useState({ name: "", slug: "", active: true });
-  const [recipeForm, setRecipeForm] = useState<Recipe>({
+  const [templateForm, setTemplateForm] = useState<Template>({
     id: 0,
     beatId: 0,
     endpointType: "SEARCH",
-    query: "",
     category: "",
-    lang: "en",
-    country: "us",
-    max: 25,
-    sort: "publishedAt",
+    beatTerms: [],
+    langDefault: "en",
+    countryDefault: "us",
+    maxDefault: 25,
+    sortbyDefault: "publishedAt",
   });
 
   const loadData = async () => {
     const beatsData = await apiFetch<Beat[]>("/api/admin/beats");
-    const recipesData = await apiFetch<Recipe[]>("/api/admin/beat-query-recipes");
+    const templatesData = await apiFetch<Template[]>("/api/admin/beat-query-templates");
     setBeats(beatsData);
-    setRecipes(recipesData);
-    if (beatsData.length && recipeForm.beatId === 0) {
-      setRecipeForm((prev) => ({ ...prev, beatId: beatsData[0].id }));
+    setTemplates(templatesData);
+    if (beatsData.length && templateForm.beatId === 0) {
+      setTemplateForm((prev) => ({ ...prev, beatId: beatsData[0].id }));
     }
   };
 
@@ -76,35 +76,35 @@ export default function AdminBeatsPage() {
     await loadData();
   };
 
-  const handleCreateRecipe = async () => {
-    await apiFetch("/api/admin/beat-query-recipes", {
+  const handleCreateTemplate = async () => {
+    await apiFetch("/api/admin/beat-query-templates", {
       method: "POST",
       body: JSON.stringify({
-        beatId: recipeForm.beatId,
-        endpointType: recipeForm.endpointType,
-        query: recipeForm.query,
-        category: recipeForm.category,
-        lang: recipeForm.lang,
-        country: recipeForm.country,
-        inFields: recipeForm.inFields,
-        nullableFields: recipeForm.nullableFields,
-        max: recipeForm.max,
-        sort: recipeForm.sort,
+        beatId: templateForm.beatId,
+        endpointType: templateForm.endpointType,
+        category: templateForm.category,
+        beatTerms: templateForm.beatTerms,
+        langDefault: templateForm.langDefault,
+        countryDefault: templateForm.countryDefault,
+        inDefault: templateForm.inDefault,
+        nullableFields: templateForm.nullableFields,
+        maxDefault: templateForm.maxDefault,
+        sortbyDefault: templateForm.sortbyDefault,
       }),
     });
     await loadData();
   };
 
-  const handleUpdateRecipe = async (recipe: Recipe) => {
-    await apiFetch(`/api/admin/beat-query-recipes/${recipe.id}`, {
+  const handleUpdateTemplate = async (template: Template) => {
+    await apiFetch(`/api/admin/beat-query-templates/${template.id}`, {
       method: "PUT",
-      body: JSON.stringify(recipe),
+      body: JSON.stringify(template),
     });
     await loadData();
   };
 
-  const handleDeleteRecipe = async (id: number) => {
-    await apiFetch(`/api/admin/beat-query-recipes/${id}`, { method: "DELETE" });
+  const handleDeleteTemplate = async (id: number) => {
+    await apiFetch(`/api/admin/beat-query-templates/${id}`, { method: "DELETE" });
     await loadData();
   };
 
@@ -113,7 +113,7 @@ export default function AdminBeatsPage() {
       <header className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
         <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Admin</p>
         <h1 className="text-2xl font-semibold">Beat Management</h1>
-        <p className="text-slate-400">Define beats and their query recipes for GNews ingestion.</p>
+        <p className="text-slate-400">Define beats and their query templates for GNews ingestion.</p>
       </header>
 
       <section className="grid gap-6 lg:grid-cols-2">
@@ -144,10 +144,10 @@ export default function AdminBeatsPage() {
           </button>
         </div>
         <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Create recipe</h2>
+          <h2 className="text-lg font-semibold">Create template</h2>
           <select
-            value={recipeForm.beatId}
-            onChange={(event) => setRecipeForm({ ...recipeForm, beatId: Number(event.target.value) })}
+            value={templateForm.beatId}
+            onChange={(event) => setTemplateForm({ ...templateForm, beatId: Number(event.target.value) })}
             className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
           >
             {beats.map((beat) => (
@@ -157,9 +157,9 @@ export default function AdminBeatsPage() {
             ))}
           </select>
           <select
-            value={recipeForm.endpointType}
+            value={templateForm.endpointType}
             onChange={(event) =>
-              setRecipeForm({ ...recipeForm, endpointType: event.target.value as Recipe["endpointType"] })
+              setTemplateForm({ ...templateForm, endpointType: event.target.value as Template["endpointType"] })
             }
             className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
           >
@@ -167,40 +167,42 @@ export default function AdminBeatsPage() {
             <option value="TOP_HEADLINES">Top headlines</option>
           </select>
           <input
-            placeholder="Query"
-            value={recipeForm.query}
-            onChange={(event) => setRecipeForm({ ...recipeForm, query: event.target.value })}
+            placeholder="Beat terms (comma-separated)"
+            value={templateForm.beatTerms?.join(", ") ?? ""}
+            onChange={(event) =>
+              setTemplateForm({ ...templateForm, beatTerms: event.target.value.split(",").map((term) => term.trim()) })
+            }
             className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
           />
           <div className="grid gap-3 md:grid-cols-2">
             <input
               placeholder="Category"
-              value={recipeForm.category}
-              onChange={(event) => setRecipeForm({ ...recipeForm, category: event.target.value })}
+              value={templateForm.category}
+              onChange={(event) => setTemplateForm({ ...templateForm, category: event.target.value })}
               className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
             />
             <input
               placeholder="Lang"
-              value={recipeForm.lang}
-              onChange={(event) => setRecipeForm({ ...recipeForm, lang: event.target.value })}
+              value={templateForm.langDefault}
+              onChange={(event) => setTemplateForm({ ...templateForm, langDefault: event.target.value })}
               className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
             />
             <input
               placeholder="Country"
-              value={recipeForm.country}
-              onChange={(event) => setRecipeForm({ ...recipeForm, country: event.target.value })}
+              value={templateForm.countryDefault}
+              onChange={(event) => setTemplateForm({ ...templateForm, countryDefault: event.target.value })}
               className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
             />
             <input
               placeholder="Max"
               type="number"
-              value={recipeForm.max ?? 0}
-              onChange={(event) => setRecipeForm({ ...recipeForm, max: Number(event.target.value) })}
+              value={templateForm.maxDefault ?? 0}
+              onChange={(event) => setTemplateForm({ ...templateForm, maxDefault: Number(event.target.value) })}
               className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
             />
           </div>
-          <button onClick={handleCreateRecipe} className="rounded-xl bg-emerald-500 px-4 py-2 font-semibold text-slate-900">
-            Add recipe
+          <button onClick={handleCreateTemplate} className="rounded-xl bg-emerald-500 px-4 py-2 font-semibold text-slate-900">
+            Add template
           </button>
         </div>
       </section>
@@ -246,16 +248,16 @@ export default function AdminBeatsPage() {
       </section>
 
       <section className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
-        <h2 className="text-lg font-semibold">Query recipes</h2>
+        <h2 className="text-lg font-semibold">Query templates</h2>
         <div className="mt-4 space-y-3">
-          {recipes.map((recipe) => (
-            <div key={recipe.id} className="grid gap-2 rounded-xl border border-slate-800/80 p-3 md:grid-cols-6">
+          {templates.map((template) => (
+            <div key={template.id} className="grid gap-2 rounded-xl border border-slate-800/80 p-3 md:grid-cols-6">
               <select
-                value={recipe.beatId}
+                value={template.beatId}
                 onChange={(event) =>
-                  setRecipes((prev) =>
+                  setTemplates((prev) =>
                     prev.map((item) =>
-                      item.id === recipe.id ? { ...item, beatId: Number(event.target.value) } : item
+                      item.id === template.id ? { ...item, beatId: Number(event.target.value) } : item
                     )
                   )
                 }
@@ -268,11 +270,11 @@ export default function AdminBeatsPage() {
                 ))}
               </select>
               <select
-                value={recipe.endpointType}
+                value={template.endpointType}
                 onChange={(event) =>
-                  setRecipes((prev) =>
+                  setTemplates((prev) =>
                     prev.map((item) =>
-                      item.id === recipe.id ? { ...item, endpointType: event.target.value as Recipe["endpointType"] } : item
+                      item.id === template.id ? { ...item, endpointType: event.target.value as Template["endpointType"] } : item
                     )
                   )
                 }
@@ -282,40 +284,48 @@ export default function AdminBeatsPage() {
                 <option value="TOP_HEADLINES">Top</option>
               </select>
               <input
-                value={recipe.query ?? ""}
+                value={template.beatTerms?.join(", ") ?? ""}
                 onChange={(event) =>
-                  setRecipes((prev) =>
-                    prev.map((item) => (item.id === recipe.id ? { ...item, query: event.target.value } : item))
+                  setTemplates((prev) =>
+                    prev.map((item) =>
+                      item.id === template.id
+                        ? { ...item, beatTerms: event.target.value.split(",").map((term) => term.trim()) }
+                        : item
+                    )
                   )
                 }
-                placeholder="Query"
+                placeholder="Beat terms"
                 className="rounded-lg bg-slate-900/60 border border-slate-700/80 p-2"
               />
               <input
-                value={recipe.lang ?? ""}
+                value={template.langDefault ?? ""}
                 onChange={(event) =>
-                  setRecipes((prev) =>
-                    prev.map((item) => (item.id === recipe.id ? { ...item, lang: event.target.value } : item))
+                  setTemplates((prev) =>
+                    prev.map((item) =>
+                      item.id === template.id ? { ...item, langDefault: event.target.value } : item
+                    )
                   )
                 }
                 placeholder="Lang"
                 className="rounded-lg bg-slate-900/60 border border-slate-700/80 p-2"
               />
               <input
-                value={recipe.country ?? ""}
+                value={template.countryDefault ?? ""}
                 onChange={(event) =>
-                  setRecipes((prev) =>
-                    prev.map((item) => (item.id === recipe.id ? { ...item, country: event.target.value } : item))
+                  setTemplates((prev) =>
+                    prev.map((item) =>
+                      item.id === template.id ? { ...item, countryDefault: event.target.value } : item
+                    )
                   )
                 }
                 placeholder="Country"
                 className="rounded-lg bg-slate-900/60 border border-slate-700/80 p-2"
               />
               <div className="flex items-center gap-2">
-                <button onClick={() => handleUpdateRecipe(recipe)} className="rounded-lg bg-emerald-500 px-3 py-1 text-xs text-slate-900">
+                <button onClick={() => handleUpdateTemplate(template)} className="rounded-lg bg-emerald-500 px-3 py-1 text-xs text-slate-900">
                   Update
                 </button>
-                <button onClick={() => handleDeleteRecipe(recipe.id)} className="rounded-lg border border-red-500/60 px-3 py-1 text-xs text-red-200">
+                <button onClick={() => handleDeleteTemplate(template.id)} className="rounded-lg border border-red-500/60 px-3 py-1 text-xs text-red-200">
                   Delete
                 </button>
               </div>

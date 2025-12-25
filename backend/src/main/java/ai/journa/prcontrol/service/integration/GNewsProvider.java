@@ -82,6 +82,9 @@ public class GNewsProvider implements NewsProvider {
     if (request.getMax() != null) {
       builder.queryParam("max", request.getMax());
     }
+    if (request.getPage() != null) {
+      builder.queryParam("page", request.getPage());
+    }
     if (request.getSort() != null) {
       builder.queryParam("sortby", request.getSort());
     }
@@ -90,6 +93,9 @@ public class GNewsProvider implements NewsProvider {
     }
     if (request.getTo() != null) {
       builder.queryParam("to", request.getTo().toString());
+    }
+    if (request.getTruncate() != null) {
+      builder.queryParam("truncate", request.getTruncate());
     }
 
     if (!useHeader) {
@@ -108,7 +114,7 @@ public class GNewsProvider implements NewsProvider {
     HttpEntity<Void> entity = new HttpEntity<>(headers);
     try {
       ResponseEntity<String> response = restTemplate.exchange(builder.toUriString(), HttpMethod.GET, entity, String.class);
-      return parseResponse(response.getBody());
+    return parseResponse(response.getBody());
     } catch (HttpStatusCodeException ex) {
       int status = ex.getStatusCode().value();
       boolean retryable = status == 429 || status >= 500;
@@ -140,7 +146,9 @@ public class GNewsProvider implements NewsProvider {
       article.setRawPayload(node.toString());
       articles.add(article);
     }
-    return new FetchResult(total, articles);
+    FetchResult result = new FetchResult(total, articles);
+    result.setRawPayload(body);
+    return result;
   }
 
   private Instant parseInstant(String value) {

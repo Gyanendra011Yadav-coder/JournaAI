@@ -1,6 +1,6 @@
 # PR News & Outreach
 
-PR News & Outreach is a cache-first PR intelligence MVP that ingests news into Postgres, surfaces articles from the cache, and supports journalist discovery + outreach workflows.
+PR News & Outreach is a cache-first PR intelligence MVP that ingests news into Postgres, surfaces articles from the cache, and supports PR teams with trending + search coverage, personalization, and publishing workflows.
 
 ## Architecture (Phase 1)
 
@@ -30,32 +30,38 @@ The UI never calls vendor APIs directly. Refreshing triggers backend ingestion i
 Managed by Flyway migrations:
 - `users`
 - `beats`
-- `articles`
-- `article_tags`
+- `beat_query_templates`
+- `user_profile`
+- `user_profile_beats`
+- `user_clients`
+- `user_client_aliases`
+- `user_keywords`
 - `news_fetch_state`
-- `journalists`
-- `journalist_tags`
-- `outreach_templates`
-- `outreach_emails`
+- `news_cache`
+- `articles`
+- `saved_articles`
 - `audit_log`
 
-Seed data is installed automatically (12+ beats, 100 articles, 200 journalists, 5 templates).
+Seed data is installed automatically (beats, templates, sample articles, admin/member users).
 
 ## Core API Contract
-- `POST /api/auth/register`
+- `POST /api/auth/signup`
 - `POST /api/auth/login`
+- `GET /api/auth/me`
+- `GET /api/me/profile`
+- `PUT /api/me/profile`
+- `GET /api/me/clients`
+- `POST /api/me/clients`
 - `GET /api/beats`
-- `GET /api/articles?beat=&timeframe=&page=&size=&from=`
-- `POST /api/articles/refresh`
-- `POST /api/articles/manual`
+- `GET /api/articles?mode=SEARCH|TRENDING&lens=ALL|CLIENT|BEAT|LOCAL|GLOBAL&beatId=&category=&from=&to=&status=&page=&size=`
 - `GET /api/articles/{id}`
+- `POST /api/ingest/refresh?mode=SEARCH|TRENDING&beatId=&category=&lensOrTrack=`
 - `POST /api/articles/{id}/save`
-- `GET /api/journalists/search?beat=&outlet=&location=&keywords=`
-- `GET /api/journalists/{id}`
-- `GET /api/templates`
-- `POST /api/outreach/send`
-- `GET /api/audit`
-- `GET /api/settings/integrations`
+- `POST /api/articles/{id}/pin`
+- `GET /api/saved-articles`
+- `POST /api/admin/articles/{id}/publish`
+- `POST /api/admin/articles/{id}/unpublish`
+- `GET /api/admin/integrations/gnews`
 
 OpenAPI UI: `/swagger-ui`
 
@@ -92,7 +98,8 @@ npm run test
 
 ## Environment Variables
 ```bash
-GNEWS_API_KEY=your_key_here
+# Optional: supply integration master key for encryption at rest
+INTEGRATION_MASTER_KEY=your-master-key
 ```
 
 ## Configuration
@@ -107,7 +114,7 @@ app:
 ```
 
 ## Product Notes
-- Refresh uses GNews, falls back to RSS, then serves cached data if both fail.
+- Refresh uses GNews and serves cached data if refresh fails.
 - Circuit breaker opens after repeated vendor failures.
 - Manual “Add Article URL” creates records without scraping.
-- Audit log entries are created for search, view, save, and send actions.
+- Audit log entries are created for search, view, save, and publish actions.

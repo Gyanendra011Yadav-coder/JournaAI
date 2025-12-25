@@ -3,19 +3,20 @@ package ai.journa.prcontrol.dto;
 import ai.journa.prcontrol.domain.EndpointType;
 
 import java.time.Instant;
+import java.util.List;
 
-public class BeatQueryRecipeResponse {
+public class BeatQueryTemplateResponse {
   private Long id;
   private Long beatId;
   private EndpointType endpointType;
-  private String query;
   private String category;
-  private String lang;
-  private String country;
-  private String inFields;
+  private List<String> beatTerms;
+  private String langDefault;
+  private String countryDefault;
+  private String inDefault;
   private String nullableFields;
-  private Integer max;
-  private String sort;
+  private Integer maxDefault;
+  private String sortbyDefault;
   private Instant createdAt;
   private Instant updatedAt;
 
@@ -43,14 +44,6 @@ public class BeatQueryRecipeResponse {
     this.endpointType = endpointType;
   }
 
-  public String getQuery() {
-    return query;
-  }
-
-  public void setQuery(String query) {
-    this.query = query;
-  }
-
   public String getCategory() {
     return category;
   }
@@ -59,28 +52,36 @@ public class BeatQueryRecipeResponse {
     this.category = category;
   }
 
-  public String getLang() {
-    return lang;
+  public List<String> getBeatTerms() {
+    return beatTerms;
   }
 
-  public void setLang(String lang) {
-    this.lang = lang;
+  public void setBeatTerms(List<String> beatTerms) {
+    this.beatTerms = beatTerms;
   }
 
-  public String getCountry() {
-    return country;
+  public String getLangDefault() {
+    return langDefault;
   }
 
-  public void setCountry(String country) {
-    this.country = country;
+  public void setLangDefault(String langDefault) {
+    this.langDefault = langDefault;
   }
 
-  public String getInFields() {
-    return inFields;
+  public String getCountryDefault() {
+    return countryDefault;
   }
 
-  public void setInFields(String inFields) {
-    this.inFields = inFields;
+  public void setCountryDefault(String countryDefault) {
+    this.countryDefault = countryDefault;
+  }
+
+  public String getInDefault() {
+    return inDefault;
+  }
+
+  public void setInDefault(String inDefault) {
+    this.inDefault = inDefault;
   }
 
   public String getNullableFields() {
@@ -91,20 +92,20 @@ public class BeatQueryRecipeResponse {
     this.nullableFields = nullableFields;
   }
 
-  public Integer getMax() {
-    return max;
+  public Integer getMaxDefault() {
+    return maxDefault;
   }
 
-  public void setMax(Integer max) {
-    this.max = max;
+  public void setMaxDefault(Integer maxDefault) {
+    this.maxDefault = maxDefault;
   }
 
-  public String getSort() {
-    return sort;
+  public String getSortbyDefault() {
+    return sortbyDefault;
   }
 
-  public void setSort(String sort) {
-    this.sort = sort;
+  public void setSortbyDefault(String sortbyDefault) {
+    this.sortbyDefault = sortbyDefault;
   }
 
   public Instant getCreatedAt() {

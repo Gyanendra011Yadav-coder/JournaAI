@@ -1,12 +1,15 @@
 package ai.journa.prcontrol.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.List;
 
 @Entity
-@Table(name = "beat_query_recipes")
-public class BeatQueryRecipe {
+@Table(name = "beat_query_templates")
+public class BeatQueryTemplate {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -19,29 +22,30 @@ public class BeatQueryRecipe {
   @Column(name = "endpoint_type", nullable = false)
   private EndpointType endpointType;
 
-  @Column(name = "q")
-  private String query;
-
   @Column(name = "category")
   private String category;
 
-  @Column(name = "lang")
-  private String lang;
+  @Column(name = "beat_terms_jsonb", columnDefinition = "jsonb")
+  @JdbcTypeCode(SqlTypes.JSON)
+  private List<String> beatTerms;
 
-  @Column(name = "country")
-  private String country;
+  @Column(name = "lang_default")
+  private String langDefault;
 
-  @Column(name = "in_fields")
-  private String inFields;
+  @Column(name = "country_default")
+  private String countryDefault;
+
+  @Column(name = "in_default")
+  private String inDefault;
 
   @Column(name = "nullable_fields")
   private String nullableFields;
 
-  @Column(name = "max")
-  private Integer max;
+  @Column(name = "max_default")
+  private Integer maxDefault;
 
-  @Column(name = "sort")
-  private String sort;
+  @Column(name = "sortby_default")
+  private String sortbyDefault;
 
   @Column(name = "created_at", nullable = false)
   private Instant createdAt = Instant.now();
@@ -73,14 +77,6 @@ public class BeatQueryRecipe {
     this.endpointType = endpointType;
   }
 
-  public String getQuery() {
-    return query;
-  }
-
-  public void setQuery(String query) {
-    this.query = query;
-  }
-
   public String getCategory() {
     return category;
   }
@@ -89,28 +85,36 @@ public class BeatQueryRecipe {
     this.category = category;
   }
 
-  public String getLang() {
-    return lang;
+  public List<String> getBeatTerms() {
+    return beatTerms;
   }
 
-  public void setLang(String lang) {
-    this.lang = lang;
+  public void setBeatTerms(List<String> beatTerms) {
+    this.beatTerms = beatTerms;
   }
 
-  public String getCountry() {
-    return country;
+  public String getLangDefault() {
+    return langDefault;
   }
 
-  public void setCountry(String country) {
-    this.country = country;
+  public void setLangDefault(String langDefault) {
+    this.langDefault = langDefault;
   }
 
-  public String getInFields() {
-    return inFields;
+  public String getCountryDefault() {
+    return countryDefault;
   }
 
-  public void setInFields(String inFields) {
-    this.inFields = inFields;
+  public void setCountryDefault(String countryDefault) {
+    this.countryDefault = countryDefault;
+  }
+
+  public String getInDefault() {
+    return inDefault;
+  }
+
+  public void setInDefault(String inDefault) {
+    this.inDefault = inDefault;
   }
 
   public String getNullableFields() {
@@ -121,20 +125,20 @@ public class BeatQueryRecipe {
     this.nullableFields = nullableFields;
   }
 
-  public Integer getMax() {
-    return max;
+  public Integer getMaxDefault() {
+    return maxDefault;
   }
 
-  public void setMax(Integer max) {
-    this.max = max;
+  public void setMaxDefault(Integer maxDefault) {
+    this.maxDefault = maxDefault;
   }
 
-  public String getSort() {
-    return sort;
+  public String getSortbyDefault() {
+    return sortbyDefault;
   }
 
-  public void setSort(String sort) {
-    this.sort = sort;
+  public void setSortbyDefault(String sortbyDefault) {
+    this.sortbyDefault = sortbyDefault;
   }
 
   public Instant getCreatedAt() {
