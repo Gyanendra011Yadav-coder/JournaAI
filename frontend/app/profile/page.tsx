@@ -130,19 +130,19 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Profile</p>
-        <h1 className="text-2xl font-semibold">Preferences & personalization</h1>
-        <p className="text-slate-400">Update your countries, languages, beats, and client lens.</p>
+      <header className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.25)]">
+        <p className="text-xs uppercase tracking-[0.2em] text-cyan-600">Profile</p>
+        <h1 className="text-3xl font-semibold">Preferences & personalization</h1>
+        <p className="text-slate-600">Update your countries, languages, beats, and client lens.</p>
       </header>
       <ErrorBanner message={error} />
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
+        <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Country</label>
+              <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Country</label>
               <select
-                className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+                className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
                 value={profile.preferredCountries?.[0] ?? ""}
                 onChange={(event) =>
                   setProfile({ ...profile, preferredCountries: [event.target.value] })
@@ -156,9 +156,9 @@ export default function ProfilePage() {
               </select>
             </div>
             <div>
-              <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Language</label>
+              <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Language</label>
               <select
-                className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+                className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
                 value={profile.preferredLangs?.[0] ?? ""}
                 onChange={(event) => setProfile({ ...profile, preferredLangs: [event.target.value] })}
               >
@@ -171,17 +171,17 @@ export default function ProfilePage() {
             </div>
           </div>
           <div>
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Beats</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Beats</label>
             <div className="mt-3 flex flex-wrap gap-2">
               {beats.map((beat) => (
                 <button
                   key={beat.id}
                   type="button"
                   onClick={() => toggleBeat(beat.id)}
-                  className={`rounded-full border px-3 py-1 text-xs ${
+                  className={`rounded-full border px-3 py-1 text-xs transition ${
                     profile.beatIds.includes(beat.id)
-                      ? "border-cyan-500/60 bg-cyan-500/10 text-cyan-100"
-                      : "border-slate-700 text-slate-300"
+                      ? "border-cyan-300/70 bg-cyan-50 text-cyan-700"
+                      : "border-slate-200 text-slate-600 hover:border-cyan-200 hover:text-slate-900"
                   }`}
                 >
                   {beat.name}
@@ -190,9 +190,9 @@ export default function ProfilePage() {
             </div>
           </div>
           <div>
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Client keywords</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Client keywords</label>
             <input
-              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
               value={profile.clientKeywords?.join(", ") ?? ""}
               onChange={(event) =>
                 setProfile({ ...profile, clientKeywords: event.target.value.split(",").map((v) => v.trim()) })
@@ -200,9 +200,9 @@ export default function ProfilePage() {
             />
           </div>
           <div>
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Exclude keywords</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Exclude keywords</label>
             <input
-              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
               value={profile.excludeKeywords?.join(", ") ?? ""}
               onChange={(event) =>
                 setProfile({ ...profile, excludeKeywords: event.target.value.split(",").map((v) => v.trim()) })
@@ -210,11 +210,11 @@ export default function ProfilePage() {
             />
           </div>
           <div>
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Default view</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Default view</label>
             <select
               value={profile.defaultSidebarMode ?? "TRENDING"}
               onChange={(event) => setProfile({ ...profile, defaultSidebarMode: event.target.value })}
-              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
             >
               <option value="TRENDING">Trending</option>
               <option value="SEARCH">Search</option>
@@ -222,19 +222,19 @@ export default function ProfilePage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Client lens ratio</label>
+              <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Client lens ratio</label>
               <input
                 type="number"
-                className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+                className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
                 value={profile.clientLensRatio ?? 40}
                 onChange={(event) => setProfile({ ...profile, clientLensRatio: Number(event.target.value) })}
               />
             </div>
             <div>
-              <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Trending local ratio</label>
+              <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Trending local ratio</label>
               <input
                 type="number"
-                className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+                className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
                 value={profile.trendingLocalRatio ?? 40}
                 onChange={(event) => setProfile({ ...profile, trendingLocalRatio: Number(event.target.value) })}
               />
@@ -247,51 +247,51 @@ export default function ProfilePage() {
           >
             <span className="inline-flex items-center gap-2">
               {savingProfile && (
-                <span className="h-3 w-3 animate-spin rounded-full border border-slate-700 border-t-transparent" />
+                <span className="h-3 w-3 animate-spin rounded-full border border-slate-200 border-t-transparent" />
               )}
               Save preferences
             </span>
           </button>
         </div>
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
+        <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 space-y-4">
           <h2 className="text-lg font-semibold">Clients & aliases</h2>
           <div className="space-y-2">
-            {clients.length === 0 && <p className="text-sm text-slate-400">No clients yet.</p>}
+            {clients.length === 0 && <p className="text-sm text-slate-600">No clients yet.</p>}
             {clients.map((client) => (
-              <div key={client.id} className="rounded-xl border border-slate-800/80 bg-slate-950/60 p-3">
+              <div key={client.id} className="rounded-xl border border-slate-200/70 bg-white p-3">
                 <p className="text-sm font-semibold">{client.displayName}</p>
                 {client.aliases.length > 0 && (
-                  <p className="text-xs text-slate-400">Aliases: {client.aliases.join(", ")}</p>
+                  <p className="text-xs text-slate-600">Aliases: {client.aliases.join(", ")}</p>
                 )}
               </div>
             ))}
           </div>
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Add client</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Add client</label>
             <input
-              className="w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="w-full rounded-xl bg-white/80 border border-slate-200 p-3"
               value={clientName}
               onChange={(event) => setClientName(event.target.value)}
               placeholder="Client name"
             />
             <input
-              className="w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="w-full rounded-xl bg-white/80 border border-slate-200 p-3"
               value={clientAliases}
               onChange={(event) => setClientAliases(event.target.value)}
               placeholder="Aliases (comma-separated)"
             />
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Client beats (optional)</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-600">Client beats (optional)</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {beats.map((beat) => (
                   <button
                     key={beat.id}
                     type="button"
                     onClick={() => toggleClientBeat(beat.id)}
-                    className={`rounded-full border px-3 py-1 text-xs ${
+                    className={`rounded-full border px-3 py-1 text-xs transition ${
                       clientBeatIds.includes(beat.id)
-                        ? "border-cyan-500/60 bg-cyan-500/10 text-cyan-100"
-                        : "border-slate-700 text-slate-300"
+                        ? "border-cyan-300/70 bg-cyan-50 text-cyan-700"
+                        : "border-slate-200 text-slate-600 hover:border-cyan-200 hover:text-slate-900"
                     }`}
                   >
                     {beat.name}
@@ -302,7 +302,7 @@ export default function ProfilePage() {
             <button
               onClick={addClient}
               disabled={addingClient}
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-200 disabled:opacity-60"
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 disabled:opacity-60"
             >
               <span className="inline-flex items-center gap-2">
                 {addingClient && (

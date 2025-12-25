@@ -38,13 +38,13 @@ export function GlobalErrorBanner() {
       : error.message;
 
   return (
-    <div className="mb-4 rounded-2xl border border-amber-400/60 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+    <div className="mb-4 rounded-2xl border border-amber-400/50 bg-amber-50 px-4 py-3 text-sm text-amber-800">
       <div className="flex items-start justify-between gap-4">
         <span>{message}</span>
         <button
           type="button"
           onClick={() => setError(null)}
-          className="text-xs uppercase tracking-[0.2em] text-amber-200/80"
+          className="text-xs uppercase tracking-[0.2em] text-amber-700/80"
         >
           Close
         </button>

@@ -31,19 +31,19 @@ export default function AdminAuditPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Admin</p>
-        <h1 className="text-2xl font-semibold">Audit Log</h1>
-        <p className="text-slate-400">Track searches, refreshes, publishes, and outreach actions.</p>
+      <header className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.25)]">
+        <p className="text-xs uppercase tracking-[0.2em] text-cyan-600">Admin</p>
+        <h1 className="text-3xl font-semibold">Audit Log</h1>
+        <p className="text-slate-600">Track searches, refreshes, publishes, and outreach actions.</p>
       </header>
       <ErrorBanner message={error} />
       {events.length === 0 && !error && (
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 text-sm text-slate-400">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 text-sm text-slate-600">
           No audit events recorded yet.
         </div>
       )}
       {events.length > 0 && (
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6">
           <AuditTimeline
             events={events.map((event) => ({
               id: event.id,

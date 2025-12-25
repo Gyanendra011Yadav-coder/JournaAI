@@ -174,27 +174,27 @@ export default function AdminBeatsPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Admin</p>
-        <h1 className="text-2xl font-semibold">Beat Management</h1>
-        <p className="text-slate-400">Define beats and their query templates for GNews ingestion.</p>
+      <header className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.25)]">
+        <p className="text-xs uppercase tracking-[0.2em] text-cyan-600">Admin</p>
+        <h1 className="text-3xl font-semibold">Beat Management</h1>
+        <p className="text-slate-600">Define beats and their query templates for GNews ingestion.</p>
       </header>
       <ErrorBanner message={error} />
 
       <section className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
+        <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-6 space-y-4">
           <h2 className="text-lg font-semibold">Create beat</h2>
           <input
             placeholder="Beat name"
             value={beatForm.name}
             onChange={(event) => setBeatForm({ ...beatForm, name: event.target.value })}
-            className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+            className="rounded-xl bg-white/80 border border-slate-200 p-3"
           />
           <input
             placeholder="Slug"
             value={beatForm.slug}
             onChange={(event) => setBeatForm({ ...beatForm, slug: event.target.value })}
-            className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+            className="rounded-xl bg-white/80 border border-slate-200 p-3"
           />
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -207,22 +207,22 @@ export default function AdminBeatsPage() {
           <button
             onClick={handleCreateBeat}
             disabled={creatingBeat}
-            className="rounded-xl bg-cyan-500 px-4 py-2 font-semibold text-slate-900 disabled:opacity-60"
+            className="rounded-xl border border-cyan-300 bg-cyan-50 px-4 py-2 font-semibold text-cyan-700 disabled:opacity-60"
           >
             <span className="inline-flex items-center gap-2">
               {creatingBeat && (
-                <span className="h-3 w-3 animate-spin rounded-full border border-slate-900 border-t-transparent" />
+                <span className="h-3 w-3 animate-spin rounded-full border border-cyan-600 border-t-transparent" />
               )}
               Add beat
             </span>
           </button>
         </div>
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
+        <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-6 space-y-4">
           <h2 className="text-lg font-semibold">Create template</h2>
           <select
             value={templateForm.beatId}
             onChange={(event) => setTemplateForm({ ...templateForm, beatId: Number(event.target.value) })}
-            className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+            className="rounded-xl bg-white/80 border border-slate-200 p-3"
           >
             {beats.map((beat) => (
               <option key={beat.id} value={beat.id}>
@@ -235,7 +235,7 @@ export default function AdminBeatsPage() {
             onChange={(event) =>
               setTemplateForm({ ...templateForm, endpointType: event.target.value as Template["endpointType"] })
             }
-            className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+            className="rounded-xl bg-white/80 border border-slate-200 p-3"
           >
             <option value="SEARCH">Search</option>
             <option value="TOP_HEADLINES">Top headlines</option>
@@ -246,27 +246,27 @@ export default function AdminBeatsPage() {
             onChange={(event) =>
               setTemplateForm({ ...templateForm, beatTerms: event.target.value.split(",").map((term) => term.trim()) })
             }
-            className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+            className="rounded-xl bg-white/80 border border-slate-200 p-3"
           />
           <div className="grid gap-3 md:grid-cols-2">
             <input
               placeholder="Category"
               value={templateForm.category}
               onChange={(event) => setTemplateForm({ ...templateForm, category: event.target.value })}
-              className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="rounded-xl bg-white/80 border border-slate-200 p-3"
             />
             <input
               placeholder="Lang"
               value={templateForm.langDefault}
               onChange={(event) => setTemplateForm({ ...templateForm, langDefault: event.target.value })}
-              className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="rounded-xl bg-white/80 border border-slate-200 p-3"
               list="lang-options"
             />
             <input
               placeholder="Country"
               value={templateForm.countryDefault}
               onChange={(event) => setTemplateForm({ ...templateForm, countryDefault: event.target.value })}
-              className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="rounded-xl bg-white/80 border border-slate-200 p-3"
               list="country-options"
             />
             <input
@@ -274,17 +274,17 @@ export default function AdminBeatsPage() {
               type="number"
               value={templateForm.maxDefault ?? 0}
               onChange={(event) => setTemplateForm({ ...templateForm, maxDefault: Number(event.target.value) })}
-              className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="rounded-xl bg-white/80 border border-slate-200 p-3"
             />
           </div>
           <button
             onClick={handleCreateTemplate}
             disabled={creatingTemplate}
-            className="rounded-xl bg-emerald-500 px-4 py-2 font-semibold text-slate-900 disabled:opacity-60"
+            className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2 font-semibold text-emerald-700 disabled:opacity-60"
           >
             <span className="inline-flex items-center gap-2">
               {creatingTemplate && (
-                <span className="h-3 w-3 animate-spin rounded-full border border-slate-900 border-t-transparent" />
+                <span className="h-3 w-3 animate-spin rounded-full border border-emerald-600 border-t-transparent" />
               )}
               Add template
             </span>
@@ -292,24 +292,24 @@ export default function AdminBeatsPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
+      <section className="rounded-3xl border border-slate-200/70 bg-white/90 p-6">
         <h2 className="text-lg font-semibold">Beats</h2>
         <div className="mt-4 space-y-3">
           {beats.map((beat) => (
-            <div key={beat.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-800/80 p-3">
+            <div key={beat.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200/70 p-3">
               <input
                 value={beat.name}
                 onChange={(event) =>
                   setBeats((prev) => prev.map((item) => (item.id === beat.id ? { ...item, name: event.target.value } : item)))
                 }
-                className="flex-1 rounded-lg bg-slate-900/60 border border-slate-700/80 p-2"
+                className="flex-1 rounded-lg bg-white/80 border border-slate-200 p-2"
               />
               <input
                 value={beat.slug}
                 onChange={(event) =>
                   setBeats((prev) => prev.map((item) => (item.id === beat.id ? { ...item, slug: event.target.value } : item)))
                 }
-                className="flex-1 rounded-lg bg-slate-900/60 border border-slate-700/80 p-2"
+                className="flex-1 rounded-lg bg-white/80 border border-slate-200 p-2"
               />
               <label className="flex items-center gap-2 text-xs">
                 <input
@@ -324,11 +324,11 @@ export default function AdminBeatsPage() {
               <button
                 onClick={() => handleUpdateBeat(beat)}
                 disabled={updatingBeatId === beat.id}
-                className="rounded-lg bg-cyan-500 px-3 py-1 text-xs text-slate-900 disabled:opacity-60"
+                className="rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-1 text-xs text-cyan-700 disabled:opacity-60"
               >
                 <span className="inline-flex items-center gap-2">
                   {updatingBeatId === beat.id && (
-                    <span className="h-3 w-3 animate-spin rounded-full border border-slate-900 border-t-transparent" />
+                    <span className="h-3 w-3 animate-spin rounded-full border border-cyan-600 border-t-transparent" />
                   )}
                   Update
                 </span>
@@ -336,7 +336,7 @@ export default function AdminBeatsPage() {
               <button
                 onClick={() => handleDeleteBeat(beat.id)}
                 disabled={deletingBeatId === beat.id}
-                className="rounded-lg border border-red-500/60 px-3 py-1 text-xs text-red-200 disabled:opacity-60"
+                className="rounded-lg border border-red-300 px-3 py-1 text-xs text-red-700 disabled:opacity-60"
               >
                 <span className="inline-flex items-center gap-2">
                   {deletingBeatId === beat.id && (
@@ -350,11 +350,11 @@ export default function AdminBeatsPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
+      <section className="rounded-3xl border border-slate-200/70 bg-white/90 p-6">
         <h2 className="text-lg font-semibold">Query templates</h2>
         <div className="mt-4 space-y-3">
           {templates.map((template) => (
-            <div key={template.id} className="grid gap-2 rounded-xl border border-slate-800/80 p-3 md:grid-cols-6">
+            <div key={template.id} className="grid gap-2 rounded-xl border border-slate-200/70 p-3 md:grid-cols-6">
               <select
                 value={template.beatId}
                 onChange={(event) =>
@@ -364,7 +364,7 @@ export default function AdminBeatsPage() {
                     )
                   )
                 }
-                className="rounded-lg bg-slate-900/60 border border-slate-700/80 p-2"
+                className="rounded-lg bg-white/80 border border-slate-200 p-2"
               >
                 {beats.map((beat) => (
                   <option key={beat.id} value={beat.id}>
@@ -381,7 +381,7 @@ export default function AdminBeatsPage() {
                     )
                   )
                 }
-                className="rounded-lg bg-slate-900/60 border border-slate-700/80 p-2"
+                className="rounded-lg bg-white/80 border border-slate-200 p-2"
               >
                 <option value="SEARCH">Search</option>
                 <option value="TOP_HEADLINES">Top</option>
@@ -398,7 +398,7 @@ export default function AdminBeatsPage() {
                   )
                 }
                 placeholder="Beat terms"
-                className="rounded-lg bg-slate-900/60 border border-slate-700/80 p-2"
+                className="rounded-lg bg-white/80 border border-slate-200 p-2"
               />
               <input
                 value={template.langDefault ?? ""}
@@ -410,7 +410,7 @@ export default function AdminBeatsPage() {
                   )
                 }
                 placeholder="Lang"
-                className="rounded-lg bg-slate-900/60 border border-slate-700/80 p-2"
+                className="rounded-lg bg-white/80 border border-slate-200 p-2"
                 list="lang-options"
               />
               <input
@@ -423,18 +423,18 @@ export default function AdminBeatsPage() {
                   )
                 }
                 placeholder="Country"
-                className="rounded-lg bg-slate-900/60 border border-slate-700/80 p-2"
+                className="rounded-lg bg-white/80 border border-slate-200 p-2"
                 list="country-options"
               />
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleUpdateTemplate(template)}
                   disabled={updatingTemplateId === template.id}
-                  className="rounded-lg bg-emerald-500 px-3 py-1 text-xs text-slate-900 disabled:opacity-60"
+                  className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs text-emerald-700 disabled:opacity-60"
                 >
                   <span className="inline-flex items-center gap-2">
                     {updatingTemplateId === template.id && (
-                      <span className="h-3 w-3 animate-spin rounded-full border border-slate-900 border-t-transparent" />
+                      <span className="h-3 w-3 animate-spin rounded-full border border-emerald-600 border-t-transparent" />
                     )}
                     Update
                   </span>
@@ -442,7 +442,7 @@ export default function AdminBeatsPage() {
                 <button
                   onClick={() => handleDeleteTemplate(template.id)}
                   disabled={deletingTemplateId === template.id}
-                  className="rounded-lg border border-red-500/60 px-3 py-1 text-xs text-red-200 disabled:opacity-60"
+                  className="rounded-lg border border-red-300 px-3 py-1 text-xs text-red-700 disabled:opacity-60"
                 >
                   <span className="inline-flex items-center gap-2">
                     {deletingTemplateId === template.id && (

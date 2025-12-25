@@ -9,15 +9,15 @@ interface TimeframePickerProps {
 
 export function TimeframePicker({ value, onChange }: TimeframePickerProps) {
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       {options.map((option) => (
         <button
           key={option}
           onClick={() => onChange(option)}
-          className={`px-3 py-1 rounded-lg text-sm border ${
+          className={`px-3 py-1 rounded-lg text-sm border transition ${
             value === option
-              ? "bg-emerald-500 text-slate-900 border-emerald-400"
-              : "border-slate-700 text-slate-200"
+              ? "bg-emerald-500/10 text-emerald-700 border-emerald-400/70"
+              : "border-slate-200 text-slate-600 hover:border-emerald-300 hover:text-slate-900"
           }`}
         >
           {option}

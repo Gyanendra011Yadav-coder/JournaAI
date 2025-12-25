@@ -74,33 +74,33 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
+      <header className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.25)]">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Dashboard</p>
-            <h1 className="text-2xl font-semibold">Command your PR narrative</h1>
-            <p className="text-slate-400">A clear snapshot of cached coverage by beat.</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-cyan-600">Dashboard</p>
+            <h1 className="text-3xl font-semibold">Command your PR narrative</h1>
+            <p className="text-slate-600">A clear snapshot of cached coverage by beat.</p>
           </div>
-          <div className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-100">
+          <div className="rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm text-cyan-700">
             {beats.length} beats tracked
           </div>
         </div>
       </header>
       <ErrorBanner message={error} />
-      <section className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
+      <section className="rounded-3xl border border-slate-200/70 bg-white/90 p-8">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Beat refresh status</h2>
-          <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
+          <span className="text-xs uppercase tracking-[0.2em] text-slate-600">
             {loading ? "Loading..." : "Cache-first"}
           </span>
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           {beats.map((beat) => (
-            <div key={beat.id} className="rounded-xl border border-slate-800/80 bg-slate-950/60 p-4">
+            <div key={beat.id} className="rounded-xl border border-slate-200/70 bg-white p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold">{beat.name}</p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-600">
                     Last refreshed{" "}
                     {beat.lastRefreshedAt ? new Date(beat.lastRefreshedAt).toLocaleString() : "never"}
                   </p>
@@ -130,11 +130,11 @@ export default function DashboardPage() {
                     }
                   }}
                   disabled={refreshingBeat === beat.id}
-                  className="rounded-lg border border-cyan-500/60 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-100 disabled:opacity-60"
+                  className="rounded-lg border border-cyan-300/70 bg-cyan-50 px-3 py-1.5 text-xs text-cyan-700 transition hover:bg-cyan-100 disabled:opacity-60"
                 >
                   <span className="inline-flex items-center gap-2">
                     {refreshingBeat === beat.id && (
-                      <span className="h-3 w-3 animate-spin rounded-full border border-cyan-200 border-t-transparent" />
+                      <span className="h-3 w-3 animate-spin rounded-full border border-cyan-600 border-t-transparent" />
                     )}
                     {refreshingBeat === beat.id ? "Refreshing..." : "Refresh"}
                   </span>
@@ -145,25 +145,25 @@ export default function DashboardPage() {
         </div>
       </section>
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
+        <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-8">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Saved articles</h2>
-            <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
+            <span className="text-xs uppercase tracking-[0.2em] text-slate-600">
               {savedArticles.length} recent
             </span>
           </div>
           <div className="mt-4 space-y-3">
             {savedArticles.length === 0 && (
-              <p className="text-sm text-slate-400">No saved articles yet.</p>
+              <p className="text-sm text-slate-600">No saved articles yet.</p>
             )}
             {savedArticles.map((article) => (
               <Link
                 key={article.articleId}
                 href={`/articles/${article.articleId}`}
-                className="block rounded-xl border border-slate-800/80 bg-slate-950/60 p-4 transition hover:border-cyan-500/60"
+                className="block rounded-xl border border-slate-200/70 bg-white p-4 transition hover:border-cyan-400/60"
               >
                 <p className="text-sm font-semibold">{article.article.title}</p>
-                <p className="text-xs text-slate-400">{article.article.beatName ?? "Trending"}</p>
+                <p className="text-xs text-slate-600">{article.article.beatName ?? "Trending"}</p>
                 <p className="text-xs text-slate-500 mt-1">
                   {article.article.publishedAtUtc
                     ? new Date(article.article.publishedAtUtc).toLocaleString()
@@ -173,19 +173,19 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
+        <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-8">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Audit log</h2>
-            <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
+            <span className="text-xs uppercase tracking-[0.2em] text-slate-600">
               {role === "ADMIN" ? "Admin view" : "Restricted"}
             </span>
           </div>
           <div className="mt-4">
             {role !== "ADMIN" && (
-              <p className="text-sm text-slate-400">Audit log is available to admins only.</p>
+              <p className="text-sm text-slate-600">Audit log is available to admins only.</p>
             )}
             {role === "ADMIN" && auditEvents.length === 0 && (
-              <p className="text-sm text-slate-400">No audit events yet.</p>
+              <p className="text-sm text-slate-600">No audit events yet.</p>
             )}
             {role === "ADMIN" && auditEvents.length > 0 && (
               <AuditTimeline

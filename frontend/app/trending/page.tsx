@@ -102,38 +102,38 @@ export default function TrendingPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Trending</p>
-        <h1 className="text-2xl font-semibold">Top headlines mix</h1>
-        <p className="text-slate-400">
+      <header className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.25)]">
+        <p className="text-xs uppercase tracking-[0.2em] text-cyan-600">Trending</p>
+        <h1 className="text-3xl font-semibold">Top headlines mix</h1>
+        <p className="text-slate-600">
           40% local + 60% global headlines, filtered by your preferred language.
         </p>
       </header>
       <ErrorBanner message={error} />
       {(refreshStatus?.staleCache || staleCache) && (
-        <div className="rounded-2xl border border-amber-400/60 bg-amber-500/10 p-4 text-amber-100">
+        <div className="rounded-2xl border border-amber-300/70 bg-amber-50 p-4 text-amber-800">
           <p className="text-sm font-semibold">Stale-cache mode</p>
-          <p className="text-sm text-amber-200">
+          <p className="text-sm text-amber-700">
             {refreshStatus?.message ?? "Serving cached results from the last successful refresh."}
           </p>
         </div>
       )}
       {lastRefreshedAt && (
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 text-sm text-slate-300">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-600">
           Last refreshed at {new Date(lastRefreshedAt).toLocaleString()}
         </div>
       )}
-      <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
+      <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 space-y-4 shadow-[0_12px_40px_-32px_rgba(15,23,42,0.2)]">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex gap-2">
             {(["MIX", "LOCAL", "GLOBAL"] as const).map((option) => (
               <button
                 key={option}
                 onClick={() => setView(option)}
-                className={`rounded-full border px-3 py-1 text-xs ${
+                className={`rounded-full border px-3 py-1 text-xs transition ${
                   view === option
-                    ? "border-cyan-500/60 bg-cyan-500/10 text-cyan-100"
-                    : "border-slate-700 text-slate-300"
+                    ? "border-cyan-300/70 bg-cyan-50 text-cyan-700"
+                    : "border-slate-200 text-slate-600 hover:border-cyan-200 hover:text-slate-900"
                 }`}
               >
                 {option === "MIX" ? "Mix" : option === "LOCAL" ? "Local only" : "Global only"}
@@ -143,7 +143,7 @@ export default function TrendingPage() {
           <select
             value={category}
             onChange={(event) => setCategory(event.target.value)}
-            className="rounded-xl bg-slate-900/60 border border-slate-700/80 px-3 py-2 text-sm"
+            className="rounded-xl bg-white/80 border border-slate-200 px-3 py-2 text-sm"
           >
             {categories.map((option) => (
               <option key={option} value={option}>
@@ -154,7 +154,7 @@ export default function TrendingPage() {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-200 disabled:opacity-60"
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-cyan-300 hover:bg-slate-50 disabled:opacity-60"
           >
             <span className="inline-flex items-center gap-2">
               {refreshing && <span className="h-3 w-3 animate-spin rounded-full border border-slate-400 border-t-transparent" />}

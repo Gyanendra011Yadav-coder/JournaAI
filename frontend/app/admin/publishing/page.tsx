@@ -114,31 +114,31 @@ export default function AdminPublishingPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Admin</p>
-        <h1 className="text-2xl font-semibold">Publishing</h1>
-        <p className="text-slate-400">Review ingested articles and control what is published.</p>
+      <header className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.25)]">
+        <p className="text-xs uppercase tracking-[0.2em] text-cyan-600">Admin</p>
+        <h1 className="text-3xl font-semibold">Publishing</h1>
+        <p className="text-slate-600">Review ingested articles and control what is published.</p>
       </header>
       <ErrorBanner message={error} />
 
-      <section className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
+      <section className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Manual feed</h2>
-          <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Admin only</span>
+          <span className="text-xs uppercase tracking-[0.2em] text-slate-600">Admin only</span>
         </div>
         <ErrorBanner message={manualError} />
         {manualStatus && (
-          <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+          <div className="rounded-2xl border border-emerald-300/70 bg-emerald-50 p-4 text-sm text-emerald-700">
             {manualStatus}
           </div>
         )}
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Beat</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Beat</label>
             <select
               value={manualBeatId ?? ""}
               onChange={(event) => setManualBeatId(Number(event.target.value))}
-              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
             >
               {beats.map((beat) => (
                 <option key={beat.id} value={beat.id}>
@@ -148,53 +148,52 @@ export default function AdminPublishingPage() {
             </select>
           </div>
           <div>
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Headline</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Headline</label>
             <input
               value={manualTitle}
               onChange={(event) => setManualTitle(event.target.value)}
-              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
             />
           </div>
           <div>
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">URL</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-600">URL</label>
             <input
               value={manualUrl}
               onChange={(event) => setManualUrl(event.target.value)}
-              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
             />
           </div>
           <div>
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Source</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Source</label>
             <input
               value={manualSource}
               onChange={(event) => setManualSource(event.target.value)}
-              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
             />
           </div>
           <div>
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Author</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Author</label>
             <input
               value={manualAuthor}
               onChange={(event) => setManualAuthor(event.target.value)}
-              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
             />
           </div>
           <div>
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Published at</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Published at</label>
             <input
               type="datetime-local"
               value={manualPublishedAt}
               onChange={(event) => setManualPublishedAt(event.target.value)}
-              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3 text-slate-200"
-              style={{ colorScheme: "dark" }}
+              className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3 text-slate-700"
             />
           </div>
           <div className="md:col-span-2">
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Summary</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Summary</label>
             <textarea
               value={manualSummary}
               onChange={(event) => setManualSummary(event.target.value)}
-              className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
               rows={3}
             />
           </div>
@@ -202,11 +201,11 @@ export default function AdminPublishingPage() {
         <button
           onClick={handleManualSubmit}
           disabled={manualSubmitting}
-          className="rounded-xl bg-cyan-500 text-slate-900 px-4 py-2 font-semibold disabled:opacity-60"
+          className="rounded-xl border border-cyan-300 bg-cyan-50 px-4 py-2 font-semibold text-cyan-700 disabled:opacity-60"
         >
           <span className="inline-flex items-center gap-2">
             {manualSubmitting && (
-              <span className="h-3 w-3 animate-spin rounded-full border border-slate-900 border-t-transparent" />
+              <span className="h-3 w-3 animate-spin rounded-full border border-cyan-600 border-t-transparent" />
             )}
             Add manual article
           </span>
@@ -218,8 +217,10 @@ export default function AdminPublishingPage() {
           <button
             key={item}
             onClick={() => setView(item)}
-            className={`rounded-full px-4 py-2 text-sm border ${
-              view === item ? "bg-cyan-500 text-slate-900 border-cyan-400" : "border-slate-700 text-slate-200"
+            className={`rounded-full px-4 py-2 text-sm border transition ${
+              view === item
+                ? "border-cyan-300/70 bg-cyan-50 text-cyan-700"
+                : "border-slate-200 text-slate-600 hover:border-cyan-200 hover:text-slate-900"
             }`}
           >
             {item}
@@ -227,9 +228,9 @@ export default function AdminPublishingPage() {
         ))}
       </div>
 
-      <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
+      <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-6">
         <table className="w-full text-sm">
-          <thead className="text-slate-400">
+          <thead className="text-slate-600">
             <tr>
               <th className="text-left pb-3">Headline</th>
               <th className="text-left pb-3">Beat</th>
@@ -238,7 +239,7 @@ export default function AdminPublishingPage() {
               <th className="text-left pb-3">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800">
+          <tbody className="divide-y divide-slate-200">
             {articles.map((article) => (
               <tr key={article.id}>
                 <td className="py-3">{article.title}</td>
@@ -253,8 +254,8 @@ export default function AdminPublishingPage() {
                     disabled={publishingId === article.id}
                     className={`rounded-lg px-3 py-1 text-xs disabled:opacity-60 ${
                       article.status === "PUBLISHED"
-                        ? "border border-amber-400/60 text-amber-200"
-                        : "bg-emerald-500 text-slate-900"
+                        ? "border border-amber-300/70 text-amber-700"
+                        : "bg-emerald-100 text-emerald-700"
                     }`}
                   >
                     <span className="inline-flex items-center gap-2">

@@ -32,9 +32,9 @@ export function ArticlesTable({ articles }: ArticlesTableProps) {
   };
 
   return (
-    <div className="border border-slate-800 rounded-xl overflow-hidden">
+    <div className="rounded-2xl border border-slate-200/70 bg-white/90 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.35)] overflow-hidden">
       <table className="w-full text-sm">
-        <thead className="bg-slate-900 text-slate-300">
+        <thead className="bg-slate-50 text-slate-600">
           <tr>
             <th className="text-left p-3">Headline</th>
             <th className="text-left p-3">Source</th>
@@ -44,11 +44,11 @@ export function ArticlesTable({ articles }: ArticlesTableProps) {
             <th className="text-left p-3">Save</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-800">
+        <tbody className="divide-y divide-slate-200">
           {articles.map((article) => (
-            <tr key={article.id} className="hover:bg-slate-900/50">
+            <tr key={article.id} className="hover:bg-slate-50">
               <td className="p-3">
-                <Link href={`/articles/${article.id}`} className="text-cyan-300 hover:underline">
+                <Link href={`/articles/${article.id}`} className="text-slate-900 hover:text-cyan-700 hover:underline">
                   {article.title}
                 </Link>
               </td>
@@ -61,8 +61,8 @@ export function ArticlesTable({ articles }: ArticlesTableProps) {
                 <span
                   className={`rounded-full px-2 py-1 text-xs ${
                     article.status === "PUBLISHED"
-                      ? "bg-emerald-500/20 text-emerald-200"
-                      : "bg-slate-800 text-slate-300"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-slate-100 text-slate-600"
                   }`}
                 >
                   {article.status}
@@ -72,7 +72,7 @@ export function ArticlesTable({ articles }: ArticlesTableProps) {
                 <button
                   onClick={() => handleSave(article.id)}
                   disabled={savingId === article.id}
-                  className="rounded-lg border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:border-cyan-500/60 disabled:opacity-60"
+                  className="rounded-lg border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:border-cyan-400/60 hover:text-cyan-700 disabled:opacity-60"
                 >
                   <span className="inline-flex items-center gap-2">
                     {savingId === article.id && (

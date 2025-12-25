@@ -142,60 +142,59 @@ export default function SearchPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Discovery</p>
-        <h1 className="text-2xl font-semibold">News Search</h1>
-        <p className="text-slate-400">Track cached news by beat and timeframe, then refresh on demand.</p>
+      <header className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.25)]">
+        <p className="text-xs uppercase tracking-[0.2em] text-cyan-600">Discovery</p>
+        <h1 className="text-3xl font-semibold">News Search</h1>
+        <p className="text-slate-600">Track cached news by beat and timeframe, then refresh on demand.</p>
       </header>
       <ErrorBanner message={error} />
       {(refreshStatus?.staleCache || staleCache) && (
-        <div className="rounded-2xl border border-amber-400/60 bg-amber-500/10 p-4 text-amber-100">
+        <div className="rounded-2xl border border-amber-300/70 bg-amber-50 p-4 text-amber-800">
           <p className="text-sm font-semibold">Stale-cache mode</p>
-          <p className="text-sm text-amber-200">
+          <p className="text-sm text-amber-700">
             {refreshStatus?.message ?? "Serving cached results from the last successful refresh."}
           </p>
         </div>
       )}
       {lastRefreshedAt && (
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 text-sm text-slate-300">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-600">
           Last refreshed at {new Date(lastRefreshedAt).toLocaleString()}
         </div>
       )}
-      <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4 shadow-[0_0_0_1px_rgba(59,130,246,0.1)]">
+      <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 space-y-5 shadow-[0_12px_40px_-32px_rgba(15,23,42,0.2)]">
         <div>
-          <p className="text-sm text-slate-400 mb-2">Select beat</p>
+          <p className="text-sm text-slate-600 mb-2">Select beat</p>
           <BeatSelector value={beatId} beats={beats} onChange={setBeatId} />
           {showOfflineHint && (
-            <p className="mt-2 text-xs text-amber-300">
+            <p className="mt-2 text-xs text-amber-700">
               Backend offline — start <span className="font-semibold">./gradlew bootRun</span> or set{" "}
               <span className="font-semibold">NEXT_PUBLIC_API_BASE</span>.
             </p>
           )}
         </div>
         <div>
-          <p className="text-sm text-slate-400 mb-2">Timeframe</p>
+          <p className="text-sm text-slate-600 mb-2">Timeframe</p>
           <TimeframePicker value={timeframe} onChange={setTimeframe} />
           {timeframe.toLowerCase() === "custom" && (
             <input
               type="datetime-local"
               value={customFrom}
               onChange={(event) => setCustomFrom(event.target.value)}
-              className="mt-3 rounded-xl bg-slate-900/60 border border-slate-700/80 p-3 text-sm text-slate-200"
-              style={{ colorScheme: "dark" }}
+              className="mt-3 rounded-xl bg-white/80 border border-slate-200 p-3 text-sm text-slate-700"
             />
           )}
         </div>
         <div>
-          <p className="text-sm text-slate-400 mb-2">Lens</p>
+          <p className="text-sm text-slate-600 mb-2">Lens</p>
           <div className="flex flex-wrap gap-2">
             {(["ALL", "CLIENT", "BEAT"] as const).map((option) => (
               <button
                 key={option}
                 onClick={() => setLens(option)}
-                className={`rounded-full border px-3 py-1 text-xs ${
+                className={`rounded-full border px-3 py-1 text-xs transition ${
                   lens === option
-                    ? "border-cyan-500/60 bg-cyan-500/10 text-cyan-100"
-                    : "border-slate-700 text-slate-300"
+                    ? "border-cyan-300/70 bg-cyan-50 text-cyan-700"
+                    : "border-slate-200 text-slate-600 hover:border-cyan-200 hover:text-slate-900"
                 }`}
               >
                 {option === "ALL" ? "All" : option === "CLIENT" ? "Client-focused" : "Beat-only"}
@@ -207,14 +206,14 @@ export default function SearchPage() {
           <button
             onClick={handleSearch}
             disabled={loading || refreshing}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 text-slate-900 font-semibold shadow-lg shadow-cyan-500/20 disabled:opacity-60"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 text-slate-900 font-semibold shadow-lg shadow-cyan-500/20 transition hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-60"
           >
             {loading ? "Searching..." : "Search"}
           </button>
           <button
             onClick={handleRefresh}
             disabled={refreshing || loading}
-            className="px-4 py-2 rounded-xl border border-slate-700 text-slate-200 disabled:opacity-60"
+            className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 transition hover:border-cyan-300 hover:bg-slate-50 disabled:opacity-60"
           >
             <span className="inline-flex items-center gap-2">
               {refreshing && <span className="h-3 w-3 animate-spin rounded-full border border-slate-400 border-t-transparent" />}

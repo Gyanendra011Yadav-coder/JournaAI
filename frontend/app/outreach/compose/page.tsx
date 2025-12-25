@@ -121,15 +121,15 @@ function OutreachComposeInner() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Outreach</p>
-        <h1 className="text-2xl font-semibold">Compose Outreach</h1>
-        <p className="text-slate-400">Draft an email and send from within the platform.</p>
+      <header className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.25)]">
+        <p className="text-xs uppercase tracking-[0.2em] text-cyan-600">Outreach</p>
+        <h1 className="text-3xl font-semibold">Compose Outreach</h1>
+        <p className="text-slate-600">Draft an email and send from within the platform.</p>
       </header>
       <ErrorBanner message={error} />
-      <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4 shadow-[0_0_0_1px_rgba(59,130,246,0.1)]">
+      <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 space-y-4 shadow-[0_12px_40px_-32px_rgba(15,23,42,0.2)]">
         <div>
-          <label className="text-sm text-slate-300">Template</label>
+          <label className="text-sm text-slate-600">Template</label>
           <select
             value={templateId}
             onChange={(event) => {
@@ -139,7 +139,7 @@ function OutreachComposeInner() {
                 applyTemplate(selected);
               }
             }}
-            className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3 focus:border-cyan-500/60 focus:outline-none"
+            className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3 focus:border-cyan-500/60 focus:outline-none"
           >
             {templates.map((template) => (
               <option key={template.id} value={template.id}>
@@ -149,16 +149,16 @@ function OutreachComposeInner() {
           </select>
         </div>
         <div>
-          <label className="text-sm text-slate-300">Client quote</label>
+          <label className="text-sm text-slate-600">Client quote</label>
           <input
             value={clientQuote}
             onChange={(event) => setClientQuote(event.target.value)}
-            className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3 focus:border-cyan-500/60 focus:outline-none"
+            className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3 focus:border-cyan-500/60 focus:outline-none"
           />
         </div>
         <button
           onClick={handleApplyVariables}
-          className="px-3 py-2 rounded-xl border border-slate-700 text-slate-200 text-sm"
+          className="px-3 py-2 rounded-xl border border-slate-200 text-slate-700 text-sm hover:border-cyan-300 hover:text-slate-900"
         >
           Apply template variables
         </button>
@@ -175,12 +175,12 @@ function OutreachComposeInner() {
         >
           <span className="inline-flex items-center gap-2">
             {sending && (
-              <span className="h-3 w-3 animate-spin rounded-full border border-slate-700 border-t-transparent" />
+              <span className="h-3 w-3 animate-spin rounded-full border border-slate-200 border-t-transparent" />
             )}
             Send Outreach
           </span>
         </button>
-        {status && <p className="text-emerald-400">Status: {status}</p>}
+        {status && <p className="text-emerald-700">Status: {status}</p>}
       </div>
     </div>
   );

@@ -18,10 +18,10 @@ export function BeatSelector({ value, beats, onChange }: BeatSelectorProps) {
         <button
           key={beat.id}
           onClick={() => onChange(beat.id)}
-          className={`px-3 py-1 rounded-full text-sm border ${
+          className={`px-3 py-1 rounded-full text-sm border transition ${
             value === beat.id
-              ? "bg-cyan-500 text-slate-900 border-cyan-400"
-              : "border-slate-700 text-slate-200"
+              ? "bg-cyan-500/10 text-cyan-700 border-cyan-400/70"
+              : "border-slate-200 text-slate-600 hover:border-cyan-300 hover:text-slate-900"
           }`}
         >
           {beat.name}

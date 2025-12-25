@@ -86,58 +86,62 @@ export default function AdminIntegrationsPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Admin</p>
-        <h1 className="text-2xl font-semibold">GNews Integration</h1>
-        <p className="text-slate-400">
+      <header className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.25)]">
+        <p className="text-xs uppercase tracking-[0.2em] text-cyan-600">Admin</p>
+        <h1 className="text-3xl font-semibold">GNews Integration</h1>
+        <p className="text-slate-600">
           Manage API credentials, defaults, and refresh cadence. API keys are never displayed.
         </p>
       </header>
 
       {error && (
-        <div className="rounded-2xl border border-amber-400/60 bg-amber-500/10 p-4 text-amber-100">
+        <div className="rounded-2xl border border-amber-300/70 bg-amber-50 p-4 text-amber-800">
           {error}
         </div>
       )}
-      {status && <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-100">{status}</div>}
+      {status && (
+        <div className="rounded-2xl border border-emerald-300/70 bg-emerald-50 p-4 text-emerald-700">
+          {status}
+        </div>
+      )}
 
       {settings && (
         <section className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
+          <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-6 space-y-4">
             <h2 className="text-lg font-semibold">Connection</h2>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-600">
               Status: {settings.configured ? "Configured" : "Missing key"}
             </p>
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-400">New API key</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-600">New API key</label>
             <input
               type="password"
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
               placeholder="Enter new key"
-              className="rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+              className="rounded-xl bg-white/80 border border-slate-200 p-3"
             />
             <button
               onClick={handleUpdateKey}
               disabled={savingKey}
-              className="rounded-xl bg-emerald-500 text-slate-900 px-4 py-2 font-semibold disabled:opacity-60"
+              className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2 font-semibold text-emerald-700 disabled:opacity-60"
             >
               <span className="inline-flex items-center gap-2">
                 {savingKey && (
-                  <span className="h-3 w-3 animate-spin rounded-full border border-slate-900 border-t-transparent" />
+                  <span className="h-3 w-3 animate-spin rounded-full border border-emerald-600 border-t-transparent" />
                 )}
                 Update key
               </span>
             </button>
           </div>
-          <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 space-y-4">
+          <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-6 space-y-4">
             <h2 className="text-lg font-semibold">Defaults</h2>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Default lang</label>
+                <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Default lang</label>
                 <select
                   value={settings.defaultLang}
                   onChange={(event) => setSettings({ ...settings, defaultLang: event.target.value })}
-                  className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+                  className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
                 >
                   {languageOptions.map((option) => (
                     <option key={option.code} value={option.code}>
@@ -147,11 +151,11 @@ export default function AdminIntegrationsPage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Default country</label>
+                <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Default country</label>
                 <select
                   value={settings.defaultCountry}
                   onChange={(event) => setSettings({ ...settings, defaultCountry: event.target.value })}
-                  className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+                  className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
                 >
                   {countryOptions.map((option) => (
                     <option key={option.code} value={option.code}>
@@ -161,30 +165,30 @@ export default function AdminIntegrationsPage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Refresh interval (min)</label>
+                <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Refresh interval (min)</label>
                 <input
                   type="number"
                   value={settings.refreshIntervalMinutes}
                   onChange={(event) => setSettings({ ...settings, refreshIntervalMinutes: Number(event.target.value) })}
-                  className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+                  className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
                 />
               </div>
               <div>
-                <label className="text-xs uppercase tracking-[0.2em] text-slate-400">TTL (min)</label>
+                <label className="text-xs uppercase tracking-[0.2em] text-slate-600">TTL (min)</label>
                 <input
                   type="number"
                   value={settings.ttlMinutes}
                   onChange={(event) => setSettings({ ...settings, ttlMinutes: Number(event.target.value) })}
-                  className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+                  className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
                 />
               </div>
               <div>
-                <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Max per request</label>
+                <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Max per request</label>
                 <input
                   type="number"
                   value={settings.maxPerRequest}
                   onChange={(event) => setSettings({ ...settings, maxPerRequest: Number(event.target.value) })}
-                  className="mt-2 w-full rounded-xl bg-slate-900/60 border border-slate-700/80 p-3"
+                  className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
                 />
               </div>
               <div className="flex items-center gap-3 pt-6">
@@ -193,17 +197,17 @@ export default function AdminIntegrationsPage() {
                   checked={settings.enabled}
                   onChange={(event) => setSettings({ ...settings, enabled: event.target.checked })}
                 />
-                <span className="text-sm text-slate-300">Enabled</span>
+                <span className="text-sm text-slate-600">Enabled</span>
               </div>
             </div>
             <button
               onClick={handleSaveSettings}
               disabled={savingSettings}
-              className="rounded-xl bg-cyan-500 text-slate-900 px-4 py-2 font-semibold disabled:opacity-60"
+              className="rounded-xl border border-cyan-300 bg-cyan-50 px-4 py-2 font-semibold text-cyan-700 disabled:opacity-60"
             >
               <span className="inline-flex items-center gap-2">
                 {savingSettings && (
-                  <span className="h-3 w-3 animate-spin rounded-full border border-slate-900 border-t-transparent" />
+                  <span className="h-3 w-3 animate-spin rounded-full border border-cyan-600 border-t-transparent" />
                 )}
                 Save settings
               </span>

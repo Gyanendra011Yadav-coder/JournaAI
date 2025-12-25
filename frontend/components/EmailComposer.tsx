@@ -9,20 +9,20 @@ export function EmailComposer({ subject, body, onSubjectChange, onBodyChange }: 
   return (
     <div className="space-y-4">
       <div>
-        <label className="text-sm text-slate-300">Subject</label>
+        <label className="text-sm text-slate-600">Subject</label>
         <input
           value={subject}
           onChange={(event) => onSubjectChange(event.target.value)}
-          className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-700 p-2"
+          className="mt-2 w-full rounded-xl border border-slate-200 bg-white/90 p-3"
         />
       </div>
       <div>
-        <label className="text-sm text-slate-300">Body</label>
+        <label className="text-sm text-slate-600">Body</label>
         <textarea
           value={body}
           onChange={(event) => onBodyChange(event.target.value)}
           rows={8}
-          className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-700 p-2"
+          className="mt-2 w-full rounded-xl border border-slate-200 bg-white/90 p-3"
         />
       </div>
     </div>

@@ -49,43 +49,51 @@ export default function ArticleDetailPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold">{article.title}</h1>
-        <p className="text-slate-400">
+        <h1 className="text-3xl font-semibold">{article.title}</h1>
+        <p className="text-slate-600">
           {article.sourceName ?? "Unknown source"} ·{" "}
           {article.publishedAtUtc ? new Date(article.publishedAtUtc).toLocaleString() : "Unknown date"}
         </p>
-        <p className="text-xs text-cyan-300">Provider: {article.providerType}</p>
+        <p className="text-xs text-cyan-600">Provider: {article.providerType}</p>
       </header>
       <ErrorBanner message={error} />
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+      <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 space-y-4 shadow-[0_12px_40px_-32px_rgba(15,23,42,0.2)]">
         {article.imageUrl && (
-          <img src={article.imageUrl} alt={article.title} className="w-full rounded-xl border border-slate-800" />
+          <img src={article.imageUrl} alt={article.title} className="w-full rounded-xl border border-slate-200" />
         )}
         <div>
-          <p className="text-sm text-slate-400">Beat</p>
-          <p className="text-slate-200 mt-2">{article.beatName}</p>
+          <p className="text-sm text-slate-600">Beat</p>
+          <p className="text-slate-700 mt-2">{article.beatName}</p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
-          {article.category && <span className="rounded-full bg-slate-800 px-2 py-1">Category: {article.category}</span>}
-          {article.lensSource && <span className="rounded-full bg-slate-800 px-2 py-1">Lens: {article.lensSource}</span>}
-          {article.clientMatch && <span className="rounded-full bg-cyan-500/20 px-2 py-1 text-cyan-200">Client match</span>}
+          {article.category && (
+            <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">
+              Category: {article.category}
+            </span>
+          )}
+          {article.lensSource && (
+            <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">Lens: {article.lensSource}</span>
+          )}
+          {article.clientMatch && (
+            <span className="rounded-full bg-cyan-50 px-2 py-1 text-cyan-700">Client match</span>
+          )}
         </div>
         {article.description && (
           <div>
-            <p className="text-sm text-slate-400">Description</p>
-            <p className="text-slate-200 mt-2">{article.description}</p>
+            <p className="text-sm text-slate-600">Description</p>
+            <p className="text-slate-700 mt-2">{article.description}</p>
           </div>
         )}
         {article.content && (
           <div>
-            <p className="text-sm text-slate-400">Content</p>
-            <p className="text-slate-200 mt-2 whitespace-pre-line">{article.content}</p>
+            <p className="text-sm text-slate-600">Content</p>
+            <p className="text-slate-700 mt-2 whitespace-pre-line">{article.content}</p>
           </div>
         )}
         <div className="flex flex-wrap gap-2 text-xs">
-          <span className="rounded-full bg-slate-800 px-2 py-1">Status: {article.status}</span>
+          <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">Status: {article.status}</span>
           {article.internalPublishedAtUtc && (
-            <span className="rounded-full bg-emerald-500/20 px-2 py-1 text-emerald-200">
+            <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700">
               Published {new Date(article.internalPublishedAtUtc).toLocaleString()}
             </span>
           )}
@@ -104,7 +112,7 @@ export default function ArticleDetailPage() {
               }
             }}
             disabled={saving}
-            className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-cyan-500/60 disabled:opacity-60"
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:border-cyan-500/60 disabled:opacity-60"
           >
             <span className="inline-flex items-center gap-2">
               {saving && <span className="h-3 w-3 animate-spin rounded-full border border-slate-400 border-t-transparent" />}
@@ -124,16 +132,18 @@ export default function ArticleDetailPage() {
               }
             }}
             disabled={pinning}
-            className="rounded-lg border border-emerald-500/60 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-100 disabled:opacity-60"
+            className="rounded-lg border border-emerald-300/70 bg-emerald-50 px-4 py-2 text-sm text-emerald-700 disabled:opacity-60"
           >
             <span className="inline-flex items-center gap-2">
-              {pinning && <span className="h-3 w-3 animate-spin rounded-full border border-emerald-200 border-t-transparent" />}
+              {pinning && (
+                <span className="h-3 w-3 animate-spin rounded-full border border-emerald-500 border-t-transparent" />
+              )}
               Pin
             </span>
           </button>
         </div>
         {externalUrl && (
-          <a href={externalUrl} className="text-cyan-300 hover:underline" target="_blank" rel="noreferrer">
+          <a href={externalUrl} className="text-cyan-600 hover:underline" target="_blank" rel="noreferrer">
             View original article
           </a>
         )}

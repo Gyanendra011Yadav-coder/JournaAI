@@ -6,8 +6,8 @@ interface ErrorBannerProps {
 }
 
 const tones = {
-  error: "border-rose-500/60 bg-rose-500/10 text-rose-100",
-  warning: "border-amber-400/60 bg-amber-500/10 text-amber-100",
+  error: "border-rose-500/40 bg-rose-50 text-rose-700",
+  warning: "border-amber-400/50 bg-amber-50 text-amber-800",
 };
 
 export function ErrorBanner({ message, tone = "error" }: ErrorBannerProps) {
