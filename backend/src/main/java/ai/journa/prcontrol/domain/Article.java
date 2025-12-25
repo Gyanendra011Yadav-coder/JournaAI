@@ -21,8 +21,17 @@ public class Article {
   private String providerArticleId;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "beat_id", nullable = false)
+  @JoinColumn(name = "beat_id")
   private Beat beat;
+
+  private String category;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "lens_source", nullable = false)
+  private LensSource lensSource = LensSource.BEAT;
+
+  @Column(name = "client_match", nullable = false)
+  private boolean clientMatch = false;
 
   @Column(nullable = false)
   private String title;
@@ -102,6 +111,30 @@ public class Article {
 
   public void setBeat(Beat beat) {
     this.beat = beat;
+  }
+
+  public String getCategory() {
+    return category;
+  }
+
+  public void setCategory(String category) {
+    this.category = category;
+  }
+
+  public LensSource getLensSource() {
+    return lensSource;
+  }
+
+  public void setLensSource(LensSource lensSource) {
+    this.lensSource = lensSource;
+  }
+
+  public boolean isClientMatch() {
+    return clientMatch;
+  }
+
+  public void setClientMatch(boolean clientMatch) {
+    this.clientMatch = clientMatch;
   }
 
   public String getTitle() {

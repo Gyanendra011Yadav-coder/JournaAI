@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { apiFetch } from "../lib/api";
 
 interface Article {
   id: number;
@@ -8,7 +9,7 @@ interface Article {
   sourceName: string | null;
   publishedAtUtc: string | null;
   status: string;
-  beatName: string;
+  beatName: string | null;
 }
 
 interface ArticlesTableProps {
@@ -16,6 +17,10 @@ interface ArticlesTableProps {
 }
 
 export function ArticlesTable({ articles }: ArticlesTableProps) {
+  const handleSave = async (id: number) => {
+    await apiFetch(`/api/articles/${id}/save`, { method: "POST" });
+  };
+
   return (
     <div className="border border-slate-800 rounded-xl overflow-hidden">
       <table className="w-full text-sm">
@@ -26,6 +31,7 @@ export function ArticlesTable({ articles }: ArticlesTableProps) {
             <th className="text-left p-3">Beat</th>
             <th className="text-left p-3">Published</th>
             <th className="text-left p-3">Status</th>
+            <th className="text-left p-3">Save</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800">
@@ -37,7 +43,7 @@ export function ArticlesTable({ articles }: ArticlesTableProps) {
                 </Link>
               </td>
               <td className="p-3">{article.sourceName ?? "Unknown"}</td>
-              <td className="p-3">{article.beatName}</td>
+              <td className="p-3">{article.beatName ?? "—"}</td>
               <td className="p-3">
                 {article.publishedAtUtc ? new Date(article.publishedAtUtc).toLocaleDateString() : "—"}
               </td>
@@ -51,6 +57,14 @@ export function ArticlesTable({ articles }: ArticlesTableProps) {
                 >
                   {article.status}
                 </span>
+              </td>
+              <td className="p-3">
+                <button
+                  onClick={() => handleSave(article.id)}
+                  className="rounded-lg border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:border-cyan-500/60"
+                >
+                  Save
+                </button>
               </td>
             </tr>
           ))}

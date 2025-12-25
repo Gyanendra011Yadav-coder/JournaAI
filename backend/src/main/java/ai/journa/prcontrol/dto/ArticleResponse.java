@@ -6,6 +6,9 @@ public class ArticleResponse {
   private String providerArticleId;
   private Long beatId;
   private String beatName;
+  private String category;
+  private String lensSource;
+  private boolean clientMatch;
   private String title;
   private String description;
   private String content;
@@ -60,6 +63,30 @@ public class ArticleResponse {
 
   public void setBeatName(String beatName) {
     this.beatName = beatName;
+  }
+
+  public String getCategory() {
+    return category;
+  }
+
+  public void setCategory(String category) {
+    this.category = category;
+  }
+
+  public String getLensSource() {
+    return lensSource;
+  }
+
+  public void setLensSource(String lensSource) {
+    this.lensSource = lensSource;
+  }
+
+  public boolean isClientMatch() {
+    return clientMatch;
+  }
+
+  public void setClientMatch(boolean clientMatch) {
+    this.clientMatch = clientMatch;
   }
 
   public String getTitle() {

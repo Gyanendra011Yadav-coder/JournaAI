@@ -3,12 +3,13 @@ package ai.journa.prcontrol.service;
 import ai.journa.prcontrol.domain.Article;
 import ai.journa.prcontrol.domain.ArticleStatus;
 import ai.journa.prcontrol.domain.Beat;
+import ai.journa.prcontrol.domain.LensSource;
 import ai.journa.prcontrol.domain.ProviderType;
 import ai.journa.prcontrol.domain.User;
 import ai.journa.prcontrol.dto.ManualArticleRequest;
 import ai.journa.prcontrol.repository.ArticleRepository;
 import ai.journa.prcontrol.repository.BeatRepository;
-import ai.journa.prcontrol.repository.NewsFetchStateRepository;
+import ai.journa.prcontrol.repository.NewsCacheRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,20 +27,20 @@ import java.util.UUID;
 public class ArticleService {
   private final ArticleRepository articleRepository;
   private final BeatRepository beatRepository;
-  private final NewsFetchStateRepository newsFetchStateRepository;
+  private final NewsCacheRepository newsCacheRepository;
   private final AuditService auditService;
   private final SearchRateLimiter searchRateLimiter;
   private final ObjectMapper objectMapper;
 
   public ArticleService(ArticleRepository articleRepository,
                         BeatRepository beatRepository,
-                        NewsFetchStateRepository newsFetchStateRepository,
+                        NewsCacheRepository newsCacheRepository,
                         AuditService auditService,
                         SearchRateLimiter searchRateLimiter,
                         ObjectMapper objectMapper) {
     this.articleRepository = articleRepository;
     this.beatRepository = beatRepository;
-    this.newsFetchStateRepository = newsFetchStateRepository;
+    this.newsCacheRepository = newsCacheRepository;
     this.auditService = auditService;
     this.searchRateLimiter = searchRateLimiter;
     this.objectMapper = objectMapper;
@@ -47,6 +48,8 @@ public class ArticleService {
 
   public Page<Article> searchArticles(User actor,
                                       Long beatId,
+                                      String category,
+                                      LensSource lensSource,
                                       ArticleStatus status,
                                       Instant from,
                                       Instant to,
@@ -59,6 +62,12 @@ public class ArticleService {
     Specification<Article> spec = Specification.where(null);
     if (beatId != null) {
       spec = spec.and((root, query, cb) -> cb.equal(root.get("beat").get("id"), beatId));
+    }
+    if (category != null) {
+      spec = spec.and((root, query, cb) -> cb.equal(root.get("category"), category));
+    }
+    if (lensSource != null) {
+      spec = spec.and((root, query, cb) -> cb.equal(root.get("lensSource"), lensSource));
     }
     if (status != null) {
       spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
@@ -124,14 +133,14 @@ public class ArticleService {
     return saved;
   }
 
-  public Optional<Instant> getLastRefreshedAt(Long beatId) {
-    return newsFetchStateRepository.findByBeatId(beatId)
-        .map(state -> state.getLastSuccessAt());
+  public Optional<Instant> getLastRefreshedAt(String cacheKey) {
+    return newsCacheRepository.findByCacheKey(cacheKey)
+        .map(cache -> cache.getLastSuccessAtUtc());
   }
 
-  public Optional<Boolean> isStaleCache(Long beatId) {
-    return newsFetchStateRepository.findByBeatId(beatId)
-        .map(state -> state.getLastErrorCode() != null && !state.getLastErrorCode().isBlank());
+  public Optional<Boolean> isStaleCache(String cacheKey) {
+    return newsCacheRepository.findByCacheKey(cacheKey)
+        .map(cache -> cache.getLastErrorCode() != null && !cache.getLastErrorCode().isBlank());
   }
 
   private String buildManualPayload(ManualArticleRequest request) {

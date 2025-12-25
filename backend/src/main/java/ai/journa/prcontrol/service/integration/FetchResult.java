@@ -5,6 +5,7 @@ import java.util.List;
 public class FetchResult {
   private int totalArticles;
   private List<ProviderArticle> articles;
+  private String rawPayload;
 
   public FetchResult() {
   }
@@ -28,5 +29,13 @@ public class FetchResult {
 
   public void setArticles(List<ProviderArticle> articles) {
     this.articles = articles;
+  }
+
+  public String getRawPayload() {
+    return rawPayload;
+  }
+
+  public void setRawPayload(String rawPayload) {
+    this.rawPayload = rawPayload;
   }
 }

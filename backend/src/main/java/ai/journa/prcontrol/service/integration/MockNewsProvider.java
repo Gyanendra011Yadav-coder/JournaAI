@@ -40,12 +40,14 @@ public class MockNewsProvider implements NewsProvider {
       article.setRawPayload(serializePayload(article));
       articles.add(article);
     }
-    return new FetchResult(articles.size(), articles);
+    FetchResult result = new FetchResult(articles.size(), articles);
+    result.setRawPayload(serializePayload(articles));
+    return result;
   }
 
-  private String serializePayload(ProviderArticle article) {
+  private String serializePayload(Object payload) {
     try {
-      return objectMapper.writeValueAsString(article);
+      return objectMapper.writeValueAsString(payload);
     } catch (Exception ex) {
       return "{}";
     }

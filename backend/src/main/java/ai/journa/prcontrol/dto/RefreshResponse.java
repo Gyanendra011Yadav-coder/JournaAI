@@ -5,6 +5,8 @@ public class RefreshResponse {
   private boolean staleCache;
   private String lastRefreshedAt;
   private String message;
+  private String resolvedCountry;
+  private String resolvedLang;
 
   public String getStatus() {
     return status;
@@ -36,5 +38,21 @@ public class RefreshResponse {
 
   public void setMessage(String message) {
     this.message = message;
+  }
+
+  public String getResolvedCountry() {
+    return resolvedCountry;
+  }
+
+  public void setResolvedCountry(String resolvedCountry) {
+    this.resolvedCountry = resolvedCountry;
+  }
+
+  public String getResolvedLang() {
+    return resolvedLang;
+  }
+
+  public void setResolvedLang(String resolvedLang) {
+    this.resolvedLang = resolvedLang;
   }
 }

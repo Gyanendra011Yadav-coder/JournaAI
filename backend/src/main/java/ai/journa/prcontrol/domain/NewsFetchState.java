@@ -11,9 +11,21 @@ public class NewsFetchState {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Column(name = "key", nullable = false, unique = true)
+  private String key;
+
+  @Column(name = "mode", nullable = false)
+  private String mode;
+
+  @Column(name = "lens_or_track", nullable = false)
+  private String lensOrTrack;
+
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "beat_id", nullable = false)
+  @JoinColumn(name = "beat_id")
   private Beat beat;
+
+  @Column(name = "category")
+  private String category;
 
   @Column(name = "last_success_at")
   private Instant lastSuccessAt;
@@ -30,6 +42,9 @@ public class NewsFetchState {
   @Column(name = "consecutive_failures", nullable = false)
   private int consecutiveFailures;
 
+  @Column(name = "cooldown_until")
+  private Instant cooldownUntil;
+
   public Long getId() {
     return id;
   }
@@ -38,12 +53,44 @@ public class NewsFetchState {
     this.id = id;
   }
 
+  public String getKey() {
+    return key;
+  }
+
+  public void setKey(String key) {
+    this.key = key;
+  }
+
+  public String getMode() {
+    return mode;
+  }
+
+  public void setMode(String mode) {
+    this.mode = mode;
+  }
+
+  public String getLensOrTrack() {
+    return lensOrTrack;
+  }
+
+  public void setLensOrTrack(String lensOrTrack) {
+    this.lensOrTrack = lensOrTrack;
+  }
+
   public Beat getBeat() {
     return beat;
   }
 
   public void setBeat(Beat beat) {
     this.beat = beat;
+  }
+
+  public String getCategory() {
+    return category;
+  }
+
+  public void setCategory(String category) {
+    this.category = category;
   }
 
   public Instant getLastSuccessAt() {
@@ -84,5 +131,13 @@ public class NewsFetchState {
 
   public void setConsecutiveFailures(int consecutiveFailures) {
     this.consecutiveFailures = consecutiveFailures;
+  }
+
+  public Instant getCooldownUntil() {
+    return cooldownUntil;
+  }
+
+  public void setCooldownUntil(Instant cooldownUntil) {
+    this.cooldownUntil = cooldownUntil;
   }
 }

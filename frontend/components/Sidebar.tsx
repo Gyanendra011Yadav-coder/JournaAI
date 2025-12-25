@@ -7,8 +7,11 @@ import { apiFetch } from "../lib/api";
 import { LogoutButton } from "./LogoutButton";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/trending", label: "Trending" },
   { href: "/search", label: "Search" },
+  { href: "/saved", label: "Saved Articles" },
+  { href: "/profile", label: "Profile" },
+  { href: "/dashboard", label: "Dashboard" },
 ];
 
 const adminItems = [
@@ -21,16 +24,29 @@ const adminItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const [role, setRole] = useState<string | null>(null);
-  const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAuthPage = pathname === "/login" || pathname === "/register" || pathname === "/signup";
 
   useEffect(() => {
     if (isAuthPage) {
       setRole(null);
       return;
     }
-    apiFetch<{ role: string }>("/api/auth/me")
-      .then((data) => setRole(data.role))
-      .catch(() => setRole(null));
+    const loadProfile = async () => {
+      try {
+        const data = await apiFetch<{ role: string }>("/api/auth/me");
+        setRole(data.role);
+        const profile = await apiFetch<{ defaultSidebarMode?: string }>("/api/me/profile");
+        if (!profile.defaultSidebarMode) {
+          await apiFetch("/api/me/profile", {
+            method: "PUT",
+            body: JSON.stringify({ defaultSidebarMode: "TRENDING" }),
+          });
+        }
+      } catch {
+        setRole(null);
+      }
+    };
+    loadProfile();
   }, [isAuthPage]);
 
   if (isAuthPage) {

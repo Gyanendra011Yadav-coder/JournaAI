@@ -43,10 +43,12 @@ export default function SearchPage() {
   const [beatId, setBeatId] = useState<number | null>(null);
   const [timeframe, setTimeframe] = useState("24h");
   const [customFrom, setCustomFrom] = useState<string>("");
+  const [lens, setLens] = useState<"ALL" | "CLIENT" | "BEAT">("ALL");
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshStatus, setRefreshStatus] = useState<RefreshResponse | null>(null);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
+  const [staleCache, setStaleCache] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,6 +86,8 @@ export default function SearchPage() {
     try {
       const params = new URLSearchParams();
       params.set("beatId", String(beatId));
+      params.set("mode", "SEARCH");
+      params.set("lens", lens);
       params.set("page", "0");
       params.set("size", "20");
       const from = resolveFrom();
@@ -96,6 +100,7 @@ export default function SearchPage() {
       const result = await apiFetch<ArticleSearchResponse>(`/api/articles?${params.toString()}`);
       setArticles(result.items);
       setLastRefreshedAt(result.lastRefreshedAt ?? null);
+      setStaleCache(Boolean(result.staleCache));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load articles.");
     } finally {
@@ -107,10 +112,22 @@ export default function SearchPage() {
     if (!beatId) return;
     setError(null);
     try {
-      const response = await apiFetch<RefreshResponse>(`/api/ingest/refresh?beatId=${beatId}`, {
-        method: "POST",
-      });
-      setRefreshStatus(response);
+      if (lens === "ALL") {
+        await apiFetch(`/api/ingest/refresh?mode=SEARCH&beatId=${beatId}&lensOrTrack=CLIENT`, { method: "POST" });
+        const response = await apiFetch<RefreshResponse>(
+          `/api/ingest/refresh?mode=SEARCH&beatId=${beatId}&lensOrTrack=BEAT`,
+          { method: "POST" }
+        );
+        setRefreshStatus(response);
+      } else {
+        const response = await apiFetch<RefreshResponse>(
+          `/api/ingest/refresh?mode=SEARCH&beatId=${beatId}&lensOrTrack=${lens}`,
+          {
+            method: "POST",
+          }
+        );
+        setRefreshStatus(response);
+      }
       await handleSearch();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to refresh cache.");
@@ -126,10 +143,12 @@ export default function SearchPage() {
         <p className="text-slate-400">Track cached news by beat and timeframe, then refresh on demand.</p>
       </header>
       <ErrorBanner message={error} />
-      {refreshStatus?.staleCache && (
+      {(refreshStatus?.staleCache || staleCache) && (
         <div className="rounded-2xl border border-amber-400/60 bg-amber-500/10 p-4 text-amber-100">
           <p className="text-sm font-semibold">Stale-cache mode</p>
-          <p className="text-sm text-amber-200">{refreshStatus.message}</p>
+          <p className="text-sm text-amber-200">
+            {refreshStatus?.message ?? "Serving cached results from the last successful refresh."}
+          </p>
         </div>
       )}
       {lastRefreshedAt && (
@@ -159,6 +178,24 @@ export default function SearchPage() {
               className="mt-3 rounded-xl bg-slate-900/60 border border-slate-700/80 p-3 text-sm"
             />
           )}
+        </div>
+        <div>
+          <p className="text-sm text-slate-400 mb-2">Lens</p>
+          <div className="flex flex-wrap gap-2">
+            {(["ALL", "CLIENT", "BEAT"] as const).map((option) => (
+              <button
+                key={option}
+                onClick={() => setLens(option)}
+                className={`rounded-full border px-3 py-1 text-xs ${
+                  lens === option
+                    ? "border-cyan-500/60 bg-cyan-500/10 text-cyan-100"
+                    : "border-slate-700 text-slate-300"
+                }`}
+              >
+                {option === "ALL" ? "All" : option === "CLIENT" ? "Client-focused" : "Beat-only"}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="flex flex-wrap gap-3">
           <button
