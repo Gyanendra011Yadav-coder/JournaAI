@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -139,7 +140,8 @@ public class IngestionService {
           fetchRequest.getCountry(),
           request.getLensOrTrack());
       result = fetchWithRetry(fetchRequest, settings.getProviderType(), apiKey);
-      int savedCount = persistArticles(result.getArticles(), request, fetchRequest, settings.getProviderType());
+      PersistResult persistResult = persistArticles(result.getArticles(), request, fetchRequest, settings.getProviderType());
+      int savedCount = persistResult.savedCount();
       state.setLastSuccessAt(now);
       state.setLastAttemptAt(now);
       state.setLastErrorCode(null);
@@ -149,7 +151,7 @@ public class IngestionService {
       upsertCache(cacheKey, now, settings, result);
       auditService.record(actor, "INGEST_SUCCESS", "news", Map.of("articles", result.getArticles().size()), cacheKey);
       if (enrichmentProperties.isAutoRunAfterIngest()) {
-        enrichmentTaskRunner.runPendingTasks();
+        enrichmentTaskRunner.runTasks(persistResult.newTasks());
       }
       logger.info("Ingest success cacheKey={} fetched={} saved={}", cacheKey, result.getArticles().size(), savedCount);
       return RefreshResult.success(state.getLastSuccessAt());
@@ -235,8 +237,9 @@ public class IngestionService {
     }
   }
 
-  private int persistArticles(List<ProviderArticle> articles, IngestRequest request, FetchRequest fetchRequest, ProviderType providerType) {
+  private PersistResult persistArticles(List<ProviderArticle> articles, IngestRequest request, FetchRequest fetchRequest, ProviderType providerType) {
     int saved = 0;
+    List<EnrichmentTask> newTasks = new ArrayList<>();
     for (ProviderArticle article : articles) {
       if (article.getUrl() == null || article.getUrl().isBlank()) {
         continue;
@@ -275,15 +278,17 @@ public class IngestionService {
       try {
         articleRepository.save(entity);
         if (isNew) {
-          enrichmentTaskRunner.enqueueTask(EnrichmentTaskType.EXTRACT_AUTHOR, entity);
+          newTasks.add(enrichmentTaskRunner.enqueueTask(EnrichmentTaskType.EXTRACT_AUTHOR, entity));
           logger.info("Enrichment queued articleId={} url={}", entity.getId(), entity.getUrl());
         }
         saved++;
       } catch (DataIntegrityViolationException ignored) {
       }
     }
-    return saved;
+    return new PersistResult(saved, newTasks);
   }
+
+  private record PersistResult(int savedCount, List<EnrichmentTask> newTasks) {}
 
   private NewsFetchState createState(String cacheKey, IngestRequest request) {
     NewsFetchState state = new NewsFetchState();

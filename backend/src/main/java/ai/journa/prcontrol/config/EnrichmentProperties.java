@@ -10,6 +10,7 @@ public class EnrichmentProperties {
   private boolean htmlFetchEnabled = false;
   private boolean autoRunAfterIngest = true;
   private Scheduled scheduled = new Scheduled();
+  private Runner runner = new Runner();
 
   public int getHtmlCacheMinutes() {
     return htmlCacheMinutes;
@@ -59,6 +60,14 @@ public class EnrichmentProperties {
     this.scheduled = scheduled;
   }
 
+  public Runner getRunner() {
+    return runner;
+  }
+
+  public void setRunner(Runner runner) {
+    this.runner = runner;
+  }
+
   public static class Scheduled {
     private boolean enabled = false;
     private long fixedDelayMs = 600000;
@@ -77,6 +86,45 @@ public class EnrichmentProperties {
 
     public void setFixedDelayMs(long fixedDelayMs) {
       this.fixedDelayMs = fixedDelayMs;
+    }
+  }
+
+  public static class Runner {
+    private int batchSize = 50;
+    private int reviewBatchSize = 10;
+    private int oldPendingBatchSize = 10;
+    private int maxConcurrentTasks = 4;
+
+    public int getBatchSize() {
+      return batchSize;
+    }
+
+    public void setBatchSize(int batchSize) {
+      this.batchSize = batchSize;
+    }
+
+    public int getReviewBatchSize() {
+      return reviewBatchSize;
+    }
+
+    public void setReviewBatchSize(int reviewBatchSize) {
+      this.reviewBatchSize = reviewBatchSize;
+    }
+
+    public int getOldPendingBatchSize() {
+      return oldPendingBatchSize;
+    }
+
+    public void setOldPendingBatchSize(int oldPendingBatchSize) {
+      this.oldPendingBatchSize = oldPendingBatchSize;
+    }
+
+    public int getMaxConcurrentTasks() {
+      return maxConcurrentTasks;
+    }
+
+    public void setMaxConcurrentTasks(int maxConcurrentTasks) {
+      this.maxConcurrentTasks = maxConcurrentTasks;
     }
   }
 }

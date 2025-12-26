@@ -118,6 +118,11 @@ app:
     scheduled:
       enabled: false
       fixedDelayMs: 600000
+    runner:
+      batchSize: 50
+      reviewBatchSize: 10
+      oldPendingBatchSize: 10
+      maxConcurrentTasks: 4
   security:
     integrationMasterKey: ${INTEGRATION_MASTER_KEY:2b5d3a9c1f7e4d8a6c0e9b1f5d7c3a2b8e6f4c1a9d7b5e3c2f8a1e6d4c0b9f2a}
   logging:
