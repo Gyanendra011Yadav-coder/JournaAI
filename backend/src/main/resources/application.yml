@@ -73,6 +73,7 @@ app:
     htmlCacheMinutes: 60
     perDomainDelayMs: 1500
     requestTimeoutSeconds: 10
+    autoRunAfterIngest: true
     scheduled:
       enabled: false
       fixedDelayMs: 600000

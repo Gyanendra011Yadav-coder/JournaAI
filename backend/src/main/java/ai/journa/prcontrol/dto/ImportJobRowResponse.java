@@ -6,6 +6,7 @@ public class ImportJobRowResponse {
   private String status;
   private String message;
   private Long journalistId;
+  private String payloadJsonb;
 
   public Long getId() {
     return id;
@@ -45,5 +46,13 @@ public class ImportJobRowResponse {
 
   public void setJournalistId(Long journalistId) {
     this.journalistId = journalistId;
+  }
+
+  public String getPayloadJsonb() {
+    return payloadJsonb;
+  }
+
+  public void setPayloadJsonb(String payloadJsonb) {
+    this.payloadJsonb = payloadJsonb;
   }
 }

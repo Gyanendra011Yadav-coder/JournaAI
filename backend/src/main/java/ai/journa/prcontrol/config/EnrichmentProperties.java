@@ -7,6 +7,7 @@ public class EnrichmentProperties {
   private int htmlCacheMinutes = 60;
   private int perDomainDelayMs = 1500;
   private int requestTimeoutSeconds = 10;
+  private boolean autoRunAfterIngest = true;
   private Scheduled scheduled = new Scheduled();
 
   public int getHtmlCacheMinutes() {
@@ -31,6 +32,14 @@ public class EnrichmentProperties {
 
   public void setRequestTimeoutSeconds(int requestTimeoutSeconds) {
     this.requestTimeoutSeconds = requestTimeoutSeconds;
+  }
+
+  public boolean isAutoRunAfterIngest() {
+    return autoRunAfterIngest;
+  }
+
+  public void setAutoRunAfterIngest(boolean autoRunAfterIngest) {
+    this.autoRunAfterIngest = autoRunAfterIngest;
   }
 
   public Scheduled getScheduled() {

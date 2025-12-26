@@ -1,5 +1,6 @@
 package ai.journa.prcontrol.service;
 
+import ai.journa.prcontrol.config.EnrichmentProperties;
 import ai.journa.prcontrol.config.NewsProviderProperties;
 import ai.journa.prcontrol.domain.*;
 import ai.journa.prcontrol.repository.ArticleRepository;
@@ -33,6 +34,7 @@ public class IngestionService {
   private final NewsCacheRepository newsCacheRepository;
   private final ArticleRepository articleRepository;
   private final EnrichmentTaskRunner enrichmentTaskRunner;
+  private final EnrichmentProperties enrichmentProperties;
   private final AuditService auditService;
   private final OutboundRateLimiter outboundRateLimiter;
   private final NewsProviderProperties properties;
@@ -46,6 +48,7 @@ public class IngestionService {
                           NewsCacheRepository newsCacheRepository,
                           ArticleRepository articleRepository,
                           EnrichmentTaskRunner enrichmentTaskRunner,
+                          EnrichmentProperties enrichmentProperties,
                           AuditService auditService,
                           OutboundRateLimiter outboundRateLimiter,
                           NewsProviderProperties properties,
@@ -58,6 +61,7 @@ public class IngestionService {
     this.newsCacheRepository = newsCacheRepository;
     this.articleRepository = articleRepository;
     this.enrichmentTaskRunner = enrichmentTaskRunner;
+    this.enrichmentProperties = enrichmentProperties;
     this.auditService = auditService;
     this.outboundRateLimiter = outboundRateLimiter;
     this.properties = properties;
@@ -139,6 +143,9 @@ public class IngestionService {
       newsFetchStateRepository.save(state);
       upsertCache(cacheKey, now, settings, result);
       auditService.record(actor, "INGEST_SUCCESS", "news", Map.of("articles", result.getArticles().size()), cacheKey);
+      if (enrichmentProperties.isAutoRunAfterIngest()) {
+        enrichmentTaskRunner.runPendingTasks();
+      }
       logger.info("Ingest success cacheKey={} fetched={} saved={}", cacheKey, result.getArticles().size(), savedCount);
       return RefreshResult.success(state.getLastSuccessAt());
     } catch (ProviderException ex) {

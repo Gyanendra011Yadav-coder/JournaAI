@@ -130,6 +130,7 @@ public class AdminJournalistController {
     response.setStatus(row.getStatus().name());
     response.setMessage(row.getMessage());
     response.setJournalistId(row.getJournalist() != null ? row.getJournalist().getId() : null);
+    response.setPayloadJsonb(row.getPayloadJsonb());
     return response;
   }
 }

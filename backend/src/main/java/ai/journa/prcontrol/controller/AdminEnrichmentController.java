@@ -47,7 +47,14 @@ public class AdminEnrichmentController {
     response.setId(task.getId());
     response.setTaskType(task.getTaskType().name());
     response.setArticleId(task.getArticle() != null ? task.getArticle().getId() : null);
+    if (task.getArticle() != null) {
+      response.setArticleTitle(task.getArticle().getTitle());
+      response.setArticleUrl(task.getArticle().getUrl());
+    }
     response.setJournalistId(task.getJournalist() != null ? task.getJournalist().getId() : null);
+    if (task.getJournalist() != null) {
+      response.setJournalistName(task.getJournalist().getFullName());
+    }
     response.setStatus(task.getStatus().name());
     response.setPriority(task.getPriority());
     response.setAttempts(task.getAttempts());

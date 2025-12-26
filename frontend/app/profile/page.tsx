@@ -36,6 +36,8 @@ export default function ProfilePage() {
   const [clientName, setClientName] = useState("");
   const [clientAliases, setClientAliases] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [addingClient, setAddingClient] = useState(false);
   const [clientBeatIds, setClientBeatIds] = useState<number[]>([]);
   const countryOptions = useMemo(() => getCountryOptions(), []);
@@ -84,6 +86,10 @@ export default function ProfilePage() {
         method: "PUT",
         body: JSON.stringify(profile),
       });
+      setSaveNotice("Preferences saved.");
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+      setTimeout(() => setSaveNotice(null), 3500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save profile.");
     } finally {
@@ -240,6 +246,11 @@ export default function ProfilePage() {
               />
             </div>
           </div>
+          {saveNotice && (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+              {saveNotice}
+            </div>
+          )}
           <button
             onClick={saveProfile}
             disabled={savingProfile}
@@ -249,7 +260,7 @@ export default function ProfilePage() {
               {savingProfile && (
                 <span className="h-3 w-3 animate-spin rounded-full border border-slate-200 border-t-transparent" />
               )}
-              Save preferences
+              {savingProfile ? "Saving..." : saveSuccess ? "Saved ✓" : "Save preferences"}
             </span>
           </button>
         </div>

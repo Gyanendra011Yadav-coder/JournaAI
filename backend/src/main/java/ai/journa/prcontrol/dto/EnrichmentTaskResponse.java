@@ -4,7 +4,10 @@ public class EnrichmentTaskResponse {
   private Long id;
   private String taskType;
   private Long articleId;
+  private String articleTitle;
+  private String articleUrl;
   private Long journalistId;
+  private String journalistName;
   private String status;
   private int priority;
   private int attempts;
@@ -35,12 +38,36 @@ public class EnrichmentTaskResponse {
     this.articleId = articleId;
   }
 
+  public String getArticleTitle() {
+    return articleTitle;
+  }
+
+  public void setArticleTitle(String articleTitle) {
+    this.articleTitle = articleTitle;
+  }
+
+  public String getArticleUrl() {
+    return articleUrl;
+  }
+
+  public void setArticleUrl(String articleUrl) {
+    this.articleUrl = articleUrl;
+  }
+
   public Long getJournalistId() {
     return journalistId;
   }
 
   public void setJournalistId(Long journalistId) {
     this.journalistId = journalistId;
+  }
+
+  public String getJournalistName() {
+    return journalistName;
+  }
+
+  public void setJournalistName(String journalistName) {
+    this.journalistName = journalistName;
   }
 
   public String getStatus() {
