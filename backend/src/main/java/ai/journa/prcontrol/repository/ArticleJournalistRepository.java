@@ -11,5 +11,7 @@ public interface ArticleJournalistRepository extends JpaRepository<ArticleJourna
 
   List<ArticleJournalist> findByArticleId(Long articleId);
 
+  Optional<ArticleJournalist> findByArticleIdAndJournalistId(Long articleId, Long journalistId);
+
   Optional<ArticleJournalist> findFirstByArticleIdOrderByMatchConfidenceDesc(Long articleId);
 }

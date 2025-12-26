@@ -74,6 +74,11 @@ public class IngestionService {
   public RefreshResult refresh(IngestRequest request, AppLocaleResolver.Resolution locale, User actor, boolean respectTtl) {
     IntegrationSettings settings = integrationSettingsService.getActiveSettings();
     Instant now = Instant.now();
+    if (request.getMode() == IngestMode.SEARCH && "CLIENT".equalsIgnoreCase(request.getLensOrTrack())) {
+      if (!queryBuilderService.hasClientTerms(request.getActor())) {
+        return RefreshResult.skipped("No client keywords configured", null);
+      }
+    }
     FetchRequest fetchRequest = buildFetchRequest(request, locale, settings);
     String cacheKey = cacheKeyService.build(
         request.getMode(),
@@ -124,7 +129,7 @@ public class IngestionService {
 
     FetchResult result;
     try {
-      logger.info("Ingest fetch cacheKey={} provider={} endpoint={} query={} category={} lang={} country={} lens={}",
+      logger.debug("Ingest fetch cacheKey={} provider={} endpoint={} query={} category={} lang={} country={} lens={}",
           cacheKey,
           settings.getProviderType(),
           fetchRequest.getEndpointType(),
@@ -175,7 +180,7 @@ public class IngestionService {
       fetchRequest.setCountry(locale.country());
       fetchRequest.setInFields(bundle.template().getInDefault());
       fetchRequest.setNullableFields(bundle.template().getNullableFields());
-      fetchRequest.setMax(bundle.template().getMaxDefault() != null ? bundle.template().getMaxDefault() : settings.getMaxPerRequest());
+      fetchRequest.setMax(resolveMax(bundle.template().getMaxDefault(), settings.getMaxPerRequest()));
       fetchRequest.setSort(bundle.template().getSortbyDefault());
     } else {
       fetchRequest.setEndpointType(EndpointType.TOP_HEADLINES);
@@ -185,9 +190,17 @@ public class IngestionService {
       if ("LOCAL".equalsIgnoreCase(request.getLensOrTrack())) {
         fetchRequest.setCountry(locale.country());
       }
-      fetchRequest.setMax(settings.getMaxPerRequest());
+      fetchRequest.setMax(resolveMax(null, settings.getMaxPerRequest()));
     }
     return fetchRequest;
+  }
+
+  private int resolveMax(Integer templateMax, Integer globalMax) {
+    int max = templateMax != null && templateMax > 0 ? templateMax : (globalMax != null ? globalMax : 1);
+    if (globalMax != null && globalMax > 0) {
+      max = Math.min(max, globalMax);
+    }
+    return Math.max(1, max);
   }
 
   private FetchResult fetchWithRetry(FetchRequest request, ProviderType providerType, String apiKey) {
@@ -201,7 +214,7 @@ public class IngestionService {
     while (true) {
       attempts++;
       try {
-        logger.info("Ingest provider call provider={} attempt={} query={}",
+        logger.debug("Ingest provider call provider={} attempt={} query={}",
             providerType,
             attempts,
             request.getQuery());
@@ -263,6 +276,7 @@ public class IngestionService {
         articleRepository.save(entity);
         if (isNew) {
           enrichmentTaskRunner.enqueueTask(EnrichmentTaskType.EXTRACT_AUTHOR, entity);
+          logger.info("Enrichment queued articleId={} url={}", entity.getId(), entity.getUrl());
         }
         saved++;
       } catch (DataIntegrityViolationException ignored) {

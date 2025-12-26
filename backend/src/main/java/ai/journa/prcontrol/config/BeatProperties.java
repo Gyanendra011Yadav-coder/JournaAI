@@ -21,6 +21,7 @@ public class BeatProperties {
     private String name;
     private String slug;
     private Boolean active;
+    private List<String> terms;
 
     public String getName() {
       return name;
@@ -44,6 +45,14 @@ public class BeatProperties {
 
     public void setActive(Boolean active) {
       this.active = active;
+    }
+
+    public List<String> getTerms() {
+      return terms;
+    }
+
+    public void setTerms(List<String> terms) {
+      this.terms = terms;
     }
   }
 }

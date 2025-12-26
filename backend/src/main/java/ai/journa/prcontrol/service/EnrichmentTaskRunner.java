@@ -12,6 +12,8 @@ import ai.journa.prcontrol.repository.ArticleRepository;
 import ai.journa.prcontrol.repository.EnrichmentTaskRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ import java.util.Optional;
 
 @Service
 public class EnrichmentTaskRunner {
+  private static final Logger logger = LoggerFactory.getLogger(EnrichmentTaskRunner.class);
   private final EnrichmentTaskRepository taskRepository;
   private final ArticleRepository articleRepository;
   private final ArticleAuthorExtractionRepository extractionRepository;
@@ -60,6 +63,11 @@ public class EnrichmentTaskRunner {
         List.of(EnrichmentTaskStatus.PENDING, EnrichmentTaskStatus.NEEDS_REVIEW),
         Instant.now()
     );
+    if (tasks.isEmpty()) {
+      logger.info("Enrichment run: no pending tasks");
+    } else {
+      logger.info("Enrichment run: processing {} task(s)", tasks.size());
+    }
     tasks.forEach(this::runTask);
   }
 
@@ -99,6 +107,10 @@ public class EnrichmentTaskRunner {
     task.setAttempts(task.getAttempts() + 1);
     task.setUpdatedAt(Instant.now());
     taskRepository.save(task);
+    logger.info("Enrichment task start type={} articleId={} attempt={}",
+        task.getTaskType(),
+        task.getArticle() != null ? task.getArticle().getId() : null,
+        task.getAttempts());
     try {
       if (task.getTaskType() == EnrichmentTaskType.EXTRACT_AUTHOR) {
         handleExtractAuthor(task);
@@ -115,6 +127,10 @@ public class EnrichmentTaskRunner {
       task.setNotes(ex.getMessage());
       task.setUpdatedAt(Instant.now());
       taskRepository.save(task);
+      logger.warn("Enrichment task failed type={} articleId={} reason={}",
+          task.getTaskType(),
+          task.getArticle() != null ? task.getArticle().getId() : null,
+          ex.getMessage());
     }
   }
 
@@ -133,6 +149,11 @@ public class EnrichmentTaskRunner {
 
     String candidatesJsonb = objectMapper.writeValueAsString(result.candidates());
     ArticleAuthorExtraction extraction = authorExtractionService.persistExtraction(article, result, candidatesJsonb, nonPerson);
+    logger.info("Author extraction result articleId={} status={} candidates={} nonPerson={}",
+        article.getId(),
+        result.fetchStatus(),
+        result.candidates().size(),
+        nonPerson);
 
     if (result.fetchStatus() == FetchStatus.SUCCESS && !nonPerson && !normalized.isEmpty()) {
       EnrichmentTask resolveTask = new EnrichmentTask();
@@ -143,6 +164,9 @@ public class EnrichmentTaskRunner {
       taskRepository.save(resolveTask);
       task.setNotes("Extraction stored id=" + extraction.getId());
       task.setStatus(EnrichmentTaskStatus.DONE);
+    } else if (result.fetchStatus() == FetchStatus.SKIPPED) {
+      task.setNotes(result.errorMessage() != null ? result.errorMessage() : "Extraction skipped");
+      task.setStatus(EnrichmentTaskStatus.SKIPPED);
     } else if (nonPerson) {
       task.setNotes("Non-person byline detected");
       task.setStatus(EnrichmentTaskStatus.DONE);
@@ -155,6 +179,10 @@ public class EnrichmentTaskRunner {
     }
     task.setUpdatedAt(Instant.now());
     taskRepository.save(task);
+    logger.info("Author extraction done articleId={} taskStatus={} notes={}",
+        article.getId(),
+        task.getStatus(),
+        task.getNotes());
   }
 
   private void handleResolveJournalist(EnrichmentTask task) {
@@ -170,6 +198,8 @@ public class EnrichmentTaskRunner {
       task.setStatus(EnrichmentTaskStatus.NEEDS_REVIEW);
       task.setNotes("Missing author extraction");
       taskRepository.save(task);
+      logger.info("Journalist resolve skipped articleId={} reason=NO_EXTRACTION",
+          article.getId());
       return;
     }
     String authorName = extraction.get().getAuthorRaw();
@@ -179,5 +209,9 @@ public class EnrichmentTaskRunner {
     task.setNotes(confidence < 80 ? "Fuzzy match" : "Resolved");
     task.setUpdatedAt(Instant.now());
     taskRepository.save(task);
+    logger.info("Journalist resolve done articleId={} author={} status={}",
+        article.getId(),
+        authorName,
+        task.getStatus());
   }
 }

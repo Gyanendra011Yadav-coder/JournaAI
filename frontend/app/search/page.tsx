@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { BeatSelector } from "../../components/BeatSelector";
 import { TimeframePicker } from "../../components/TimeframePicker";
 import { ArticlesTable } from "../../components/ArticlesTable";
@@ -34,6 +35,14 @@ interface Beat {
   slug: string;
 }
 
+interface Profile {
+  clientKeywords?: string[];
+}
+
+interface Client {
+  id: number;
+}
+
 interface RefreshResponse {
   status: string;
   staleCache: boolean;
@@ -42,11 +51,13 @@ interface RefreshResponse {
 }
 
 export default function SearchPage() {
+  const searchParams = useSearchParams();
   const [beats, setBeats] = useState<Beat[]>([]);
   const [beatId, setBeatId] = useState<number | null>(null);
   const [timeframe, setTimeframe] = useState("24h");
   const [customFrom, setCustomFrom] = useState<string>("");
   const [lens, setLens] = useState<"ALL" | "CLIENT" | "BEAT">("ALL");
+  const [pageSize, setPageSize] = useState(20);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshStatus, setRefreshStatus] = useState<RefreshResponse | null>(null);
@@ -54,21 +65,61 @@ export default function SearchPage() {
   const [staleCache, setStaleCache] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [hasClientTerms, setHasClientTerms] = useState(false);
+  const [autoSearchReady, setAutoSearchReady] = useState(false);
+  const [journalistFilterId, setJournalistFilterId] = useState<number | null>(null);
+  const [journalistFilterName, setJournalistFilterName] = useState<string | null>(null);
   const showOfflineHint = error?.includes("Unable to reach API");
 
   useEffect(() => {
-    apiFetch<Beat[]>("/api/beats")
-      .then((data) => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const data = await apiFetch<Beat[]>("/api/beats");
+        if (cancelled) return;
         setBeats(data);
-        if (data.length > 0) {
-          setBeatId(data[0].id);
-        }
         setError(null);
-      })
-      .catch((err) => {
+      } catch (err) {
+        if (cancelled) return;
         setError(err instanceof Error ? err.message : "Unable to load beats.");
-      });
+      }
+      try {
+        const [profileData, clientsData] = await Promise.all([
+          apiFetch<Profile>("/api/me/profile"),
+          apiFetch<Client[]>("/api/me/clients"),
+        ]);
+        if (cancelled) return;
+        const keywordCount = (profileData.clientKeywords ?? []).filter(Boolean).length;
+        setHasClientTerms(keywordCount > 0 || clientsData.length > 0);
+      } catch {
+        if (cancelled) return;
+        setHasClientTerms(false);
+      }
+      if (!cancelled) {
+        setAutoSearchReady(true);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  useEffect(() => {
+    const journalistIdParam = searchParams.get("journalistId");
+    if (!journalistIdParam) {
+      setJournalistFilterId(null);
+      setJournalistFilterName(null);
+      return;
+    }
+    const parsed = Number(journalistIdParam);
+    if (Number.isFinite(parsed)) {
+      setJournalistFilterId(parsed);
+      setJournalistFilterName(searchParams.get("journalistName"));
+      setBeatId(null);
+      setLens("ALL");
+    }
+  }, [searchParams]);
 
   const resolveFrom = () => {
     const now = new Date();
@@ -85,16 +136,24 @@ export default function SearchPage() {
   };
 
   const handleSearch = async () => {
-    if (!beatId) return;
+    if (lens === "CLIENT" && !hasClientTerms) {
+      setError("Add client keywords or clients to use the client-focused lens.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
-      params.set("beatId", String(beatId));
       params.set("mode", "SEARCH");
       params.set("lens", lens);
       params.set("page", "0");
-      params.set("size", "20");
+      params.set("size", String(pageSize));
+      if (beatId !== null) {
+        params.set("beatId", String(beatId));
+      }
+      if (journalistFilterId !== null) {
+        params.set("journalistId", String(journalistFilterId));
+      }
       const from = resolveFrom();
       if (from) {
         params.set("from", from);
@@ -114,12 +173,30 @@ export default function SearchPage() {
   };
 
   const handleRefresh = async () => {
-    if (!beatId) return;
+    if (journalistFilterId !== null) {
+      setError("Refresh is disabled when filtering by journalist.");
+      return;
+    }
+    if (!beatId) {
+      setError("Select a beat before refreshing the cache.");
+      return;
+    }
+    if (lens === "CLIENT" && !hasClientTerms) {
+      setError("Add client keywords or clients to use the client-focused lens.");
+      setRefreshStatus({
+        status: "SKIPPED",
+        staleCache: true,
+        message: "No client keywords configured.",
+      });
+      return;
+    }
     setError(null);
     setRefreshing(true);
     try {
       if (lens === "ALL") {
-        await apiFetch(`/api/ingest/refresh?mode=SEARCH&beatId=${beatId}&lensOrTrack=CLIENT`, { method: "POST" });
+        if (hasClientTerms) {
+          await apiFetch(`/api/ingest/refresh?mode=SEARCH&beatId=${beatId}&lensOrTrack=CLIENT`, { method: "POST" });
+        }
         const response = await apiFetch<RefreshResponse>(
           `/api/ingest/refresh?mode=SEARCH&beatId=${beatId}&lensOrTrack=BEAT`,
           { method: "POST" }
@@ -141,6 +218,13 @@ export default function SearchPage() {
       setRefreshing(false);
     }
   };
+
+  useEffect(() => {
+    if (!autoSearchReady) return;
+    if (timeframe.toLowerCase() === "custom" && !customFrom) return;
+    if (lens === "CLIENT" && !hasClientTerms) return;
+    handleSearch();
+  }, [autoSearchReady, beatId, timeframe, customFrom, lens, journalistFilterId, hasClientTerms, pageSize]);
 
 
   return (
@@ -167,7 +251,34 @@ export default function SearchPage() {
       <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 space-y-5 shadow-[0_12px_40px_-32px_rgba(15,23,42,0.2)]">
         <div>
           <p className="text-sm text-slate-600 mb-2">Select beat</p>
-          <BeatSelector value={beatId} beats={beats} onChange={setBeatId} />
+          <BeatSelector
+            value={beatId}
+            beats={beats}
+            onChange={(value) => {
+              setBeatId(value);
+              if (journalistFilterId !== null) {
+                setJournalistFilterId(null);
+                setJournalistFilterName(null);
+              }
+            }}
+          />
+          {journalistFilterId !== null && (
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs text-cyan-800">
+              <span>
+                Filtering by journalist: {journalistFilterName ?? `ID ${journalistFilterId}`}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setJournalistFilterId(null);
+                  setJournalistFilterName(null);
+                }}
+                className="rounded-full border border-cyan-300/70 px-2 py-0.5 text-[10px] uppercase tracking-[0.15em]"
+              >
+                Clear
+              </button>
+            </div>
+          )}
           {showOfflineHint && (
             <p className="mt-2 text-xs text-amber-700">
               Backend offline — start <span className="font-semibold">./gradlew bootRun</span> or set{" "}
@@ -194,7 +305,8 @@ export default function SearchPage() {
               <button
                 key={option}
                 onClick={() => setLens(option)}
-                className={`rounded-full border px-3 py-1 text-xs transition ${
+                disabled={journalistFilterId !== null || (option === "CLIENT" && !hasClientTerms)}
+                className={`rounded-full border px-3 py-1 text-xs transition disabled:cursor-not-allowed disabled:opacity-60 ${
                   lens === option
                     ? "border-cyan-300/70 bg-cyan-50 text-cyan-700"
                     : "border-slate-200 text-slate-600 hover:border-cyan-200 hover:text-slate-900"
@@ -204,6 +316,23 @@ export default function SearchPage() {
               </button>
             ))}
           </div>
+          {!hasClientTerms && (
+            <p className="mt-2 text-xs text-slate-500">Add clients or keywords in Profile to enable client-focused.</p>
+          )}
+        </div>
+        <div>
+          <p className="text-sm text-slate-600 mb-2">Results per page</p>
+          <select
+            value={pageSize}
+            onChange={(event) => setPageSize(Number(event.target.value))}
+            className="rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-sm text-slate-700"
+          >
+            {[10, 20, 50].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="flex flex-wrap gap-3">
           <button

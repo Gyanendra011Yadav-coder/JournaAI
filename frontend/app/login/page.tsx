@@ -23,7 +23,7 @@ export default function LoginPage() {
       });
       localStorage.setItem("token", data.token);
       const profile = await apiFetch<{ defaultSidebarMode?: string }>("/api/me/profile");
-      const defaultMode = profile.defaultSidebarMode === "SEARCH" ? "/search" : "/trending";
+      const defaultMode = profile.defaultSidebarMode === "SEARCH" ? "/search" : "/dashboard";
       router.push(defaultMode);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Authentication failed.");

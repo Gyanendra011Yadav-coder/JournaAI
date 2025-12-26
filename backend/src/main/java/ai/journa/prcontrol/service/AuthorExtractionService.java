@@ -1,6 +1,7 @@
 package ai.journa.prcontrol.service;
 
 import ai.journa.prcontrol.domain.Article;
+import ai.journa.prcontrol.config.EnrichmentProperties;
 import ai.journa.prcontrol.domain.ArticleAuthorExtraction;
 import ai.journa.prcontrol.domain.FetchStatus;
 import ai.journa.prcontrol.repository.ArticleAuthorExtractionRepository;
@@ -10,39 +11,66 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class AuthorExtractionService {
+  private static final Logger logger = LoggerFactory.getLogger(AuthorExtractionService.class);
+  private static final Pattern BYLINE_PREFIX = Pattern.compile("(?i)^by\\s*[:\\-]?\\s+(.+)$");
+  private static final Pattern BYLINE_SPLIT = Pattern.compile("\\s+(\\||-|—|–)\\s+");
   private final HtmlFetchService htmlFetchService;
   private final ArticleAuthorExtractionRepository extractionRepository;
   private final ObjectMapper objectMapper;
+  private final EnrichmentProperties enrichmentProperties;
 
   public AuthorExtractionService(HtmlFetchService htmlFetchService,
                                  ArticleAuthorExtractionRepository extractionRepository,
-                                 ObjectMapper objectMapper) {
+                                 ObjectMapper objectMapper,
+                                 EnrichmentProperties enrichmentProperties) {
     this.htmlFetchService = htmlFetchService;
     this.extractionRepository = extractionRepository;
     this.objectMapper = objectMapper;
+    this.enrichmentProperties = enrichmentProperties;
   }
 
   public ExtractionResult extractForArticle(Article article) {
     if (article == null || article.getUrl() == null || article.getUrl().isBlank()) {
       return new ExtractionResult(FetchStatus.SKIPPED, null, List.of(), "NO_URL", "Missing article URL");
     }
-    Optional<String> html = htmlFetchService.fetchHtml(article.getUrl());
-    if (html.isEmpty()) {
-      return new ExtractionResult(FetchStatus.FAILED, null, List.of(), "FETCH_FAILED", "Unable to fetch article HTML");
-    }
-    Document document = Jsoup.parse(html.get());
     List<Candidate> candidates = new ArrayList<>();
     String authorRaw = null;
 
+    extractFromText(article.getContent(), "CONTENT", 60, candidates);
+    extractFromText(article.getDescription(), "DESCRIPTION", 55, candidates);
+    if (!candidates.isEmpty()) {
+      authorRaw = candidates.get(0).name();
+      return new ExtractionResult(FetchStatus.SUCCESS, authorRaw, candidates, null, null);
+    }
+
+    if (!enrichmentProperties.isHtmlFetchEnabled()) {
+      logger.info("Author extraction skipped articleId={} reason=HTML_FETCH_DISABLED url={}",
+          article.getId(), article.getUrl());
+      logger.info("Author extraction skipped articleId={} reason=NO_BYLINE_IN_API_FIELDS",
+          article.getId());
+      return new ExtractionResult(FetchStatus.SKIPPED, null, List.of(), "HTML_DISABLED", "HTML fetch disabled");
+    }
+
+    Optional<String> html = htmlFetchService.fetchHtml(article.getUrl());
+    if (html.isEmpty()) {
+      logger.warn("Author extraction failed articleId={} reason=HTML_FETCH_FAILED url={}",
+          article.getId(), article.getUrl());
+      return new ExtractionResult(FetchStatus.FAILED, null, List.of(), "FETCH_FAILED", "Unable to fetch article HTML");
+    }
+    Document document = Jsoup.parse(html.get());
     candidates.addAll(extractFromJsonLd(document));
     candidates.addAll(extractFromMeta(document));
     if (candidates.isEmpty()) {
@@ -65,6 +93,29 @@ public class AuthorExtractionService {
     extraction.setErrorCode(result.errorCode());
     extraction.setErrorMessage(result.errorMessage());
     return extractionRepository.save(extraction);
+  }
+
+  private void extractFromText(String text, String method, int confidence, List<Candidate> candidates) {
+    if (text == null || text.isBlank()) {
+      return;
+    }
+    Matcher matcher = BYLINE_PREFIX.matcher(text.stripLeading());
+    if (!matcher.find()) {
+      return;
+    }
+    String name = matcher.group(1);
+    if (name == null) {
+      return;
+    }
+    String trimmed = name.trim();
+    if (trimmed.isBlank()) {
+      return;
+    }
+    String[] parts = BYLINE_SPLIT.split(trimmed, 2);
+    String candidate = parts.length > 0 ? parts[0].trim() : trimmed;
+    if (!candidate.isBlank()) {
+      candidates.add(new Candidate(candidate, confidence, method));
+    }
   }
 
   private List<Candidate> extractFromJsonLd(Document document) {

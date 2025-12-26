@@ -69,7 +69,7 @@ export default function SignupPage() {
         body: JSON.stringify(payload),
       });
       localStorage.setItem("token", data.token);
-      router.push("/trending");
+      router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed.");
     } finally {

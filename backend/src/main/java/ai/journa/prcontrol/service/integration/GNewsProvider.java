@@ -12,12 +12,17 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class GNewsProvider implements NewsProvider {
   private static final Logger logger = LoggerFactory.getLogger(GNewsProvider.class);
+  private static final Pattern ENCODED_SEQUENCE = Pattern.compile("%[0-9A-Fa-f]{2}");
 
   private final RestTemplate restTemplate;
   private final ObjectMapper objectMapper;
@@ -58,13 +63,13 @@ public class GNewsProvider implements NewsProvider {
         builder.queryParam("category", request.getCategory());
       }
       if (request.getQuery() != null && !request.getQuery().isBlank()) {
-        builder.queryParam("q", request.getQuery());
+        builder.queryParam("q", normalizeQuery(request.getQuery()));
       }
     } else {
       if (request.getQuery() == null || request.getQuery().isBlank()) {
         throw new ProviderException("GNews search requires a query", 400, false);
       }
-      builder.queryParam("q", request.getQuery());
+      builder.queryParam("q", normalizeQuery(request.getQuery()));
     }
 
     if (request.getLang() != null) {
@@ -102,8 +107,13 @@ public class GNewsProvider implements NewsProvider {
       builder.queryParam("apikey", apiKey);
     }
 
-    String requestUrl = builder.toUriString();
-    logger.info("GNews request url={} headerAuth={}", sanitizeUrl(requestUrl), useHeader);
+    URI uri = builder.build().encode(StandardCharsets.UTF_8).toUri();
+    String requestUrl = uri.toString();
+    if (requestUrl.contains("%25")) {
+      logger.warn("GNews request appears double-encoded url={} rawQuery={}", sanitizeUrl(requestUrl), request.getQuery());
+      throw new ProviderException("GNews query appears double-encoded", 400, false);
+    }
+    logger.debug("GNews request url={} headerAuth={}", sanitizeUrl(requestUrl), useHeader);
 
     HttpHeaders headers = new HttpHeaders();
     headers.setAccept(List.of(MediaType.APPLICATION_JSON));
@@ -113,8 +123,8 @@ public class GNewsProvider implements NewsProvider {
 
     HttpEntity<Void> entity = new HttpEntity<>(headers);
     try {
-      ResponseEntity<String> response = restTemplate.exchange(builder.toUriString(), HttpMethod.GET, entity, String.class);
-    return parseResponse(response.getBody());
+      ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
+      return parseResponse(response.getBody());
     } catch (HttpStatusCodeException ex) {
       int status = ex.getStatusCode().value();
       boolean retryable = status == 429 || status >= 500;
@@ -190,5 +200,23 @@ public class GNewsProvider implements NewsProvider {
       end = url.length();
     }
     return url.substring(0, idx) + "apikey=***" + url.substring(end);
+  }
+
+  private String normalizeQuery(String query) {
+    if (query == null) {
+      return null;
+    }
+    String trimmed = query.trim();
+    if (trimmed.isBlank()) {
+      return trimmed;
+    }
+    if (!ENCODED_SEQUENCE.matcher(trimmed).find()) {
+      return trimmed;
+    }
+    try {
+      return URLDecoder.decode(trimmed, StandardCharsets.UTF_8);
+    } catch (IllegalArgumentException ex) {
+      return trimmed;
+    }
   }
 }

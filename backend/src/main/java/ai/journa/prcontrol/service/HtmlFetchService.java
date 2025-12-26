@@ -43,7 +43,7 @@ public class HtmlFetchService {
       cache.put(url, new CachedHtml(body, Instant.now().plus(Duration.ofMinutes(properties.getHtmlCacheMinutes()))));
       return Optional.ofNullable(body);
     } catch (RestClientException ex) {
-      logger.warn("Html fetch failed url={} reason={}", url, ex.getMessage());
+      logger.debug("Html fetch failed url={} reason={}", url, ex.getMessage());
       return Optional.empty();
     }
   }

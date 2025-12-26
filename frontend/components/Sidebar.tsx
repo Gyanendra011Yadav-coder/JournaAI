@@ -36,12 +36,16 @@ export function Sidebar() {
       try {
         const data = await apiFetch<{ role: string }>("/api/auth/me");
         setRole(data.role);
-        const profile = await apiFetch<{ defaultSidebarMode?: string }>("/api/me/profile");
-        if (!profile.defaultSidebarMode) {
-          await apiFetch("/api/me/profile", {
-            method: "PUT",
-            body: JSON.stringify({ defaultSidebarMode: "TRENDING" }),
-          });
+        try {
+          const profile = await apiFetch<{ defaultSidebarMode?: string }>("/api/me/profile");
+          if (!profile.defaultSidebarMode || profile.defaultSidebarMode === "TRENDING") {
+            await apiFetch("/api/me/profile", {
+              method: "PUT",
+              body: JSON.stringify({ defaultSidebarMode: "DASHBOARD" }),
+            });
+          }
+        } catch {
+          // Keep role even if profile update fails.
         }
       } catch {
         setRole(null);

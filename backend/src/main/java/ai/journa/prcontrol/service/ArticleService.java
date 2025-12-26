@@ -8,6 +8,7 @@ import ai.journa.prcontrol.domain.ProviderType;
 import ai.journa.prcontrol.domain.User;
 import ai.journa.prcontrol.dto.ManualArticleRequest;
 import ai.journa.prcontrol.repository.ArticleRepository;
+import ai.journa.prcontrol.repository.ArticleJournalistRepository;
 import ai.journa.prcontrol.repository.BeatRepository;
 import ai.journa.prcontrol.repository.NewsCacheRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,19 +32,22 @@ public class ArticleService {
   private final AuditService auditService;
   private final SearchRateLimiter searchRateLimiter;
   private final ObjectMapper objectMapper;
+  private final ArticleJournalistRepository articleJournalistRepository;
 
   public ArticleService(ArticleRepository articleRepository,
                         BeatRepository beatRepository,
                         NewsCacheRepository newsCacheRepository,
                         AuditService auditService,
                         SearchRateLimiter searchRateLimiter,
-                        ObjectMapper objectMapper) {
+                        ObjectMapper objectMapper,
+                        ArticleJournalistRepository articleJournalistRepository) {
     this.articleRepository = articleRepository;
     this.beatRepository = beatRepository;
     this.newsCacheRepository = newsCacheRepository;
     this.auditService = auditService;
     this.searchRateLimiter = searchRateLimiter;
     this.objectMapper = objectMapper;
+    this.articleJournalistRepository = articleJournalistRepository;
   }
 
   public Page<Article> searchArticles(User actor,
@@ -51,6 +55,7 @@ public class ArticleService {
                                       String category,
                                       LensSource lensSource,
                                       ArticleStatus status,
+                                      String country,
                                       Instant from,
                                       Instant to,
                                       int page,
@@ -69,6 +74,45 @@ public class ArticleService {
     if (lensSource != null) {
       spec = spec.and((root, query, cb) -> cb.equal(root.get("lensSource"), lensSource));
     }
+    if (status != null) {
+      spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+    }
+    if (country != null && !country.isBlank()) {
+      String normalized = country.trim().toLowerCase();
+      spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("sourceCountry")), normalized));
+    }
+    if (from != null) {
+      spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("providerPublishedAtUtc"), from));
+    }
+    if (to != null) {
+      spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("providerPublishedAtUtc"), to));
+    }
+    return articleRepository.findAll(spec, pageable);
+  }
+
+  public Page<Article> searchArticlesByJournalist(User actor,
+                                                  Long journalistId,
+                                                  ArticleStatus status,
+                                                  Instant from,
+                                                  Instant to,
+                                                  int page,
+                                                  int size,
+                                                  int maxPerMinute) {
+    searchRateLimiter.enforceSearchLimit(actor != null ? actor.getEmail() : null, maxPerMinute);
+    auditService.record(actor, "SEARCH", "journalist-articles", null, journalistId != null ? journalistId.toString() : null);
+    PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "providerPublishedAtUtc"));
+    if (journalistId == null) {
+      return Page.empty(pageable);
+    }
+    var articleIds = articleJournalistRepository.findByJournalistId(journalistId).stream()
+        .map(link -> link.getArticle() != null ? link.getArticle().getId() : null)
+        .filter(id -> id != null)
+        .distinct()
+        .toList();
+    if (articleIds.isEmpty()) {
+      return Page.empty(pageable);
+    }
+    Specification<Article> spec = (root, query, cb) -> root.get("id").in(articleIds);
     if (status != null) {
       spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
     }

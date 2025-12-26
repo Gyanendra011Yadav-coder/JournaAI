@@ -57,6 +57,7 @@ public class BeatSeeder implements ApplicationRunner {
     int created = 0;
     int updated = 0;
     int recipesCreated = 0;
+    int templatesUpdated = 0;
     Set<String> seen = new HashSet<>();
 
     for (BeatProperties.BeatDefinition definition : definitions) {
@@ -95,19 +96,28 @@ public class BeatSeeder implements ApplicationRunner {
         updated++;
       }
 
-      if (beatQueryTemplateRepository.findByBeatId(beat.getId()).isEmpty()) {
+      List<String> configuredTerms = normalizeTerms(definition.getTerms());
+      List<BeatQueryTemplate> templates = beatQueryTemplateRepository.findByBeatId(beat.getId());
+      if (templates.isEmpty()) {
         BeatQueryTemplate template = new BeatQueryTemplate();
         template.setBeat(beat);
         template.setEndpointType(EndpointType.SEARCH);
-        template.setBeatTerms(List.of(beat.getName()));
+        template.setBeatTerms(configuredTerms.isEmpty() ? List.of(beat.getName()) : configuredTerms);
         template.setSortbyDefault("publishedAt");
         beatQueryTemplateRepository.save(template);
         recipesCreated++;
+      } else if (!configuredTerms.isEmpty()) {
+        BeatQueryTemplate template = templates.get(0);
+        if (!termsMatch(template.getBeatTerms(), configuredTerms)) {
+          template.setBeatTerms(configuredTerms);
+          beatQueryTemplateRepository.save(template);
+          templatesUpdated++;
+        }
       }
     }
 
-    logger.info("Beat seeding complete. Created: {}, Updated: {}, Templates: {}.",
-        created, updated, recipesCreated);
+    logger.info("Beat seeding complete. Created: {}, Updated: {}, Templates: {}, Templates updated: {}.",
+        created, updated, recipesCreated, templatesUpdated);
   }
 
   private String normalize(String value) {
@@ -119,5 +129,33 @@ public class BeatSeeder implements ApplicationRunner {
     slug = slug.replaceAll("[^a-z0-9]+", "-");
     slug = slug.replaceAll("(^-+|-+$)", "");
     return slug;
+  }
+
+  private List<String> normalizeTerms(List<String> terms) {
+    if (terms == null) {
+      return List.of();
+    }
+    return terms.stream()
+        .filter(term -> term != null && !term.isBlank())
+        .map(String::trim)
+        .distinct()
+        .toList();
+  }
+
+  private boolean termsMatch(List<String> existing, List<String> configured) {
+    if (existing == null || existing.isEmpty()) {
+      return false;
+    }
+    if (existing.size() != configured.size()) {
+      return false;
+    }
+    for (int i = 0; i < existing.size(); i++) {
+      String left = normalize(existing.get(i));
+      String right = normalize(configured.get(i));
+      if (!left.equals(right)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

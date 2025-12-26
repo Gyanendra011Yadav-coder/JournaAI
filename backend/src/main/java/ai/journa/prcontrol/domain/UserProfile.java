@@ -30,7 +30,7 @@ public class UserProfile {
 
   @Enumerated(EnumType.STRING)
   @Column(name = "default_sidebar_mode")
-  private SidebarMode defaultSidebarMode = SidebarMode.TRENDING;
+  private SidebarMode defaultSidebarMode = SidebarMode.DASHBOARD;
 
   @Column(name = "client_lens_ratio", nullable = false)
   private int clientLensRatio = 40;

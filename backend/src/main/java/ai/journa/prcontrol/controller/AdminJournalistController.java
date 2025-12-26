@@ -6,6 +6,7 @@ import ai.journa.prcontrol.dto.ImportJobRowResponse;
 import ai.journa.prcontrol.dto.JournalistArticleSummary;
 import ai.journa.prcontrol.dto.JournalistContactResponse;
 import ai.journa.prcontrol.dto.JournalistResponse;
+import ai.journa.prcontrol.dto.JournalistUpdateRequest;
 import ai.journa.prcontrol.repository.ArticleJournalistRepository;
 import ai.journa.prcontrol.repository.ImportJobRowRepository;
 import ai.journa.prcontrol.service.CsvImportService;
@@ -41,8 +42,9 @@ public class AdminJournalistController {
   }
 
   @GetMapping("/incomplete")
-  public List<JournalistResponse> getIncomplete(@RequestParam(required = false) String missing) {
-    List<Journalist> journalists = journalistService.findIncomplete(missing);
+  public List<JournalistResponse> getIncomplete(@RequestParam(required = false) String missing,
+                                                @RequestParam(required = false) String q) {
+    List<Journalist> journalists = journalistService.findIncomplete(missing, q);
     return journalists.stream().map(this::toResponse).toList();
   }
 
@@ -60,6 +62,13 @@ public class AdminJournalistController {
     Journalist source = journalistService.getJournalist(id);
     Journalist target = journalistService.getJournalist(targetId);
     journalistService.mergeJournalists(source, target);
+  }
+
+  @PutMapping("/{id}")
+  public JournalistResponse update(@PathVariable Long id, @RequestBody JournalistUpdateRequest request) {
+    Journalist journalist = journalistService.getJournalist(id);
+    Journalist updated = journalistService.updateDetails(journalist, request);
+    return toResponse(updated);
   }
 
   @PostMapping("/import-csv")

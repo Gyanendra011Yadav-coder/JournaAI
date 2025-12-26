@@ -7,6 +7,7 @@ public class EnrichmentProperties {
   private int htmlCacheMinutes = 60;
   private int perDomainDelayMs = 1500;
   private int requestTimeoutSeconds = 10;
+  private boolean htmlFetchEnabled = false;
   private boolean autoRunAfterIngest = true;
   private Scheduled scheduled = new Scheduled();
 
@@ -32,6 +33,14 @@ public class EnrichmentProperties {
 
   public void setRequestTimeoutSeconds(int requestTimeoutSeconds) {
     this.requestTimeoutSeconds = requestTimeoutSeconds;
+  }
+
+  public boolean isHtmlFetchEnabled() {
+    return htmlFetchEnabled;
+  }
+
+  public void setHtmlFetchEnabled(boolean htmlFetchEnabled) {
+    this.htmlFetchEnabled = htmlFetchEnabled;
   }
 
   public boolean isAutoRunAfterIngest() {

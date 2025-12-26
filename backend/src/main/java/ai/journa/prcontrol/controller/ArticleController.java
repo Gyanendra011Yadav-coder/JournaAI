@@ -65,6 +65,7 @@ public class ArticleController {
   public ArticleListResponse search(@RequestParam(defaultValue = "SEARCH") IngestMode mode,
                                     @RequestParam(required = false) String lens,
                                     @RequestParam(required = false) Long beatId,
+                                    @RequestParam(required = false) Long journalistId,
                                     @RequestParam(required = false) String category,
                                     @RequestParam(required = false) String from,
                                     @RequestParam(required = false) String to,
@@ -78,19 +79,39 @@ public class ArticleController {
     AppLocaleResolver.Resolution locale = localeResolver.resolve(actor, servletRequest);
 
     ArticleListResponse response = new ArticleListResponse();
-    if (mode == IngestMode.TRENDING && (lens == null || lens.equalsIgnoreCase("MIX") || lens.equalsIgnoreCase("ALL"))) {
+    if (journalistId != null) {
+      Page<Article> results = articleService.searchArticlesByJournalist(
+          actor,
+          journalistId,
+          effectiveStatus,
+          parseInstant(from),
+          parseInstant(to),
+          page,
+          size,
+          newsProviderProperties.getSearchesPerMinute()
+      );
+      response.setItems(results.getContent().stream().map(this::toResponse).toList());
+      response.setTotal(results.getTotalElements());
+      response.setPage(results.getNumber());
+      response.setSize(results.getSize());
+    } else if (mode == IngestMode.TRENDING && (lens == null || lens.equalsIgnoreCase("MIX") || lens.equalsIgnoreCase("ALL"))) {
       List<Article> merged = mergeTrendingMix(actor, category, effectiveStatus, parseInstant(from), parseInstant(to), size);
       response.setItems(merged.stream().map(this::toResponse).toList());
       response.setTotal(merged.size());
       response.setPage(0);
       response.setSize(merged.size());
     } else {
+      String searchCountry = null;
+      if (mode == IngestMode.SEARCH && beatId == null && category == null) {
+        searchCountry = locale.country();
+      }
       Page<Article> results = articleService.searchArticles(
           actor,
           beatId,
           category,
           lensSource,
           effectiveStatus,
+          searchCountry,
           parseInstant(from),
           parseInstant(to),
           page,
@@ -104,6 +125,9 @@ public class ArticleController {
     }
 
     String cacheLens = lens;
+    if (journalistId != null) {
+      return response;
+    }
     if (mode == IngestMode.TRENDING && (lens == null || lens.equalsIgnoreCase("MIX") || lens.equalsIgnoreCase("ALL"))) {
       cacheLens = "LOCAL";
     }
@@ -190,6 +214,7 @@ public class ArticleController {
         category,
         LensSource.TRENDING_LOCAL,
         status,
+        localeResolver.resolveDefaults().country(),
         from,
         to,
         0,
@@ -202,6 +227,7 @@ public class ArticleController {
         category,
         LensSource.TRENDING_GLOBAL,
         status,
+        null,
         from,
         to,
         0,

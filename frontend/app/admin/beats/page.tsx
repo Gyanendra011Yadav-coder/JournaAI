@@ -38,7 +38,7 @@ export default function AdminBeatsPage() {
     beatTerms: [],
     langDefault: "en",
     countryDefault: "us",
-    maxDefault: 25,
+    maxDefault: 10,
     sortbyDefault: "publishedAt",
   });
   const [error, setError] = useState<string | null>(null);

@@ -218,10 +218,11 @@ export default function ProfilePage() {
           <div>
             <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Default view</label>
             <select
-              value={profile.defaultSidebarMode ?? "TRENDING"}
+              value={profile.defaultSidebarMode ?? "DASHBOARD"}
               onChange={(event) => setProfile({ ...profile, defaultSidebarMode: event.target.value })}
               className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
             >
+              <option value="DASHBOARD">Dashboard</option>
               <option value="TRENDING">Trending</option>
               <option value="SEARCH">Search</option>
             </select>

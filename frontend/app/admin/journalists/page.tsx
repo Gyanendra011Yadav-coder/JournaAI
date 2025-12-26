@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import { ErrorBanner } from "../../../components/ErrorBanner";
 
@@ -16,11 +16,20 @@ interface JournalistSummary {
 export default function AdminJournalistsPage() {
   const [journalists, setJournalists] = useState<JournalistSummary[]>([]);
   const [missingField, setMissingField] = useState("email");
+  const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const loadJournalists = () => {
-    const query = missingField ? `?missing=${missingField}` : "";
-    apiFetch<JournalistSummary[]>(`/api/admin/journalists/incomplete${query}`)
+    const params = new URLSearchParams();
+    if (missingField) {
+      params.set("missing", missingField);
+    }
+    if (query.trim()) {
+      params.set("q", query.trim());
+    }
+    const suffix = params.toString();
+    apiFetch<JournalistSummary[]>(`/api/admin/journalists/incomplete${suffix ? `?${suffix}` : ""}`)
       .then((data) => {
         setJournalists(data);
         setError(null);
@@ -30,7 +39,7 @@ export default function AdminJournalistsPage() {
 
   useEffect(() => {
     loadJournalists();
-  }, [missingField]);
+  }, [missingField, query]);
 
   return (
     <div className="space-y-6">
@@ -40,7 +49,7 @@ export default function AdminJournalistsPage() {
         <p className="text-slate-600">Focus on incomplete profiles and approve updates.</p>
       </header>
       <ErrorBanner message={error} />
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <label className="text-sm text-slate-600">Missing</label>
         <select
           value={missingField}
@@ -51,6 +60,12 @@ export default function AdminJournalistsPage() {
           <option value="beats">Beats</option>
           <option value="publication">Publication</option>
         </select>
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search journalists"
+          className="rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-sm text-slate-700"
+        />
       </div>
       <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-[0_12px_40px_-32px_rgba(15,23,42,0.2)]">
         {journalists.length === 0 ? (
@@ -60,7 +75,16 @@ export default function AdminJournalistsPage() {
             {journalists.map((journalist) => (
               <div
                 key={journalist.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white p-4"
+                role="button"
+                tabIndex={0}
+                onClick={() => router.push(`/journalists/${journalist.id}`)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    router.push(`/journalists/${journalist.id}`);
+                  }
+                }}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white p-4 transition hover:border-cyan-200 hover:bg-cyan-50/40"
               >
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{journalist.fullName}</p>
@@ -70,12 +94,9 @@ export default function AdminJournalistsPage() {
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
                     {journalist.verificationStatus}
                   </span>
-                  <Link
-                    href={`/journalists/${journalist.id}`}
-                    className="rounded-xl border border-cyan-300/70 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 hover:bg-cyan-100"
-                  >
+                  <span className="rounded-xl border border-cyan-300/70 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700">
                     Open
-                  </Link>
+                  </span>
                 </div>
               </div>
             ))}

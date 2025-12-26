@@ -34,7 +34,7 @@ public class IntegrationSettings {
   private Integer ttlMinutes = 15;
 
   @Column(name = "max_per_request", nullable = false)
-  private Integer maxPerRequest = 50;
+  private Integer maxPerRequest = 10;
 
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt = Instant.now();

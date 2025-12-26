@@ -22,36 +22,76 @@ app:
   beats:
     - name: "Law"
       slug: "law"
+      terms:
+        - "law"
     - name: "Taxation"
       slug: "taxation"
+      terms:
+        - "taxation"
     - name: "Healthcare"
       slug: "healthcare"
+      terms:
+        - "healthcare"
     - name: "Education"
       slug: "education"
+      terms:
+        - "education"
     - name: "Steel"
       slug: "steel"
-    - name: "Finance/BFSI"
-      slug: "finance-bfsi"
-    - name: "Technology/AI"
-      slug: "tech-ai"
+      terms:
+        - "steel industry"
+    - name: "Finance & Banking"
+      slug: "finance-banking"
+      terms:
+        - "financial services"
+        - "investment banking"
+    - name: "Technology & AI"
+      slug: "technology-ai"
+      terms:
+        - "technology sector"
+        - "artificial intelligence"
     - name: "Telecom"
       slug: "telecom"
+      terms:
+        - "telecom"
     - name: "Energy"
       slug: "energy"
-    - name: "ESG"
-      slug: "esg"
+      terms:
+        - "energy industry"
+    - name: "Entertainment"
+      slug: "entertainment"
+      terms:
+        - "entertainment industry"
+        - "streaming media"
     - name: "Manufacturing"
       slug: "manufacturing"
-    - name: "Startups/VC"
+      terms:
+        - "manufacturing"
+    - name: "Startups & VC"
       slug: "startups-vc"
-    - name: "Pharma/MedTech"
+      terms:
+        - "startup funding"
+        - "venture capital"
+    - name: "Pharma & MedTech"
       slug: "pharma-medtech"
-    - name: "Real Estate & Infra"
+      terms:
+        - "pharmaceutical industry"
+        - "medical technology"
+    - name: "Real Estate & Infrastructure"
       slug: "real-estate-infra"
-    - name: "Consumer/Retail"
+      terms:
+        - "real estate"
+        - "infrastructure projects"
+    - name: "Consumer & Retail"
       slug: "consumer-retail"
-    - name: "Auto/EV"
+      terms:
+        - "consumer goods"
+        - "retail industry"
+    - name: "Automotive & EV"
       slug: "auto-ev"
+      terms:
+        - "automotive industry"
+        - "electric vehicle"
   jwt:
     secret: "change-me-change-me-change-me-change-me"
     expirationSeconds: 3600
@@ -73,14 +113,27 @@ app:
     htmlCacheMinutes: 60
     perDomainDelayMs: 1500
     requestTimeoutSeconds: 10
+    htmlFetchEnabled: true
     autoRunAfterIngest: true
     scheduled:
       enabled: false
       fixedDelayMs: 600000
   security:
     integrationMasterKey: ${INTEGRATION_MASTER_KEY:2b5d3a9c1f7e4d8a6c0e9b1f5d7c3a2b8e6f4c1a9d7b5e3c2f8a1e6d4c0b9f2a}
+  logging:
+    request:
+      enabled: true
+      logStart: true
+      logSuccess: true
+      slowThresholdMs: 1500
+      includePaths:
+        - "/api"
 springdoc:
   api-docs:
     path: /api/docs
   swagger-ui:
     path: /swagger-ui
+logging:
+  level:
+    ai.journa.prcontrol.service.IngestionService: DEBUG
+    ai.journa.prcontrol.service.integration.GNewsProvider: DEBUG
