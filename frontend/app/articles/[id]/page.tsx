@@ -2,11 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { apiFetch } from "../../../lib/api";
 import { ErrorBanner } from "../../../components/ErrorBanner";
 interface Article {
   id: number;
   title: string;
+  authorRaw?: string | null;
+  journalistId?: number | null;
+  journalistName?: string | null;
   description: string | null;
   content: string | null;
   url: string;
@@ -53,6 +57,15 @@ export default function ArticleDetailPage() {
         <p className="text-slate-600">
           {article.sourceName ?? "Unknown source"} ·{" "}
           {article.publishedAtUtc ? new Date(article.publishedAtUtc).toLocaleString() : "Unknown date"}
+        </p>
+        <p className="text-sm text-slate-600">
+          {article.journalistId ? (
+            <Link href={`/journalists/${article.journalistId}`} className="text-cyan-700 hover:underline">
+              {article.journalistName ?? article.authorRaw ?? "Unknown author"}
+            </Link>
+          ) : (
+            <span>{article.journalistName ?? article.authorRaw ?? "Unknown author"}</span>
+          )}
         </p>
         <p className="text-xs text-cyan-600">Provider: {article.providerType}</p>
       </header>

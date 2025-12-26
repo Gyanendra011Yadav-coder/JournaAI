@@ -4,6 +4,7 @@ import ai.journa.prcontrol.domain.Article;
 import ai.journa.prcontrol.dto.ArticleResponse;
 import ai.journa.prcontrol.dto.ManualArticleRequest;
 import ai.journa.prcontrol.service.ArticleService;
+import ai.journa.prcontrol.service.ArticleResponseFactory;
 import ai.journa.prcontrol.service.CurrentUserService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,10 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminArticleController {
   private final ArticleService articleService;
   private final CurrentUserService currentUserService;
+  private final ArticleResponseFactory articleResponseFactory;
 
-  public AdminArticleController(ArticleService articleService, CurrentUserService currentUserService) {
+  public AdminArticleController(ArticleService articleService,
+                                CurrentUserService currentUserService,
+                                ArticleResponseFactory articleResponseFactory) {
     this.articleService = articleService;
     this.currentUserService = currentUserService;
+    this.articleResponseFactory = articleResponseFactory;
   }
 
   @PostMapping("/{id}/publish")
@@ -44,27 +49,6 @@ public class AdminArticleController {
   }
 
   private ArticleResponse toResponse(Article article) {
-    ArticleResponse response = new ArticleResponse();
-    response.setId(article.getId());
-    response.setProviderType(article.getProviderType().name());
-    response.setProviderArticleId(article.getProviderArticleId());
-    response.setBeatId(article.getBeat().getId());
-    response.setBeatName(article.getBeat().getName());
-    response.setTitle(article.getTitle());
-    response.setDescription(article.getDescription());
-    response.setContent(article.getContent());
-    response.setUrl(article.getUrl());
-    response.setImageUrl(article.getImageUrl());
-    response.setPublishedAtUtc(article.getProviderPublishedAtUtc() != null ? article.getProviderPublishedAtUtc().toString() : null);
-    response.setLang(article.getLang());
-    response.setSourceId(article.getSourceId());
-    response.setSourceName(article.getSourceName());
-    response.setSourceUrl(article.getSourceUrl());
-    response.setSourceCountry(article.getSourceCountry());
-    response.setFetchedAtUtc(article.getFetchedAtUtc() != null ? article.getFetchedAtUtc().toString() : null);
-    response.setStatus(article.getStatus().name());
-    response.setPublishedBy(article.getPublishedBy() != null ? article.getPublishedBy().getEmail() : null);
-    response.setInternalPublishedAtUtc(article.getInternalPublishedAtUtc() != null ? article.getInternalPublishedAtUtc().toString() : null);
-    return response;
+    return articleResponseFactory.toResponse(article);
   }
 }

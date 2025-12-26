@@ -1,9 +1,6 @@
 package ai.journa.prcontrol.controller;
 
-import ai.journa.prcontrol.domain.ImportJob;
-import ai.journa.prcontrol.domain.Journalist;
-import ai.journa.prcontrol.domain.JournalistContact;
-import ai.journa.prcontrol.domain.JournalistVerificationStatus;
+import ai.journa.prcontrol.domain.*;
 import ai.journa.prcontrol.dto.ImportJobResponse;
 import ai.journa.prcontrol.dto.ImportJobRowResponse;
 import ai.journa.prcontrol.dto.JournalistArticleSummary;

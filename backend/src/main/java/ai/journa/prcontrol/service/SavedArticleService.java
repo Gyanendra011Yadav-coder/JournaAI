@@ -4,7 +4,6 @@ import ai.journa.prcontrol.domain.Article;
 import ai.journa.prcontrol.domain.SavedArticle;
 import ai.journa.prcontrol.domain.SavedArticleId;
 import ai.journa.prcontrol.domain.User;
-import ai.journa.prcontrol.dto.ArticleResponse;
 import ai.journa.prcontrol.dto.SavedArticleResponse;
 import ai.journa.prcontrol.repository.ArticleRepository;
 import ai.journa.prcontrol.repository.SavedArticleRepository;
@@ -18,10 +17,14 @@ import java.util.List;
 public class SavedArticleService {
   private final SavedArticleRepository savedArticleRepository;
   private final ArticleRepository articleRepository;
+  private final ArticleResponseFactory articleResponseFactory;
 
-  public SavedArticleService(SavedArticleRepository savedArticleRepository, ArticleRepository articleRepository) {
+  public SavedArticleService(SavedArticleRepository savedArticleRepository,
+                             ArticleRepository articleRepository,
+                             ArticleResponseFactory articleResponseFactory) {
     this.savedArticleRepository = savedArticleRepository;
     this.articleRepository = articleRepository;
+    this.articleResponseFactory = articleResponseFactory;
   }
 
   @Transactional
@@ -64,32 +67,8 @@ public class SavedArticleService {
           response.setSavedAt(saved.getSavedAt() != null ? saved.getSavedAt().toString() : null);
           response.setNote(saved.getNote());
           response.setTags(saved.getTags());
-          ArticleResponse article = new ArticleResponse();
           Article entity = saved.getArticle();
-          article.setId(entity.getId());
-          article.setProviderType(entity.getProviderType().name());
-          article.setProviderArticleId(entity.getProviderArticleId());
-          article.setBeatId(entity.getBeat() != null ? entity.getBeat().getId() : null);
-          article.setBeatName(entity.getBeat() != null ? entity.getBeat().getName() : null);
-          article.setCategory(entity.getCategory());
-          article.setLensSource(entity.getLensSource().name());
-          article.setClientMatch(entity.isClientMatch());
-          article.setTitle(entity.getTitle());
-          article.setDescription(entity.getDescription());
-          article.setContent(entity.getContent());
-          article.setUrl(entity.getUrl());
-          article.setImageUrl(entity.getImageUrl());
-          article.setPublishedAtUtc(entity.getProviderPublishedAtUtc() != null ? entity.getProviderPublishedAtUtc().toString() : null);
-          article.setLang(entity.getLang());
-          article.setSourceId(entity.getSourceId());
-          article.setSourceName(entity.getSourceName());
-          article.setSourceUrl(entity.getSourceUrl());
-          article.setSourceCountry(entity.getSourceCountry());
-          article.setFetchedAtUtc(entity.getFetchedAtUtc() != null ? entity.getFetchedAtUtc().toString() : null);
-          article.setStatus(entity.getStatus().name());
-          article.setPublishedBy(entity.getPublishedBy() != null ? entity.getPublishedBy().getEmail() : null);
-          article.setInternalPublishedAtUtc(entity.getInternalPublishedAtUtc() != null ? entity.getInternalPublishedAtUtc().toString() : null);
-          response.setArticle(article);
+          response.setArticle(articleResponseFactory.toResponse(entity));
           return response;
         }).toList();
   }

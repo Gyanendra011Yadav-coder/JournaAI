@@ -3,6 +3,7 @@ package ai.journa.prcontrol.controller;
 import ai.journa.prcontrol.domain.ArticleJournalist;
 import ai.journa.prcontrol.domain.Journalist;
 import ai.journa.prcontrol.domain.Role;
+import ai.journa.prcontrol.domain.User;
 import ai.journa.prcontrol.dto.JournalistArticleSummary;
 import ai.journa.prcontrol.dto.JournalistResponse;
 import ai.journa.prcontrol.dto.SuggestUpdateRequest;
@@ -46,8 +47,8 @@ public class JournalistController {
 
   @PostMapping("/{id}/suggest-update")
   public void suggestUpdate(@PathVariable Long id, @RequestBody SuggestUpdateRequest request) {
-    currentUserService.requireCurrentUser();
-    auditService.log("SUGGEST_JOURNALIST_UPDATE", "journalist", String.valueOf(id));
+    User actor = currentUserService.requireCurrentUser();
+    auditService.record(actor, "SUGGEST_JOURNALIST_UPDATE", "journalist", request, String.valueOf(id));
   }
 
   private JournalistResponse toResponse(Journalist journalist, List<ArticleJournalist> links) {

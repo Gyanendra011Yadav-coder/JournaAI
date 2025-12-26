@@ -20,6 +20,9 @@ interface SavedArticle {
     beatName: string | null;
     publishedAtUtc: string | null;
     status: string;
+    authorRaw?: string | null;
+    journalistName?: string | null;
+    journalistId?: number | null;
   };
 }
 
@@ -163,7 +166,10 @@ export default function DashboardPage() {
                 className="block rounded-xl border border-slate-200/70 bg-white p-4 transition hover:border-cyan-400/60"
               >
                 <p className="text-sm font-semibold">{article.article.title}</p>
-                <p className="text-xs text-slate-600">{article.article.beatName ?? "Trending"}</p>
+                <p className="text-xs text-slate-600">
+                  {article.article.journalistName ?? article.article.authorRaw ?? "Unknown author"} ·{" "}
+                  {article.article.beatName ?? "Trending"}
+                </p>
                 <p className="text-xs text-slate-500 mt-1">
                   {article.article.publishedAtUtc
                     ? new Date(article.article.publishedAtUtc).toLocaleString()

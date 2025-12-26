@@ -1,12 +1,13 @@
 package ai.journa.prcontrol.service;
 
 import ai.journa.prcontrol.domain.Beat;
-import ai.journa.prcontrol.domain.BeatQueryRecipe;
+import ai.journa.prcontrol.domain.BeatQueryTemplate;
 import ai.journa.prcontrol.domain.EndpointType;
+import ai.journa.prcontrol.domain.IngestMode;
 import ai.journa.prcontrol.domain.IntegrationSettings;
 import ai.journa.prcontrol.domain.ProviderType;
 import ai.journa.prcontrol.repository.ArticleRepository;
-import ai.journa.prcontrol.repository.BeatQueryRecipeRepository;
+import ai.journa.prcontrol.repository.BeatQueryTemplateRepository;
 import ai.journa.prcontrol.repository.BeatRepository;
 import ai.journa.prcontrol.repository.IntegrationSettingsRepository;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,7 +46,7 @@ class IngestionIntegrationTest {
   @Autowired
   private BeatRepository beatRepository;
   @Autowired
-  private BeatQueryRecipeRepository recipeRepository;
+  private BeatQueryTemplateRepository templateRepository;
   @Autowired
   private IntegrationSettingsRepository integrationSettingsRepository;
   @Autowired
@@ -61,14 +64,14 @@ class IngestionIntegrationTest {
     beat.setActive(true);
     beat = beatRepository.save(beat);
 
-    BeatQueryRecipe recipe = new BeatQueryRecipe();
-    recipe.setBeat(beat);
-    recipe.setEndpointType(EndpointType.SEARCH);
-    recipe.setQuery("Testing");
-    recipe.setLang("en");
-    recipe.setCountry("us");
-    recipe.setMax(5);
-    recipeRepository.save(recipe);
+    BeatQueryTemplate template = new BeatQueryTemplate();
+    template.setBeat(beat);
+    template.setEndpointType(EndpointType.SEARCH);
+    template.setBeatTerms(List.of("Testing"));
+    template.setLangDefault("en");
+    template.setCountryDefault("us");
+    template.setMaxDefault(5);
+    templateRepository.save(template);
 
     IntegrationSettings settings = integrationSettingsRepository.findAll().stream().findFirst().orElse(null);
     if (settings == null) {
@@ -83,7 +86,16 @@ class IngestionIntegrationTest {
     settings.setMaxPerRequest(5);
     integrationSettingsRepository.save(settings);
 
-    var result = ingestionService.refreshBeat(beat.getId(), null, false);
+    IngestionService.IngestRequest request = new IngestionService.IngestRequest(
+        IngestMode.SEARCH,
+        beat.getId(),
+        null,
+        "BEAT",
+        null,
+        null
+    );
+    AppLocaleResolver.Resolution locale = new AppLocaleResolver.Resolution("us", "en", null, null);
+    var result = ingestionService.refresh(request, locale, null, false);
     assertThat(result.isSuccess()).isTrue();
     assertThat(articleRepository.findAll()).isNotEmpty();
   }

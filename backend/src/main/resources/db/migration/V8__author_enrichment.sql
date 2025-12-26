@@ -1,4 +1,4 @@
-CREATE TABLE article_author_extractions (
+CREATE TABLE IF NOT EXISTS article_author_extractions (
     id BIGSERIAL PRIMARY KEY,
     article_id BIGINT NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
     author_raw TEXT,
@@ -10,7 +10,7 @@ CREATE TABLE article_author_extractions (
     error_message TEXT
 );
 
-CREATE TABLE journalists (
+CREATE TABLE IF NOT EXISTS journalists (
     id BIGSERIAL PRIMARY KEY,
     full_name TEXT NOT NULL,
     publication_name TEXT,
@@ -27,7 +27,7 @@ CREATE TABLE journalists (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE journalist_contacts (
+CREATE TABLE IF NOT EXISTS journalist_contacts (
     id BIGSERIAL PRIMARY KEY,
     journalist_id BIGINT NOT NULL REFERENCES journalists(id) ON DELETE CASCADE,
     email TEXT,
@@ -39,7 +39,7 @@ CREATE TABLE journalist_contacts (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE article_journalists (
+CREATE TABLE IF NOT EXISTS article_journalists (
     id BIGSERIAL PRIMARY KEY,
     article_id BIGINT NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
     journalist_id BIGINT NOT NULL REFERENCES journalists(id) ON DELETE CASCADE,
@@ -49,7 +49,7 @@ CREATE TABLE article_journalists (
     UNIQUE (article_id, journalist_id)
 );
 
-CREATE TABLE enrichment_tasks (
+CREATE TABLE IF NOT EXISTS enrichment_tasks (
     id BIGSERIAL PRIMARY KEY,
     task_type TEXT NOT NULL CHECK (task_type IN ('EXTRACT_AUTHOR', 'RESOLVE_JOURNALIST', 'ENRICH_PROFILE')),
     article_id BIGINT REFERENCES articles(id) ON DELETE CASCADE,
@@ -63,7 +63,7 @@ CREATE TABLE enrichment_tasks (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE import_jobs (
+CREATE TABLE IF NOT EXISTS import_jobs (
     id BIGSERIAL PRIMARY KEY,
     status TEXT NOT NULL CHECK (status IN ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED')),
     dry_run BOOLEAN NOT NULL DEFAULT FALSE,
@@ -73,7 +73,7 @@ CREATE TABLE import_jobs (
     summary_jsonb JSONB
 );
 
-CREATE TABLE import_job_rows (
+CREATE TABLE IF NOT EXISTS import_job_rows (
     id BIGSERIAL PRIMARY KEY,
     job_id BIGINT NOT NULL REFERENCES import_jobs(id) ON DELETE CASCADE,
     row_number INTEGER NOT NULL,

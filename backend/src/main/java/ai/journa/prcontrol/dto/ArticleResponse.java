@@ -20,6 +20,9 @@ public class ArticleResponse {
   private String sourceName;
   private String sourceUrl;
   private String sourceCountry;
+  private String authorRaw;
+  private Long journalistId;
+  private String journalistName;
   private String fetchedAtUtc;
   private String status;
   private String publishedBy;
@@ -175,6 +178,30 @@ public class ArticleResponse {
 
   public void setSourceCountry(String sourceCountry) {
     this.sourceCountry = sourceCountry;
+  }
+
+  public String getAuthorRaw() {
+    return authorRaw;
+  }
+
+  public void setAuthorRaw(String authorRaw) {
+    this.authorRaw = authorRaw;
+  }
+
+  public Long getJournalistId() {
+    return journalistId;
+  }
+
+  public void setJournalistId(Long journalistId) {
+    this.journalistId = journalistId;
+  }
+
+  public String getJournalistName() {
+    return journalistName;
+  }
+
+  public void setJournalistName(String journalistName) {
+    this.journalistName = journalistName;
   }
 
   public String getFetchedAtUtc() {

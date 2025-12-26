@@ -7,6 +7,9 @@ import { ErrorBanner } from "../../../components/ErrorBanner";
 interface Article {
   id: number;
   title: string;
+  authorRaw?: string | null;
+  journalistName?: string | null;
+  journalistId?: number | null;
   beatName: string;
   sourceName: string | null;
   publishedAtUtc: string | null;

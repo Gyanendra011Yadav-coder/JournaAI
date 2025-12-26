@@ -1,0 +1,2 @@
+ALTER TABLE journalists
+  ADD COLUMN IF NOT EXISTS beats TEXT[];

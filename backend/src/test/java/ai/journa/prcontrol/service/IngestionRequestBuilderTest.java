@@ -1,57 +1,45 @@
 package ai.journa.prcontrol.service;
 
-import ai.journa.prcontrol.config.NewsProviderProperties;
 import ai.journa.prcontrol.domain.Beat;
-import ai.journa.prcontrol.domain.BeatQueryRecipe;
+import ai.journa.prcontrol.domain.BeatQueryTemplate;
 import ai.journa.prcontrol.domain.EndpointType;
-import ai.journa.prcontrol.domain.IntegrationSettings;
-import ai.journa.prcontrol.domain.ProviderType;
-import ai.journa.prcontrol.repository.ArticleRepository;
-import ai.journa.prcontrol.repository.BeatQueryRecipeRepository;
-import ai.journa.prcontrol.repository.BeatRepository;
-import ai.journa.prcontrol.repository.NewsFetchStateRepository;
-import ai.journa.prcontrol.service.integration.NewsProvider;
+import ai.journa.prcontrol.repository.BeatQueryTemplateRepository;
+import ai.journa.prcontrol.repository.UserClientRepository;
+import ai.journa.prcontrol.repository.UserKeywordRepository;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class IngestionRequestBuilderTest {
   @Test
-  void buildsRequestWithDefaults() {
+  void buildsQueriesFromTemplate() {
     Beat beat = new Beat();
     beat.setId(1L);
+    beat.setName("Finance");
 
-    BeatQueryRecipe recipe = new BeatQueryRecipe();
-    recipe.setBeat(beat);
-    recipe.setEndpointType(EndpointType.SEARCH);
-    recipe.setQuery("Finance");
-    recipe.setLang(null);
+    BeatQueryTemplate template = new BeatQueryTemplate();
+    template.setBeat(beat);
+    template.setEndpointType(EndpointType.SEARCH);
+    template.setBeatTerms(List.of("Finance"));
+    template.setLangDefault("en");
+    template.setCountryDefault("us");
 
-    IntegrationSettings settings = new IntegrationSettings();
-    settings.setProviderType(ProviderType.GNEWS);
-    settings.setDefaultLang("en");
-    settings.setDefaultCountry("us");
-    settings.setMaxPerRequest(25);
+    BeatQueryTemplateRepository templateRepository = mock(BeatQueryTemplateRepository.class);
+    when(templateRepository.findByBeatId(1L)).thenReturn(List.of(template));
 
-    IngestionService ingestionService = new IngestionService(
-        mock(BeatRepository.class),
-        mock(BeatQueryRecipeRepository.class),
-        mock(IntegrationSettingsService.class),
-        mock(NewsFetchStateRepository.class),
-        mock(ArticleRepository.class),
-        mock(AuditService.class),
-        mock(OutboundRateLimiter.class),
-        new NewsProviderProperties(),
-        List.of(mock(NewsProvider.class))
+    QueryBuilderService queryBuilderService = new QueryBuilderService(
+        templateRepository,
+        mock(UserKeywordRepository.class),
+        mock(UserClientRepository.class)
     );
 
-    var request = ingestionService.buildFetchRequest(recipe, settings);
-    assertThat(request.getQuery()).isEqualTo("Finance");
-    assertThat(request.getLang()).isEqualTo("en");
-    assertThat(request.getCountry()).isEqualTo("us");
-    assertThat(request.getMax()).isEqualTo(25);
+    QueryBuilderService.QueryBundle bundle = queryBuilderService.buildSearchQueries(beat, null);
+    assertThat(bundle.beatQuery()).isEqualTo("Finance");
+    assertThat(bundle.clientQuery()).isEqualTo("Finance");
+    assertThat(bundle.template()).isEqualTo(template);
   }
 }

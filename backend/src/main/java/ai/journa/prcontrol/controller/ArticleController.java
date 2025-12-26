@@ -12,6 +12,7 @@ import ai.journa.prcontrol.dto.ArticleListResponse;
 import ai.journa.prcontrol.dto.ArticleResponse;
 import ai.journa.prcontrol.service.CacheKeyService;
 import ai.journa.prcontrol.service.ArticleService;
+import ai.journa.prcontrol.service.ArticleResponseFactory;
 import ai.journa.prcontrol.service.CurrentUserService;
 import ai.journa.prcontrol.service.AppLocaleResolver;
 import ai.journa.prcontrol.service.QueryBuilderService;
@@ -38,6 +39,7 @@ public class ArticleController {
   private final UserProfileRepository userProfileRepository;
   private final QueryBuilderService queryBuilderService;
   private final BeatRepository beatRepository;
+  private final ArticleResponseFactory articleResponseFactory;
 
   public ArticleController(ArticleService articleService,
                            CurrentUserService currentUserService,
@@ -46,7 +48,8 @@ public class ArticleController {
                            CacheKeyService cacheKeyService,
                            UserProfileRepository userProfileRepository,
                            QueryBuilderService queryBuilderService,
-                           BeatRepository beatRepository) {
+                           BeatRepository beatRepository,
+                           ArticleResponseFactory articleResponseFactory) {
     this.articleService = articleService;
     this.currentUserService = currentUserService;
     this.newsProviderProperties = newsProviderProperties;
@@ -55,6 +58,7 @@ public class ArticleController {
     this.userProfileRepository = userProfileRepository;
     this.queryBuilderService = queryBuilderService;
     this.beatRepository = beatRepository;
+    this.articleResponseFactory = articleResponseFactory;
   }
 
   @GetMapping
@@ -135,31 +139,7 @@ public class ArticleController {
   }
 
   private ArticleResponse toResponse(Article article) {
-    ArticleResponse response = new ArticleResponse();
-    response.setId(article.getId());
-    response.setProviderType(article.getProviderType().name());
-    response.setProviderArticleId(article.getProviderArticleId());
-    response.setBeatId(article.getBeat() != null ? article.getBeat().getId() : null);
-    response.setBeatName(article.getBeat() != null ? article.getBeat().getName() : null);
-    response.setCategory(article.getCategory());
-    response.setLensSource(article.getLensSource().name());
-    response.setClientMatch(article.isClientMatch());
-    response.setTitle(article.getTitle());
-    response.setDescription(article.getDescription());
-    response.setContent(article.getContent());
-    response.setUrl(article.getUrl());
-    response.setImageUrl(article.getImageUrl());
-    response.setPublishedAtUtc(article.getProviderPublishedAtUtc() != null ? article.getProviderPublishedAtUtc().toString() : null);
-    response.setLang(article.getLang());
-    response.setSourceId(article.getSourceId());
-    response.setSourceName(article.getSourceName());
-    response.setSourceUrl(article.getSourceUrl());
-    response.setSourceCountry(article.getSourceCountry());
-    response.setFetchedAtUtc(article.getFetchedAtUtc() != null ? article.getFetchedAtUtc().toString() : null);
-    response.setStatus(article.getStatus().name());
-    response.setPublishedBy(article.getPublishedBy() != null ? article.getPublishedBy().getEmail() : null);
-    response.setInternalPublishedAtUtc(article.getInternalPublishedAtUtc() != null ? article.getInternalPublishedAtUtc().toString() : null);
-    return response;
+    return articleResponseFactory.toResponse(article);
   }
 
   private Instant parseInstant(String value) {

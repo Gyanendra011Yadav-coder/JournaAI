@@ -7,6 +7,8 @@ import { apiFetch } from "../lib/api";
 interface Article {
   id: number;
   title: string;
+  authorRaw?: string | null;
+  journalistName?: string | null;
   sourceName: string | null;
   publishedAtUtc: string | null;
   status: string;
@@ -38,6 +40,7 @@ export function ArticlesTable({ articles }: ArticlesTableProps) {
           <tr>
             <th className="text-left p-3">Headline</th>
             <th className="text-left p-3">Source</th>
+            <th className="text-left p-3">Author</th>
             <th className="text-left p-3">Beat</th>
             <th className="text-left p-3">Published</th>
             <th className="text-left p-3">Status</th>
@@ -53,6 +56,7 @@ export function ArticlesTable({ articles }: ArticlesTableProps) {
                 </Link>
               </td>
               <td className="p-3">{article.sourceName ?? "Unknown"}</td>
+              <td className="p-3">{article.journalistName ?? article.authorRaw ?? "—"}</td>
               <td className="p-3">{article.beatName ?? "—"}</td>
               <td className="p-3">
                 {article.publishedAtUtc ? new Date(article.publishedAtUtc).toLocaleDateString() : "—"}

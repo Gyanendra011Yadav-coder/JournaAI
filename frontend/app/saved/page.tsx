@@ -17,6 +17,9 @@ interface SavedArticle {
     publishedAtUtc?: string | null;
     beatName?: string | null;
     status?: string;
+    authorRaw?: string | null;
+    journalistName?: string | null;
+    journalistId?: number | null;
   };
 }
 
@@ -76,6 +79,7 @@ export default function SavedPage() {
                   {item.article.title}
                 </Link>
                 <p className="text-xs text-slate-600">
+                  {item.article.journalistName ?? item.article.authorRaw ?? "Unknown author"} ·{" "}
                   {item.article.beatName ?? "Trending"} ·{" "}
                   {item.article.publishedAtUtc
                     ? new Date(item.article.publishedAtUtc).toLocaleString()
