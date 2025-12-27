@@ -24,6 +24,34 @@ public class ArticleAuthorExtraction {
   @JdbcTypeCode(SqlTypes.JSON)
   private String candidatesJsonb;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "method")
+  private AuthorExtractionMethod method;
+
+  @Column(name = "authors_jsonb", columnDefinition = "jsonb")
+  @JdbcTypeCode(SqlTypes.JSON)
+  private String authorsJsonb;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "classification")
+  private AuthorClassification classification;
+
+  private Integer confidence;
+
+  @Column(name = "evidence_jsonb", columnDefinition = "jsonb")
+  @JdbcTypeCode(SqlTypes.JSON)
+  private String evidenceJsonb;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "status")
+  private AuthorExtractionStatus status;
+
+  @Column(name = "attempts", nullable = false)
+  private int attempts = 0;
+
+  @Column(name = "content_hash")
+  private String contentHash;
+
   @Column(name = "is_non_person_author", nullable = false)
   private boolean nonPersonAuthor;
 
@@ -70,6 +98,70 @@ public class ArticleAuthorExtraction {
 
   public void setCandidatesJsonb(String candidatesJsonb) {
     this.candidatesJsonb = candidatesJsonb;
+  }
+
+  public AuthorExtractionMethod getMethod() {
+    return method;
+  }
+
+  public void setMethod(AuthorExtractionMethod method) {
+    this.method = method;
+  }
+
+  public String getAuthorsJsonb() {
+    return authorsJsonb;
+  }
+
+  public void setAuthorsJsonb(String authorsJsonb) {
+    this.authorsJsonb = authorsJsonb;
+  }
+
+  public AuthorClassification getClassification() {
+    return classification;
+  }
+
+  public void setClassification(AuthorClassification classification) {
+    this.classification = classification;
+  }
+
+  public Integer getConfidence() {
+    return confidence;
+  }
+
+  public void setConfidence(Integer confidence) {
+    this.confidence = confidence;
+  }
+
+  public String getEvidenceJsonb() {
+    return evidenceJsonb;
+  }
+
+  public void setEvidenceJsonb(String evidenceJsonb) {
+    this.evidenceJsonb = evidenceJsonb;
+  }
+
+  public AuthorExtractionStatus getStatus() {
+    return status;
+  }
+
+  public void setStatus(AuthorExtractionStatus status) {
+    this.status = status;
+  }
+
+  public int getAttempts() {
+    return attempts;
+  }
+
+  public void setAttempts(int attempts) {
+    this.attempts = attempts;
+  }
+
+  public String getContentHash() {
+    return contentHash;
+  }
+
+  public void setContentHash(String contentHash) {
+    this.contentHash = contentHash;
   }
 
   public boolean isNonPersonAuthor() {
