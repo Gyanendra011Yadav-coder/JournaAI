@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 @Service
 public class AuthorExtractionService {
   private static final Logger logger = LoggerFactory.getLogger(AuthorExtractionService.class);
-  private static final Pattern BYLINE_PREFIX = Pattern.compile("(?i)^by\\s*[:\\-]?\\s+(.+)$");
+  private static final Pattern ATTRIBUTION_PREFIX = Pattern.compile("(?i)^(by|reviewed by|edited by|written by|reported by)\\s*[:\\-]?\\s*(.+)$");
   private static final Pattern BYLINE_SPLIT = Pattern.compile("\\s+(\\||-|—|–)\\s+");
   private final HtmlFetchService htmlFetchService;
   private final ArticleAuthorExtractionRepository extractionRepository;
@@ -99,15 +99,15 @@ public class AuthorExtractionService {
     if (text == null || text.isBlank()) {
       return;
     }
-    Matcher matcher = BYLINE_PREFIX.matcher(text.stripLeading());
+    Matcher matcher = ATTRIBUTION_PREFIX.matcher(text.stripLeading());
     if (!matcher.find()) {
       return;
     }
-    String name = matcher.group(1);
+    String name = matcher.group(2);
     if (name == null) {
       return;
     }
-    String trimmed = name.trim();
+    String trimmed = extractLeadingName(name);
     if (trimmed.isBlank()) {
       return;
     }
@@ -165,7 +165,7 @@ public class AuthorExtractionService {
 
   private List<Candidate> extractFromMeta(Document document) {
     List<Candidate> candidates = new ArrayList<>();
-    Elements meta = document.select("meta[name=author], meta[property=article:author], meta[name=twitter:creator]");
+    Elements meta = document.select("meta[name=author], meta[property=article:author], meta[name=twitter:creator], meta[name=reviewer]");
     for (Element element : meta) {
       String content = element.attr("content");
       if (content != null && !content.isBlank()) {
@@ -177,15 +177,55 @@ public class AuthorExtractionService {
 
   private List<Candidate> extractFromByline(Document document) {
     List<Candidate> candidates = new ArrayList<>();
-    Elements elements = document.select("[class*=byline], [class*=author], [itemprop=author]");
+    Elements elements = document.select("[class*=byline], [class*=author], [class*=review], [class*=reviewed], [itemprop=author], [itemprop=reviewedBy]");
     for (Element element : elements) {
       String text = element.text();
       if (text != null && !text.isBlank()) {
-        candidates.add(new Candidate(text.trim(), 50, "HTML"));
+        if (extractAttributedName(text, "HTML", 55, candidates)) {
+          break;
+        }
+        candidates.add(new Candidate(text.trim(), 45, "HTML"));
         break;
       }
     }
     return candidates;
+  }
+
+  private boolean extractAttributedName(String text, String method, int confidence, List<Candidate> candidates) {
+    String[] lines = text.split("\\R+");
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i].trim();
+      if (line.isBlank()) {
+        continue;
+      }
+      Matcher matcher = ATTRIBUTION_PREFIX.matcher(line);
+      if (matcher.find()) {
+        String candidate = matcher.group(2).trim();
+        String extracted = extractLeadingName(candidate);
+        String[] parts = BYLINE_SPLIT.split(extracted, 2);
+        String name = parts.length > 0 ? parts[0].trim() : extracted;
+        if (name.isBlank() && i + 1 < lines.length) {
+          name = extractLeadingName(lines[i + 1].trim());
+        }
+        if (!name.isBlank()) {
+          candidates.add(new Candidate(name, confidence, method));
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private String extractLeadingName(String value) {
+    if (value == null) {
+      return "";
+    }
+    String trimmed = value.trim();
+    Matcher matcher = Pattern.compile("([A-Z][\\p{L}\\.'-]+(?:\\s+[A-Z][\\p{L}\\.'-]+){0,2})").matcher(trimmed);
+    if (matcher.find()) {
+      return matcher.group(1).trim();
+    }
+    return trimmed;
   }
 
   public record Candidate(String name, int confidence, String method) {
