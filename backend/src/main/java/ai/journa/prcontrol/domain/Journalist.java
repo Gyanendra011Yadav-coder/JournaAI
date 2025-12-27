@@ -38,6 +38,18 @@ public class Journalist {
   private String journeySummary;
 
   @Enumerated(EnumType.STRING)
+  @Column(name = "status", nullable = false)
+  private JournalistStatus status = JournalistStatus.DRAFT;
+
+  @Column(name = "author_page_url")
+  private String authorPageUrl;
+
+  private String twitter;
+
+  @Column(name = "bio_summary")
+  private String bioSummary;
+
+  @Enumerated(EnumType.STRING)
   @Column(name = "verification_status", nullable = false)
   private JournalistVerificationStatus verificationStatus = JournalistVerificationStatus.UNVERIFIED;
 
@@ -49,6 +61,9 @@ public class Journalist {
 
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt = Instant.now();
+
+  @Column(name = "last_updated_at", nullable = false)
+  private Instant lastUpdatedAt = Instant.now();
 
   public Long getId() {
     return id;
@@ -130,6 +145,38 @@ public class Journalist {
     this.journeySummary = journeySummary;
   }
 
+  public JournalistStatus getStatus() {
+    return status;
+  }
+
+  public void setStatus(JournalistStatus status) {
+    this.status = status;
+  }
+
+  public String getAuthorPageUrl() {
+    return authorPageUrl;
+  }
+
+  public void setAuthorPageUrl(String authorPageUrl) {
+    this.authorPageUrl = authorPageUrl;
+  }
+
+  public String getTwitter() {
+    return twitter;
+  }
+
+  public void setTwitter(String twitter) {
+    this.twitter = twitter;
+  }
+
+  public String getBioSummary() {
+    return bioSummary;
+  }
+
+  public void setBioSummary(String bioSummary) {
+    this.bioSummary = bioSummary;
+  }
+
   public JournalistVerificationStatus getVerificationStatus() {
     return verificationStatus;
   }
@@ -160,5 +207,13 @@ public class Journalist {
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public Instant getLastUpdatedAt() {
+    return lastUpdatedAt;
+  }
+
+  public void setLastUpdatedAt(Instant lastUpdatedAt) {
+    this.lastUpdatedAt = lastUpdatedAt;
   }
 }
