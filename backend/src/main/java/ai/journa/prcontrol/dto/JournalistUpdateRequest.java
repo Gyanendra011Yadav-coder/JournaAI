@@ -8,10 +8,13 @@ public class JournalistUpdateRequest {
   private String publicationDomain;
   private String designation;
   private String linkedin;
+  private String twitter;
+  private String authorPageUrl;
   private List<String> beats;
   private String country;
   private String city;
   private String journeySummary;
+  private String bioSummary;
   private String verificationStatus;
   private Integer completenessScore;
 
@@ -55,6 +58,22 @@ public class JournalistUpdateRequest {
     this.linkedin = linkedin;
   }
 
+  public String getTwitter() {
+    return twitter;
+  }
+
+  public void setTwitter(String twitter) {
+    this.twitter = twitter;
+  }
+
+  public String getAuthorPageUrl() {
+    return authorPageUrl;
+  }
+
+  public void setAuthorPageUrl(String authorPageUrl) {
+    this.authorPageUrl = authorPageUrl;
+  }
+
   public List<String> getBeats() {
     return beats;
   }
@@ -85,6 +104,14 @@ public class JournalistUpdateRequest {
 
   public void setJourneySummary(String journeySummary) {
     this.journeySummary = journeySummary;
+  }
+
+  public String getBioSummary() {
+    return bioSummary;
+  }
+
+  public void setBioSummary(String bioSummary) {
+    this.bioSummary = bioSummary;
   }
 
   public String getVerificationStatus() {

@@ -97,7 +97,7 @@ export default function AdminEnrichmentPage() {
     <div className="space-y-6">
       <header className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.25)]">
         <p className="text-xs uppercase tracking-[0.2em] text-cyan-600">Admin</p>
-        <h1 className="text-3xl font-semibold">Enrichment Queue</h1>
+        <h1 className="text-3xl font-semibold">Article Enrichment</h1>
         <p className="text-slate-600">Track author extraction, journalist resolution, and profile enrichment.</p>
       </header>
       <div className="rounded-3xl border border-slate-200/70 bg-slate-50 p-6 text-sm text-slate-700 shadow-[0_12px_40px_-32px_rgba(15,23,42,0.12)]">

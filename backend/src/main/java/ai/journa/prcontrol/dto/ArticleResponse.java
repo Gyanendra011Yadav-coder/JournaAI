@@ -23,6 +23,7 @@ public class ArticleResponse {
   private String authorRaw;
   private Long journalistId;
   private String journalistName;
+  private String authorTaskStatus;
   private String fetchedAtUtc;
   private String status;
   private String publishedBy;
@@ -202,6 +203,14 @@ public class ArticleResponse {
 
   public void setJournalistName(String journalistName) {
     this.journalistName = journalistName;
+  }
+
+  public String getAuthorTaskStatus() {
+    return authorTaskStatus;
+  }
+
+  public void setAuthorTaskStatus(String authorTaskStatus) {
+    this.authorTaskStatus = authorTaskStatus;
   }
 
   public String getFetchedAtUtc() {

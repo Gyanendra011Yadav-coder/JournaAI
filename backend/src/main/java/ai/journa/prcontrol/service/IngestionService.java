@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -151,7 +153,19 @@ public class IngestionService {
       upsertCache(cacheKey, now, settings, result);
       auditService.record(actor, "INGEST_SUCCESS", "news", Map.of("articles", result.getArticles().size()), cacheKey);
       if (enrichmentProperties.isAutoRunAfterIngest()) {
-        enrichmentTaskRunner.runTasks(persistResult.newTasks());
+        List<EnrichmentTask> tasks = List.copyOf(persistResult.newTasks());
+        if (!tasks.isEmpty()) {
+          if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+              @Override
+              public void afterCommit() {
+                enrichmentTaskRunner.runTasks(tasks);
+              }
+            });
+          } else {
+            enrichmentTaskRunner.runTasks(tasks);
+          }
+        }
       }
       logger.info("Ingest success cacheKey={} fetched={} saved={}", cacheKey, result.getArticles().size(), savedCount);
       return RefreshResult.success(state.getLastSuccessAt());

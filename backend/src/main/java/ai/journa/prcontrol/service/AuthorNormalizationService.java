@@ -14,6 +14,14 @@ public class AuthorNormalizationService {
       "desk",
       "bureau",
       "team",
+      "correspondent",
+      "staff reporter",
+      "news service",
+      "news agency",
+      "news desk",
+      "tnn",
+      "news network",
+      "agencies",
       "pti",
       "ani",
       "reuters",
@@ -45,6 +53,9 @@ public class AuthorNormalizationService {
 
   public boolean isNonPerson(String value) {
     String normalized = value.toLowerCase(Locale.ROOT);
+    if (normalized.startsWith("@")) {
+      return true;
+    }
     if (normalized.contains("staff")) {
       return true;
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { ArticlesTable } from "../../components/ArticlesTable";
 import { ErrorBanner } from "../../components/ErrorBanner";
@@ -9,6 +9,7 @@ interface Article {
   id: number;
   title: string;
   authorRaw?: string | null;
+  authorTaskStatus?: string | null;
   journalistName?: string | null;
   journalistId?: number | null;
   sourceName: string | null;
@@ -55,7 +56,7 @@ export default function TrendingPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadTrending = async () => {
+  const loadTrending = useCallback(async () => {
     setError(null);
     const params = new URLSearchParams();
     params.set("mode", "TRENDING");
@@ -71,11 +72,25 @@ export default function TrendingPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load trending headlines.");
     }
-  };
+  }, [category, view]);
 
   useEffect(() => {
     loadTrending();
-  }, [view, category]);
+  }, [loadTrending]);
+
+  useEffect(() => {
+    const hasPending = articles.some(
+      (article) =>
+        !article.authorRaw && (article.authorTaskStatus === "PENDING" || article.authorTaskStatus === "RUNNING")
+    );
+    if (!hasPending) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      loadTrending();
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [articles, loadTrending]);
 
   const handleRefresh = async () => {
     setError(null);

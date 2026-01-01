@@ -8,6 +8,7 @@ interface Article {
   id: number;
   title: string;
   authorRaw?: string | null;
+  authorTaskStatus?: string | null;
   journalistName?: string | null;
   journalistId?: number | null;
   beatName: string;

@@ -16,6 +16,7 @@ interface JournalistSummary {
 export default function AdminJournalistsPage() {
   const [journalists, setJournalists] = useState<JournalistSummary[]>([]);
   const [missingField, setMissingField] = useState("email");
+  const [searchBy, setSearchBy] = useState("name");
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -28,6 +29,9 @@ export default function AdminJournalistsPage() {
     if (query.trim()) {
       params.set("q", query.trim());
     }
+    if (searchBy) {
+      params.set("searchBy", searchBy);
+    }
     const suffix = params.toString();
     apiFetch<JournalistSummary[]>(`/api/admin/journalists/incomplete${suffix ? `?${suffix}` : ""}`)
       .then((data) => {
@@ -39,7 +43,7 @@ export default function AdminJournalistsPage() {
 
   useEffect(() => {
     loadJournalists();
-  }, [missingField, query]);
+  }, [missingField, query, searchBy]);
 
   return (
     <div className="space-y-6">
@@ -50,14 +54,15 @@ export default function AdminJournalistsPage() {
       </header>
       <ErrorBanner message={error} />
       <div className="flex flex-wrap items-center gap-3">
-        <label className="text-sm text-slate-600">Missing</label>
+        <label className="text-sm text-slate-600">Search by</label>
         <select
-          value={missingField}
-          onChange={(event) => setMissingField(event.target.value)}
+          value={searchBy}
+          onChange={(event) => setSearchBy(event.target.value)}
           className="rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-sm text-slate-700"
         >
+          <option value="name">Name</option>
           <option value="email">Email</option>
-          <option value="beats">Beats</option>
+          <option value="beat">Beat</option>
           <option value="publication">Publication</option>
         </select>
         <input

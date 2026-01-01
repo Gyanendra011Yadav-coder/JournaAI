@@ -9,6 +9,7 @@ import ai.journa.prcontrol.dto.JournalistResponse;
 import ai.journa.prcontrol.dto.JournalistUpdateRequest;
 import ai.journa.prcontrol.repository.ArticleJournalistRepository;
 import ai.journa.prcontrol.repository.ImportJobRowRepository;
+import ai.journa.prcontrol.repository.JournalistEnrichmentReviewRepository;
 import ai.journa.prcontrol.service.CsvImportService;
 import ai.journa.prcontrol.service.CurrentUserService;
 import ai.journa.prcontrol.service.JournalistService;
@@ -28,23 +29,27 @@ public class AdminJournalistController {
   private final CsvImportService csvImportService;
   private final CurrentUserService currentUserService;
   private final ImportJobRowRepository importJobRowRepository;
+  private final JournalistEnrichmentReviewRepository reviewRepository;
 
   public AdminJournalistController(JournalistService journalistService,
                                    ArticleJournalistRepository articleJournalistRepository,
                                    CsvImportService csvImportService,
                                    CurrentUserService currentUserService,
-                                   ImportJobRowRepository importJobRowRepository) {
+                                   ImportJobRowRepository importJobRowRepository,
+                                   JournalistEnrichmentReviewRepository reviewRepository) {
     this.journalistService = journalistService;
     this.articleJournalistRepository = articleJournalistRepository;
     this.csvImportService = csvImportService;
     this.currentUserService = currentUserService;
     this.importJobRowRepository = importJobRowRepository;
+    this.reviewRepository = reviewRepository;
   }
 
   @GetMapping("/incomplete")
   public List<JournalistResponse> getIncomplete(@RequestParam(required = false) String missing,
-                                                @RequestParam(required = false) String q) {
-    List<Journalist> journalists = journalistService.findIncomplete(missing, q);
+                                                @RequestParam(required = false) String q,
+                                                @RequestParam(required = false) String searchBy) {
+    List<Journalist> journalists = journalistService.findIncomplete(missing, q, searchBy);
     return journalists.stream().map(this::toResponse).toList();
   }
 
@@ -87,12 +92,16 @@ public class AdminJournalistController {
     response.setPublicationDomain(journalist.getPublicationDomain());
     response.setDesignation(journalist.getDesignation());
     response.setLinkedin(journalist.getLinkedin());
+    response.setTwitter(journalist.getTwitter());
+    response.setAuthorPageUrl(journalist.getAuthorPageUrl());
     response.setBeats(journalist.getBeats() != null ? Arrays.asList(journalist.getBeats()) : List.of());
     response.setCountry(journalist.getCountry());
     response.setCity(journalist.getCity());
     response.setJourneySummary(journalist.getJourneySummary());
+    response.setBioSummary(journalist.getBioSummary());
     response.setVerificationStatus(journalist.getVerificationStatus().name());
     response.setCompletenessScore(journalist.getCompletenessScore());
+    applyPendingReview(response, journalist);
     response.setArticles(articleJournalistRepository.findByJournalistId(journalist.getId()).stream().map(link -> {
       JournalistArticleSummary summary = new JournalistArticleSummary();
       summary.setArticleId(link.getArticle().getId());
@@ -106,6 +115,21 @@ public class AdminJournalistController {
     List<JournalistContact> contacts = journalistService.getContacts(journalist.getId());
     response.setContacts(contacts.stream().map(this::toContactResponse).toList());
     return response;
+  }
+
+  private void applyPendingReview(JournalistResponse response, Journalist journalist) {
+    if (journalist == null || journalist.getId() == null) {
+      return;
+    }
+    reviewRepository.findTopByJournalistIdAndStatusOrderByCreatedAtDesc(
+            journalist.getId(),
+            JournalistEnrichmentReviewStatus.PENDING
+        )
+        .ifPresent(review -> {
+          response.setPendingReviewId(review.getId());
+          response.setPendingReviewStatus(review.getStatus().name());
+          response.setPendingProfileJsonb(review.getProposedJsonb());
+        });
   }
 
   private JournalistContactResponse toContactResponse(JournalistContact contact) {

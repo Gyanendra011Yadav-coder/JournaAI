@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { BeatSelector } from "../../components/BeatSelector";
 import { TimeframePicker } from "../../components/TimeframePicker";
 import { ArticlesTable } from "../../components/ArticlesTable";
@@ -14,6 +14,7 @@ interface Article {
   authorRaw?: string | null;
   journalistName?: string | null;
   journalistId?: number | null;
+  authorTaskStatus?: string | null;
   sourceName: string | null;
   publishedAtUtc: string | null;
   status: string;
@@ -51,6 +52,7 @@ interface RefreshResponse {
 }
 
 export default function SearchPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [beats, setBeats] = useState<Beat[]>([]);
   const [beatId, setBeatId] = useState<number | null>(null);
@@ -69,6 +71,7 @@ export default function SearchPage() {
   const [autoSearchReady, setAutoSearchReady] = useState(false);
   const [journalistFilterId, setJournalistFilterId] = useState<number | null>(null);
   const [journalistFilterName, setJournalistFilterName] = useState<string | null>(null);
+  const [querySynced, setQuerySynced] = useState(false);
   const showOfflineHint = error?.includes("Unable to reach API");
 
   useEffect(() => {
@@ -105,6 +108,16 @@ export default function SearchPage() {
     };
   }, []);
 
+  const queryDefaults = useMemo(() => {
+    return {
+      beatId: searchParams.get("beatId"),
+      lens: searchParams.get("lens"),
+      timeframe: searchParams.get("timeframe"),
+      from: searchParams.get("from"),
+      size: searchParams.get("size"),
+    };
+  }, [searchParams]);
+
   useEffect(() => {
     const journalistIdParam = searchParams.get("journalistId");
     if (!journalistIdParam) {
@@ -121,7 +134,59 @@ export default function SearchPage() {
     }
   }, [searchParams]);
 
-  const resolveFrom = () => {
+  useEffect(() => {
+    if (queryDefaults.beatId) {
+      const parsed = Number(queryDefaults.beatId);
+      if (Number.isFinite(parsed)) {
+        setBeatId(parsed);
+      }
+    }
+    if (queryDefaults.lens === "CLIENT" || queryDefaults.lens === "BEAT" || queryDefaults.lens === "ALL") {
+      setLens(queryDefaults.lens);
+    }
+    if (queryDefaults.timeframe) {
+      setTimeframe(queryDefaults.timeframe);
+    }
+    if (queryDefaults.from) {
+      setCustomFrom(new Date(queryDefaults.from).toISOString().slice(0, 16));
+    }
+    if (queryDefaults.size) {
+      const parsed = Number(queryDefaults.size);
+      if (Number.isFinite(parsed)) {
+        setPageSize(parsed);
+      }
+    }
+    if (!querySynced) {
+      setQuerySynced(true);
+    }
+  }, [queryDefaults, querySynced]);
+
+  useEffect(() => {
+    if (!querySynced) {
+      return;
+    }
+    const params = new URLSearchParams(searchParams.toString());
+    if (beatId !== null) {
+      params.set("beatId", String(beatId));
+    } else {
+      params.delete("beatId");
+    }
+    params.set("lens", lens);
+    params.set("timeframe", timeframe);
+    params.set("size", String(pageSize));
+    if (timeframe.toLowerCase() === "custom" && customFrom) {
+      params.set("from", new Date(customFrom).toISOString());
+    } else {
+      params.delete("from");
+    }
+    const nextQuery = params.toString();
+    const currentQuery = searchParams.toString();
+    if (nextQuery !== currentQuery) {
+      router.replace(`/search?${nextQuery}`);
+    }
+  }, [beatId, customFrom, lens, pageSize, router, searchParams, timeframe]);
+
+  const resolveFrom = useCallback(() => {
     const now = new Date();
     if (timeframe === "7d") {
       return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -133,9 +198,9 @@ export default function SearchPage() {
       return new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
     }
     return null;
-  };
+  }, [timeframe]);
 
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (lens === "CLIENT" && !hasClientTerms) {
       setError("Add client keywords or clients to use the client-focused lens.");
       return;
@@ -170,7 +235,24 @@ export default function SearchPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [beatId, customFrom, hasClientTerms, journalistFilterId, lens, pageSize, resolveFrom, timeframe]);
+
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+    const hasPending = articles.some(
+      (article) =>
+        !article.authorRaw && (article.authorTaskStatus === "PENDING" || article.authorTaskStatus === "RUNNING")
+    );
+    if (!hasPending) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      handleSearch();
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [articles, handleSearch, loading]);
 
   const handleRefresh = async () => {
     if (journalistFilterId !== null) {

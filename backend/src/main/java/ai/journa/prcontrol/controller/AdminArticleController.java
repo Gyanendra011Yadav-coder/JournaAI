@@ -1,6 +1,7 @@
 package ai.journa.prcontrol.controller;
 
 import ai.journa.prcontrol.domain.Article;
+import ai.journa.prcontrol.dto.AdminArticleUpdateRequest;
 import ai.journa.prcontrol.dto.ArticleResponse;
 import ai.journa.prcontrol.dto.ManualArticleRequest;
 import ai.journa.prcontrol.service.ArticleService;
@@ -8,9 +9,10 @@ import ai.journa.prcontrol.service.ArticleResponseFactory;
 import ai.journa.prcontrol.service.CurrentUserService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,6 +30,12 @@ public class AdminArticleController {
     this.articleService = articleService;
     this.currentUserService = currentUserService;
     this.articleResponseFactory = articleResponseFactory;
+  }
+
+  @PutMapping("/{id}")
+  public ArticleResponse update(@PathVariable Long id, @RequestBody AdminArticleUpdateRequest request) {
+    Article article = articleService.updateArticle(id, request, currentUserService.requireCurrentUser());
+    return toResponse(article);
   }
 
   @PostMapping("/{id}/publish")

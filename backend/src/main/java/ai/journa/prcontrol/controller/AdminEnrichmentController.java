@@ -23,8 +23,10 @@ public class AdminEnrichmentController {
   }
 
   @GetMapping("/tasks")
-  public List<EnrichmentTaskResponse> listTasks(@RequestParam(required = false) EnrichmentTaskStatus status) {
-    List<EnrichmentTask> tasks = status != null ? taskRepository.findByStatus(status) : taskRepository.findAll();
+  public List<EnrichmentTaskResponse> listTasks(@RequestParam(required = false) EnrichmentTaskStatus status,
+                                                @RequestParam(required = false) Long journalistId,
+                                                @RequestParam(required = false) ai.journa.prcontrol.domain.EnrichmentTaskType taskType) {
+    List<EnrichmentTask> tasks = resolveTasks(status, journalistId, taskType);
     return tasks.stream().map(this::toResponse).toList();
   }
 
@@ -38,8 +40,25 @@ public class AdminEnrichmentController {
       return response;
     }
     EnrichmentTask task = taskRunner.runOnDemand(articleId, journalistId);
-    taskRunner.runPendingTasks();
     return toResponse(task);
+  }
+
+  private List<EnrichmentTask> resolveTasks(EnrichmentTaskStatus status,
+                                            Long journalistId,
+                                            ai.journa.prcontrol.domain.EnrichmentTaskType taskType) {
+    if (journalistId != null) {
+      if (status != null && taskType != null) {
+        return taskRepository.findByStatusAndJournalistIdAndTaskTypeOrderByCreatedAtDesc(status, journalistId, taskType);
+      }
+      if (status != null) {
+        return taskRepository.findByStatusAndJournalistIdOrderByCreatedAtDesc(status, journalistId);
+      }
+      if (taskType != null) {
+        return taskRepository.findByJournalistIdAndTaskTypeOrderByCreatedAtDesc(journalistId, taskType);
+      }
+      return taskRepository.findByJournalistIdOrderByCreatedAtDesc(journalistId);
+    }
+    return status != null ? taskRepository.findByStatus(status) : taskRepository.findAll();
   }
 
   private EnrichmentTaskResponse toResponse(EnrichmentTask task) {

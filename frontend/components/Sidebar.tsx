@@ -13,10 +13,11 @@ const navItems = [
 ];
 
 const adminItems = [
-  { href: "/admin/integrations", label: "Admin Integrations" },
+  { href: "/admin/integrations", label: "Integrations & AI" },
   { href: "/admin/beats", label: "Admin Beats" },
   { href: "/admin/publishing", label: "Publishing" },
-  { href: "/admin/enrichment", label: "Enrichment Queue" },
+  { href: "/admin/enrichment", label: "Article Enrichment" },
+  { href: "/admin/journalist-enrichment", label: "Journalist Enrichment" },
   { href: "/admin/journalists", label: "Journalists" },
   { href: "/admin/journalists/import", label: "CSV Import" },
   { href: "/admin/audit", label: "Audit Log" },

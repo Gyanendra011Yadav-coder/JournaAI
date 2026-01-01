@@ -21,6 +21,7 @@ interface SavedArticle {
     publishedAtUtc: string | null;
     status: string;
     authorRaw?: string | null;
+    authorTaskStatus?: string | null;
     journalistName?: string | null;
     journalistId?: number | null;
   };
@@ -48,6 +49,25 @@ export default function DashboardPage() {
   const [refreshingBeat, setRefreshingBeat] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
+
+  const renderAuthor = (article: SavedArticle["article"]) => {
+    if (article.journalistName) {
+      return article.journalistName;
+    }
+    if (article.authorRaw) {
+      return article.authorRaw;
+    }
+    if (article.authorTaskStatus === "PENDING" || article.authorTaskStatus === "RUNNING") {
+      return "Extracting...";
+    }
+    if (article.authorTaskStatus === "FAILED") {
+      return "Failed";
+    }
+    if (article.authorTaskStatus === "NEEDS_REVIEW") {
+      return "Needs review";
+    }
+    return "Unknown author";
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -167,7 +187,7 @@ export default function DashboardPage() {
               >
                 <p className="text-sm font-semibold">{article.article.title}</p>
                 <p className="text-xs text-slate-600">
-                  {article.article.journalistName ?? article.article.authorRaw ?? "Unknown author"} ·{" "}
+                  {renderAuthor(article.article)} ·{" "}
                   {article.article.beatName ?? "Trending"}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">

@@ -2,6 +2,8 @@ package ai.journa.prcontrol.repository;
 
 import ai.journa.prcontrol.domain.JournalistContact;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -9,4 +11,8 @@ public interface JournalistContactRepository extends JpaRepository<JournalistCon
   List<JournalistContact> findByJournalistId(Long journalistId);
 
   JournalistContact findFirstByEmailIgnoreCase(String email);
+
+  @Query("select distinct contact.journalist.id from JournalistContact contact " +
+      "where lower(contact.email) like lower(concat('%', :needle, '%'))")
+  List<Long> findJournalistIdsByEmailLike(@Param("needle") String needle);
 }

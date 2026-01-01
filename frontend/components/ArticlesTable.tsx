@@ -9,6 +9,7 @@ interface Article {
   title: string;
   authorRaw?: string | null;
   journalistName?: string | null;
+  authorTaskStatus?: string | null;
   sourceName: string | null;
   publishedAtUtc: string | null;
   status: string;
@@ -21,6 +22,30 @@ interface ArticlesTableProps {
 
 export function ArticlesTable({ articles }: ArticlesTableProps) {
   const [savingId, setSavingId] = useState<number | null>(null);
+
+  const renderAuthor = (article: Article) => {
+    if (article.journalistName) {
+      return article.journalistName;
+    }
+    if (article.authorRaw) {
+      return article.authorRaw;
+    }
+    if (article.authorTaskStatus === "PENDING" || article.authorTaskStatus === "RUNNING") {
+      return (
+        <span className="inline-flex items-center gap-2 text-xs text-slate-500">
+          <span className="h-3 w-3 animate-spin rounded-full border border-slate-400 border-t-transparent" />
+          Extracting...
+        </span>
+      );
+    }
+    if (article.authorTaskStatus === "FAILED") {
+      return <span className="text-xs text-rose-600">Failed</span>;
+    }
+    if (article.authorTaskStatus === "NEEDS_REVIEW") {
+      return <span className="text-xs text-amber-600">Needs review</span>;
+    }
+    return "—";
+  };
 
   const handleSave = async (id: number) => {
     setSavingId(id);
@@ -56,7 +81,7 @@ export function ArticlesTable({ articles }: ArticlesTableProps) {
                 </Link>
               </td>
               <td className="p-3">{article.sourceName ?? "Unknown"}</td>
-              <td className="p-3">{article.journalistName ?? article.authorRaw ?? "—"}</td>
+              <td className="p-3">{renderAuthor(article)}</td>
               <td className="p-3">{article.beatName ?? "—"}</td>
               <td className="p-3">
                 {article.publishedAtUtc ? new Date(article.publishedAtUtc).toLocaleDateString() : "—"}

@@ -10,14 +10,20 @@ public class JournalistResponse {
   private String publicationDomain;
   private String designation;
   private String linkedin;
+  private String twitter;
+  private String authorPageUrl;
   private List<String> beats;
   private String country;
   private String city;
   private String journeySummary;
+  private String bioSummary;
   private String verificationStatus;
   private int completenessScore;
   private List<JournalistArticleSummary> articles;
   private List<JournalistContactResponse> contacts;
+  private Long pendingReviewId;
+  private String pendingReviewStatus;
+  private String pendingProfileJsonb;
 
   public Long getId() {
     return id;
@@ -75,6 +81,22 @@ public class JournalistResponse {
     this.linkedin = linkedin;
   }
 
+  public String getTwitter() {
+    return twitter;
+  }
+
+  public void setTwitter(String twitter) {
+    this.twitter = twitter;
+  }
+
+  public String getAuthorPageUrl() {
+    return authorPageUrl;
+  }
+
+  public void setAuthorPageUrl(String authorPageUrl) {
+    this.authorPageUrl = authorPageUrl;
+  }
+
   public List<String> getBeats() {
     return beats;
   }
@@ -107,6 +129,14 @@ public class JournalistResponse {
     this.journeySummary = journeySummary;
   }
 
+  public String getBioSummary() {
+    return bioSummary;
+  }
+
+  public void setBioSummary(String bioSummary) {
+    this.bioSummary = bioSummary;
+  }
+
   public String getVerificationStatus() {
     return verificationStatus;
   }
@@ -137,5 +167,29 @@ public class JournalistResponse {
 
   public void setContacts(List<JournalistContactResponse> contacts) {
     this.contacts = contacts;
+  }
+
+  public Long getPendingReviewId() {
+    return pendingReviewId;
+  }
+
+  public void setPendingReviewId(Long pendingReviewId) {
+    this.pendingReviewId = pendingReviewId;
+  }
+
+  public String getPendingReviewStatus() {
+    return pendingReviewStatus;
+  }
+
+  public void setPendingReviewStatus(String pendingReviewStatus) {
+    this.pendingReviewStatus = pendingReviewStatus;
+  }
+
+  public String getPendingProfileJsonb() {
+    return pendingProfileJsonb;
+  }
+
+  public void setPendingProfileJsonb(String pendingProfileJsonb) {
+    this.pendingProfileJsonb = pendingProfileJsonb;
   }
 }

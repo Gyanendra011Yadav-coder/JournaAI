@@ -18,6 +18,7 @@ interface SavedArticle {
     beatName?: string | null;
     status?: string;
     authorRaw?: string | null;
+    authorTaskStatus?: string | null;
     journalistName?: string | null;
     journalistId?: number | null;
   };
@@ -28,6 +29,25 @@ export default function SavedPage() {
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [showPinnedOnly, setShowPinnedOnly] = useState(false);
+
+  const renderAuthor = (article: SavedArticle["article"]) => {
+    if (article.journalistName) {
+      return article.journalistName;
+    }
+    if (article.authorRaw) {
+      return article.authorRaw;
+    }
+    if (article.authorTaskStatus === "PENDING" || article.authorTaskStatus === "RUNNING") {
+      return "Extracting...";
+    }
+    if (article.authorTaskStatus === "FAILED") {
+      return "Failed";
+    }
+    if (article.authorTaskStatus === "NEEDS_REVIEW") {
+      return "Needs review";
+    }
+    return "Unknown author";
+  };
 
   useEffect(() => {
     apiFetch<SavedArticle[]>("/api/saved-articles")
@@ -79,7 +99,7 @@ export default function SavedPage() {
                   {item.article.title}
                 </Link>
                 <p className="text-xs text-slate-600">
-                  {item.article.journalistName ?? item.article.authorRaw ?? "Unknown author"} ·{" "}
+                  {renderAuthor(item.article)} ·{" "}
                   {item.article.beatName ?? "Trending"} ·{" "}
                   {item.article.publishedAtUtc
                     ? new Date(item.article.publishedAtUtc).toLocaleString()

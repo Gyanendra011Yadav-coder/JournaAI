@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class JournalistService {
@@ -36,12 +38,9 @@ public class JournalistService {
     return contactRepository.findByJournalistId(journalistId);
   }
 
-  public List<Journalist> findIncomplete(String missingField, String query) {
-    if ("email".equalsIgnoreCase(missingField)) {
-      List<Journalist> candidates = journalistRepository.findByVerificationStatus(JournalistVerificationStatus.UNVERIFIED);
-      return filterByQuery(candidates, query);
-    }
-    return filterByQuery(journalistRepository.findAll(), query);
+  public List<Journalist> findIncomplete(String missingField, String query, String searchBy) {
+    List<Journalist> base = resolveMissingFilter(missingField);
+    return filterByQuery(base, query, searchBy);
   }
 
   public Journalist updateVerification(Journalist journalist, JournalistVerificationStatus status, int completenessScore) {
@@ -67,6 +66,12 @@ public class JournalistService {
     if (request.getLinkedin() != null) {
       journalist.setLinkedin(request.getLinkedin().trim());
     }
+    if (request.getTwitter() != null) {
+      journalist.setTwitter(request.getTwitter().trim());
+    }
+    if (request.getAuthorPageUrl() != null) {
+      journalist.setAuthorPageUrl(request.getAuthorPageUrl().trim());
+    }
     if (request.getBeats() != null) {
       String[] beats = request.getBeats().stream()
           .filter(item -> item != null && !item.isBlank())
@@ -84,6 +89,9 @@ public class JournalistService {
     if (request.getJourneySummary() != null) {
       journalist.setJourneySummary(request.getJourneySummary().trim());
     }
+    if (request.getBioSummary() != null) {
+      journalist.setBioSummary(request.getBioSummary().trim());
+    }
     if (request.getVerificationStatus() != null) {
       journalist.setVerificationStatus(
           JournalistVerificationStatus.valueOf(request.getVerificationStatus().trim().toUpperCase(Locale.ROOT))
@@ -91,6 +99,11 @@ public class JournalistService {
     }
     if (request.getCompletenessScore() != null) {
       journalist.setCompletenessScore(request.getCompletenessScore());
+    } else {
+      int computed = calculateCompletenessScore(journalist);
+      if (computed > journalist.getCompletenessScore()) {
+        journalist.setCompletenessScore(computed);
+      }
     }
     journalist.setUpdatedAt(Instant.now());
     return journalistRepository.save(journalist);
@@ -110,16 +123,112 @@ public class JournalistService {
     journalistRepository.delete(source);
   }
 
-  private List<Journalist> filterByQuery(List<Journalist> journalists, String query) {
+  private List<Journalist> filterByQuery(List<Journalist> journalists, String query, String searchBy) {
     if (query == null || query.isBlank()) {
       return journalists;
     }
     String needle = query.trim().toLowerCase(Locale.ROOT);
+    String normalizedSearchBy = searchBy == null ? "name" : searchBy.trim().toLowerCase(Locale.ROOT);
+    if ("email".equals(normalizedSearchBy)) {
+      return filterByEmail(journalists, needle);
+    }
     return journalists.stream()
-        .filter(journalist -> contains(journalist.getFullName(), needle)
-            || contains(journalist.getPublicationName(), needle)
-            || contains(journalist.getPublicationDomain(), needle))
+        .filter(journalist -> matchesSearch(journalist, needle, normalizedSearchBy))
         .toList();
+  }
+
+  private int calculateCompletenessScore(Journalist journalist) {
+    if (journalist == null) {
+      return 0;
+    }
+    int totalFields = 7;
+    int filled = 0;
+    if (hasText(journalist.getFullName())) {
+      filled++;
+    }
+    if (hasText(journalist.getPublicationName())) {
+      filled++;
+    }
+    if (hasText(journalist.getPublicationDomain())) {
+      filled++;
+    }
+    if (hasText(journalist.getDesignation())) {
+      filled++;
+    }
+    if (journalist.getBeats() != null && journalist.getBeats().length > 0) {
+      filled++;
+    }
+    if (hasText(journalist.getBioSummary()) || hasText(journalist.getJourneySummary())) {
+      filled++;
+    }
+    if (hasText(journalist.getAuthorPageUrl()) || hasText(journalist.getTwitter()) || hasText(journalist.getLinkedin())) {
+      filled++;
+    }
+    return (int) Math.round((filled * 100.0) / totalFields);
+  }
+
+  private boolean hasText(String value) {
+    return value != null && !value.isBlank();
+  }
+
+  private List<Journalist> resolveMissingFilter(String missingField) {
+    if (missingField == null || missingField.isBlank()) {
+      return journalistRepository.findAll();
+    }
+    String normalized = missingField.trim().toLowerCase(Locale.ROOT);
+    if ("email".equals(normalized)) {
+      return journalistRepository.findByVerificationStatus(JournalistVerificationStatus.UNVERIFIED);
+    }
+    if ("beats".equals(normalized)) {
+      return journalistRepository.findAll().stream()
+          .filter(journalist -> journalist.getBeats() == null || journalist.getBeats().length == 0)
+          .toList();
+    }
+    if ("publication".equals(normalized)) {
+      return journalistRepository.findAll().stream()
+          .filter(journalist -> journalist.getPublicationName() == null
+              || journalist.getPublicationName().isBlank())
+          .toList();
+    }
+    return journalistRepository.findAll();
+  }
+
+  private boolean matchesSearch(Journalist journalist, String needle, String searchBy) {
+    return switch (searchBy) {
+      case "beat" -> matchesBeats(journalist, needle);
+      case "publication" -> contains(journalist.getPublicationName(), needle)
+          || contains(journalist.getPublicationDomain(), needle);
+      default -> contains(journalist.getFullName(), needle);
+    };
+  }
+
+  private List<Journalist> filterByEmail(List<Journalist> journalists, String needle) {
+    List<Long> ids = contactRepository.findJournalistIdsByEmailLike(needle);
+    if (ids.isEmpty()) {
+      return List.of();
+    }
+    if (journalists.isEmpty()) {
+      return List.of();
+    }
+    if (journalists.size() == journalistRepository.count()) {
+      return journalistRepository.findAllById(ids);
+    }
+    Set<Long> idSet = new HashSet<>(ids);
+    return journalists.stream()
+        .filter(journalist -> journalist != null && journalist.getId() != null && idSet.contains(journalist.getId()))
+        .toList();
+  }
+
+  private boolean matchesBeats(Journalist journalist, String needle) {
+    if (journalist == null || journalist.getBeats() == null) {
+      return false;
+    }
+    for (String beat : journalist.getBeats()) {
+      if (contains(beat, needle)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean contains(String value, String needle) {
