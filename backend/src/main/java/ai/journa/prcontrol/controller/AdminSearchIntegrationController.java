@@ -12,28 +12,28 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/admin/integrations/gnews")
+@RequestMapping("/api/admin/integrations/google")
 @PreAuthorize("hasRole('ADMIN')")
-public class AdminIntegrationController {
+public class AdminSearchIntegrationController {
   private final IntegrationSettingsService integrationSettingsService;
   private final CurrentUserService currentUserService;
 
-  public AdminIntegrationController(IntegrationSettingsService integrationSettingsService,
-                                    CurrentUserService currentUserService) {
+  public AdminSearchIntegrationController(IntegrationSettingsService integrationSettingsService,
+                                          CurrentUserService currentUserService) {
     this.integrationSettingsService = integrationSettingsService;
     this.currentUserService = currentUserService;
   }
 
   @GetMapping
   public IntegrationSettingsResponse getSettings() {
-    IntegrationSettings settings = integrationSettingsService.getSettings(ProviderType.GNEWS);
+    IntegrationSettings settings = integrationSettingsService.getSettings(ProviderType.GOOGLE_CSE);
     return toResponse(settings);
   }
 
   @PutMapping
   public IntegrationSettingsResponse update(@Valid @RequestBody IntegrationSettingsUpdateRequest request) {
     IntegrationSettings settings = integrationSettingsService.updateSettings(
-        ProviderType.GNEWS,
+        ProviderType.GOOGLE_CSE,
         request,
         currentUserService.requireCurrentUser()
     );
@@ -43,7 +43,7 @@ public class AdminIntegrationController {
   @PostMapping("/key")
   public IntegrationSettingsResponse updateKey(@Valid @RequestBody IntegrationKeyRequest request) {
     IntegrationSettings settings = integrationSettingsService.updateApiKey(
-        ProviderType.GNEWS,
+        ProviderType.GOOGLE_CSE,
         request,
         currentUserService.requireCurrentUser()
     );

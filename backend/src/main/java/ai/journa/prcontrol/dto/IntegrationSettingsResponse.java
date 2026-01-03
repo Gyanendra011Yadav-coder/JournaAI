@@ -9,6 +9,8 @@ public class IntegrationSettingsResponse {
   private int refreshIntervalMinutes;
   private int ttlMinutes;
   private int maxPerRequest;
+  private String searchEngineId;
+  private String allowedDomains;
   private String updatedAt;
   private String updatedBy;
 
@@ -74,6 +76,22 @@ public class IntegrationSettingsResponse {
 
   public void setMaxPerRequest(int maxPerRequest) {
     this.maxPerRequest = maxPerRequest;
+  }
+
+  public String getSearchEngineId() {
+    return searchEngineId;
+  }
+
+  public void setSearchEngineId(String searchEngineId) {
+    this.searchEngineId = searchEngineId;
+  }
+
+  public String getAllowedDomains() {
+    return allowedDomains;
+  }
+
+  public void setAllowedDomains(String allowedDomains) {
+    this.allowedDomains = allowedDomains;
   }
 
   public String getUpdatedAt() {

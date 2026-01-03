@@ -31,6 +31,7 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.18.3'
     implementation 'org.apache.commons:commons-csv:1.10.0'
     implementation 'com.jayway.jsonpath:json-path:2.9.0'
+    implementation 'com.microsoft.playwright:playwright:1.43.0'
 
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
@@ -44,4 +45,10 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.register('installPlaywright', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    args 'install', 'chromium'
 }

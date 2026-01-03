@@ -20,13 +20,16 @@ public class HtmlFetchService {
   private static final Logger logger = LoggerFactory.getLogger(HtmlFetchService.class);
   private final RestTemplate restTemplate;
   private final EnrichmentProperties properties;
+  private final PlaywrightHtmlService playwrightHtmlService;
   private final Map<String, CachedHtml> cache = new ConcurrentHashMap<>();
   private final Map<String, Instant> domainThrottle = new ConcurrentHashMap<>();
 
   public HtmlFetchService(@Qualifier("htmlRestTemplate") RestTemplate htmlRestTemplate,
-                          EnrichmentProperties properties) {
+                          EnrichmentProperties properties,
+                          PlaywrightHtmlService playwrightHtmlService) {
     this.restTemplate = htmlRestTemplate;
     this.properties = properties;
+    this.playwrightHtmlService = playwrightHtmlService;
   }
 
   public Optional<String> fetchHtml(String url) {
@@ -38,14 +41,71 @@ public class HtmlFetchService {
       return Optional.ofNullable(cached.html);
     }
     throttle(url);
+    Optional<String> body = fetchStatic(url);
+    if (body.isPresent()) {
+      String html = body.get();
+      if (shouldRender(html)) {
+        Optional<String> rendered = playwrightHtmlService.renderHtml(url);
+        if (rendered.isPresent()) {
+          cacheHtml(url, rendered.get(), true);
+          return rendered;
+        }
+      }
+      cacheHtml(url, html, false);
+      return Optional.of(html);
+    }
+    Optional<String> rendered = playwrightHtmlService.renderHtml(url);
+    if (rendered.isPresent()) {
+      cacheHtml(url, rendered.get(), true);
+    }
+    return rendered;
+  }
+
+  public Optional<String> fetchHtmlWithPlaywright(String url) {
+    if (url == null || url.isBlank()) {
+      return Optional.empty();
+    }
+    if (!playwrightHtmlService.isAvailable()) {
+      return Optional.empty();
+    }
+    throttle(url);
+    Optional<String> rendered = playwrightHtmlService.renderHtml(url);
+    rendered.ifPresent(html -> cacheHtml(url, html, true));
+    return rendered;
+  }
+
+  public boolean wasRendered(String url) {
+    CachedHtml cached = url != null ? cache.get(url) : null;
+    return cached != null && cached.rendered;
+  }
+
+  private Optional<String> fetchStatic(String url) {
     try {
       String body = restTemplate.getForObject(URI.create(url), String.class);
-      cache.put(url, new CachedHtml(body, Instant.now().plus(Duration.ofMinutes(properties.getHtmlCacheMinutes()))));
       return Optional.ofNullable(body);
     } catch (RestClientException ex) {
       logger.debug("Html fetch failed url={} reason={}", url, ex.getMessage());
       return Optional.empty();
     }
+  }
+
+  private boolean shouldRender(String html) {
+    if (!playwrightHtmlService.isAvailable()) {
+      return false;
+    }
+    if (html == null || html.isBlank()) {
+      return true;
+    }
+    int minChars = properties.getPlaywrightMinHtmlChars();
+    return minChars > 0 && html.length() < minChars;
+  }
+
+  private Instant expiresAt() {
+    return Instant.now().plus(Duration.ofMinutes(properties.getHtmlCacheMinutes()));
+  }
+
+  private void cacheHtml(String url, String html, boolean rendered) {
+    cache.put(url, new CachedHtml(html, expiresAt(), rendered));
   }
 
   private void throttle(String url) {
@@ -75,10 +135,12 @@ public class HtmlFetchService {
   private static class CachedHtml {
     private final String html;
     private final Instant expiresAt;
+    private final boolean rendered;
 
-    private CachedHtml(String html, Instant expiresAt) {
+    private CachedHtml(String html, Instant expiresAt, boolean rendered) {
       this.html = html;
       this.expiresAt = expiresAt;
+      this.rendered = rendered;
     }
 
     private boolean isExpired() {

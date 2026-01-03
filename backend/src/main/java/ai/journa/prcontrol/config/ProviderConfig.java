@@ -13,7 +13,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 
 @Configuration
-@EnableConfigurationProperties(NewsProviderProperties.class)
+@EnableConfigurationProperties({NewsProviderProperties.class, SearchProviderProperties.class})
 public class ProviderConfig {
   @Bean
   public RestTemplate restTemplate(NewsProviderProperties properties) {

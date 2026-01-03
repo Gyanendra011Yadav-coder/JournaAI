@@ -7,6 +7,7 @@ import ai.journa.prcontrol.dto.IntegrationKeyRequest;
 import ai.journa.prcontrol.dto.IntegrationSettingsUpdateRequest;
 import ai.journa.prcontrol.repository.IntegrationSettingsRepository;
 import ai.journa.prcontrol.config.NewsProviderProperties;
+import ai.journa.prcontrol.config.SearchProviderProperties;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -16,13 +17,16 @@ public class IntegrationSettingsService {
   private final IntegrationSettingsRepository integrationSettingsRepository;
   private final EncryptionService encryptionService;
   private final NewsProviderProperties newsProviderProperties;
+  private final SearchProviderProperties searchProviderProperties;
 
   public IntegrationSettingsService(IntegrationSettingsRepository integrationSettingsRepository,
                                     EncryptionService encryptionService,
-                                    NewsProviderProperties newsProviderProperties) {
+                                    NewsProviderProperties newsProviderProperties,
+                                    SearchProviderProperties searchProviderProperties) {
     this.integrationSettingsRepository = integrationSettingsRepository;
     this.encryptionService = encryptionService;
     this.newsProviderProperties = newsProviderProperties;
+    this.searchProviderProperties = searchProviderProperties;
   }
 
   public IntegrationSettings getSettings(ProviderType providerType) {
@@ -31,8 +35,7 @@ public class IntegrationSettingsService {
   }
 
   public IntegrationSettings getActiveSettings() {
-    return integrationSettingsRepository.findAll().stream().findFirst()
-        .orElseThrow(() -> new IllegalStateException("Integration settings not found"));
+    return getSettings(ProviderType.GNEWS);
   }
 
   public IntegrationSettings updateSettings(ProviderType providerType, IntegrationSettingsUpdateRequest request, User actor) {
@@ -43,6 +46,13 @@ public class IntegrationSettingsService {
     settings.setRefreshIntervalMinutes(request.getRefreshIntervalMinutes());
     settings.setTtlMinutes(request.getTtlMinutes());
     settings.setMaxPerRequest(request.getMaxPerRequest());
+    if (request.getSearchEngineId() != null) {
+      String engineId = request.getSearchEngineId().trim();
+      settings.setSearchEngineId(engineId.isBlank() ? null : engineId);
+    }
+    if (request.getAllowedDomains() != null) {
+      settings.setAllowedDomains(request.getAllowedDomains());
+    }
     settings.setUpdatedAt(Instant.now());
     settings.setUpdatedBy(actor);
     return integrationSettingsRepository.save(settings);
@@ -68,6 +78,9 @@ public class IntegrationSettingsService {
     if (settings.getProviderType() == ProviderType.GNEWS) {
       return newsProviderProperties.getGnews().getDecodedApiKey();
     }
+    if (settings.getProviderType() == ProviderType.GOOGLE_CSE) {
+      return searchProviderProperties.getGoogle().getDecodedApiKey();
+    }
     return null;
   }
 
@@ -79,6 +92,21 @@ public class IntegrationSettingsService {
       String apiKey = newsProviderProperties.getGnews().getDecodedApiKey();
       return apiKey != null && !apiKey.isBlank();
     }
+    if (settings.getProviderType() == ProviderType.GOOGLE_CSE) {
+      String apiKey = searchProviderProperties.getGoogle().getDecodedApiKey();
+      String engineId = resolveSearchEngineId(settings);
+      return apiKey != null && !apiKey.isBlank() && engineId != null && !engineId.isBlank();
+    }
     return false;
+  }
+
+  public String resolveSearchEngineId(IntegrationSettings settings) {
+    if (settings.getSearchEngineId() != null && !settings.getSearchEngineId().isBlank()) {
+      return settings.getSearchEngineId().trim();
+    }
+    if (settings.getProviderType() == ProviderType.GOOGLE_CSE) {
+      return searchProviderProperties.getGoogle().getSearchEngineId();
+    }
+    return null;
   }
 }

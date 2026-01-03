@@ -32,17 +32,20 @@ public class JournalistEnrichmentService {
   private final ObjectMapper objectMapper;
   private final HtmlFetchService htmlFetchService;
   private final JournalistEnrichmentReviewService reviewService;
+  private final SearchEvidenceService searchEvidenceService;
 
   public JournalistEnrichmentService(LlmClientService llmClientService,
                                      PromptFileService promptFileService,
                                      ObjectMapper objectMapper,
                                      HtmlFetchService htmlFetchService,
-                                     JournalistEnrichmentReviewService reviewService) {
+                                     JournalistEnrichmentReviewService reviewService,
+                                     SearchEvidenceService searchEvidenceService) {
     this.llmClientService = llmClientService;
     this.promptFileService = promptFileService;
     this.objectMapper = objectMapper;
     this.htmlFetchService = htmlFetchService;
     this.reviewService = reviewService;
+    this.searchEvidenceService = searchEvidenceService;
   }
 
   public EnrichmentOutcome enrich(Journalist journalist, List<Article> recentArticles) {
@@ -60,6 +63,9 @@ public class JournalistEnrichmentService {
     }
     PageSignals pageSignals = fetchPageSignals(authorPageUrl);
     String articleSnippets = buildArticleSnippets(recentArticles);
+    String searchEvidence = searchEvidenceService.buildEvidence(journalist, recentArticles, authorPageUrl)
+        .map(SearchEvidenceService.SearchEvidence::summary)
+        .orElse("");
 
     String userPrompt = promptFileService.renderJournalistUserPrompt(Map.of(
         "CURRENT_JOURNALIST_JSON", currentJson,
@@ -67,6 +73,7 @@ public class JournalistEnrichmentService {
         "AUTHOR_PAGE_TEXT", safe(pageSignals.text()),
         "AUTHOR_PAGE_LINKS", safe(pageSignals.links()),
         "AUTHOR_PAGE_DISCOVERY", discovery != null ? discovery.summary() : "",
+        "SEARCH_EVIDENCE", safe(searchEvidence),
         "RECENT_ARTICLES", safe(articleSnippets)
     ));
     try {

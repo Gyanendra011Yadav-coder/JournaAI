@@ -64,6 +64,7 @@ Verified evidence (may be empty):
 - Publisher author page text: {{AUTHOR_PAGE_TEXT}}
 - Publisher author page links (social): {{AUTHOR_PAGE_LINKS}}
 - Author page discovery notes: {{AUTHOR_PAGE_DISCOVERY}}
+- External evidence (search API): {{SEARCH_EVIDENCE}}
 - Recent article titles/urls: {{RECENT_ARTICLES}}
 
 Enrich cautiously. Output JSON only.

@@ -13,6 +13,8 @@ interface IntegrationSettings {
   refreshIntervalMinutes: number;
   ttlMinutes: number;
   maxPerRequest: number;
+  searchEngineId?: string | null;
+  allowedDomains?: string | null;
   updatedAt?: string;
   updatedBy?: string;
 }
@@ -55,6 +57,13 @@ export default function AdminIntegrationsPage() {
   const [gnewsError, setGnewsError] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
+
+  const [googleSettings, setGoogleSettings] = useState<IntegrationSettings | null>(null);
+  const [googleApiKey, setGoogleApiKey] = useState("");
+  const [googleStatus, setGoogleStatus] = useState<string | null>(null);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+  const [savingGoogleKey, setSavingGoogleKey] = useState(false);
+  const [savingGoogleSettings, setSavingGoogleSettings] = useState(false);
   const countryOptions = useMemo(() => getCountryOptions(), []);
   const languageOptions = useMemo(() => getLanguageOptions(), []);
   const isGnewsLoading = !settings && !gnewsError;
@@ -67,6 +76,17 @@ export default function AdminIntegrationsPage() {
       })
       .catch((err) =>
         setGnewsError(err instanceof Error ? err.message : "Unable to load integration settings."),
+      );
+  }, []);
+
+  useEffect(() => {
+    apiFetch<IntegrationSettings>("/api/admin/integrations/google")
+      .then((data) => {
+        setGoogleSettings(data);
+        setGoogleError(null);
+      })
+      .catch((err) =>
+        setGoogleError(err instanceof Error ? err.message : "Unable to load Google settings."),
       );
   }, []);
 
@@ -114,6 +134,52 @@ export default function AdminIntegrationsPage() {
     }
   };
 
+  const handleSaveGoogleSettings = async () => {
+    if (!googleSettings) return;
+    setSavingGoogleSettings(true);
+    setGoogleError(null);
+    try {
+      const response = await apiFetch<IntegrationSettings>("/api/admin/integrations/google", {
+        method: "PUT",
+        body: JSON.stringify({
+          enabled: googleSettings.enabled,
+          defaultLang: googleSettings.defaultLang,
+          defaultCountry: googleSettings.defaultCountry,
+          refreshIntervalMinutes: googleSettings.refreshIntervalMinutes,
+          ttlMinutes: googleSettings.ttlMinutes,
+          maxPerRequest: googleSettings.maxPerRequest,
+          searchEngineId: googleSettings.searchEngineId ?? "",
+          allowedDomains: googleSettings.allowedDomains ?? "",
+        }),
+      });
+      setGoogleSettings(response);
+      setGoogleStatus("Google search settings updated.");
+    } catch (err) {
+      setGoogleError(err instanceof Error ? err.message : "Unable to save Google settings.");
+    } finally {
+      setSavingGoogleSettings(false);
+    }
+  };
+
+  const handleUpdateGoogleKey = async () => {
+    if (!googleApiKey) return;
+    setSavingGoogleKey(true);
+    setGoogleError(null);
+    try {
+      const response = await apiFetch<IntegrationSettings>("/api/admin/integrations/google/key", {
+        method: "POST",
+        body: JSON.stringify({ apiKey: googleApiKey }),
+      });
+      setGoogleSettings(response);
+      setGoogleApiKey("");
+      setGoogleStatus("Google API key updated.");
+    } catch (err) {
+      setGoogleError(err instanceof Error ? err.message : "Unable to update Google key.");
+    } finally {
+      setSavingGoogleKey(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <header className="rounded-3xl border border-slate-200/70 bg-white/90 p-8 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.25)]">
@@ -130,6 +196,16 @@ export default function AdminIntegrationsPage() {
       {gnewsStatus && (
         <div className="rounded-2xl border border-emerald-300/70 bg-emerald-50 p-4 text-emerald-700">
           {gnewsStatus}
+        </div>
+      )}
+      {googleError && (
+        <div className="rounded-2xl border border-amber-300/70 bg-amber-50 p-4 text-amber-800">
+          {googleError}
+        </div>
+      )}
+      {googleStatus && (
+        <div className="rounded-2xl border border-emerald-300/70 bg-emerald-50 p-4 text-emerald-700">
+          {googleStatus}
         </div>
       )}
 
@@ -257,6 +333,142 @@ export default function AdminIntegrationsPage() {
             </>
           ) : (
             <p className="text-sm text-slate-600">GNews defaults unavailable.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-6 space-y-4">
+          <h2 className="text-lg font-semibold">Google Programmable Search Connection</h2>
+          {!googleSettings ? (
+            <p className="text-sm text-slate-600">Loading Google settings...</p>
+          ) : (
+            <>
+              <p className="text-sm text-slate-600">
+                Status: {googleSettings.configured ? "Configured" : "Missing key"}
+              </p>
+              <label className="text-xs uppercase tracking-[0.2em] text-slate-600">New API key</label>
+              <input
+                type="password"
+                value={googleApiKey}
+                onChange={(event) => setGoogleApiKey(event.target.value)}
+                placeholder="Enter new key"
+                className="rounded-xl bg-white/80 border border-slate-200 p-3"
+              />
+              <button
+                onClick={handleUpdateGoogleKey}
+                disabled={savingGoogleKey || !googleSettings}
+                className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2 font-semibold text-emerald-700 disabled:opacity-60"
+              >
+                <span className="inline-flex items-center gap-2">
+                  {savingGoogleKey && (
+                    <span className="h-3 w-3 animate-spin rounded-full border border-emerald-600 border-t-transparent" />
+                  )}
+                  Update key
+                </span>
+              </button>
+            </>
+          )}
+        </div>
+        <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-6 space-y-4">
+          <h2 className="text-lg font-semibold">Google Search Defaults</h2>
+          {googleSettings ? (
+            <>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div>
+                  <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Search engine ID (cx)</label>
+                  <input
+                    value={googleSettings.searchEngineId ?? ""}
+                    onChange={(event) =>
+                      setGoogleSettings({ ...googleSettings, searchEngineId: event.target.value })
+                    }
+                    className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
+                    placeholder="01f32d91ca0e847db"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Default lang</label>
+                  <select
+                    value={googleSettings.defaultLang}
+                    onChange={(event) => setGoogleSettings({ ...googleSettings, defaultLang: event.target.value })}
+                    className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
+                  >
+                    {languageOptions.map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Default country</label>
+                  <select
+                    value={googleSettings.defaultCountry}
+                    onChange={(event) => setGoogleSettings({ ...googleSettings, defaultCountry: event.target.value })}
+                    className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
+                  >
+                    {countryOptions.map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Max results</label>
+                  <input
+                    type="number"
+                    value={googleSettings.maxPerRequest}
+                    onChange={(event) =>
+                      setGoogleSettings({ ...googleSettings, maxPerRequest: Number(event.target.value) })
+                    }
+                    className="mt-2 w-full rounded-xl bg-white/80 border border-slate-200 p-3"
+                  />
+                </div>
+                <div className="flex items-center gap-3 pt-6">
+                  <input
+                    type="checkbox"
+                    checked={googleSettings.enabled}
+                    onChange={(event) => setGoogleSettings({ ...googleSettings, enabled: event.target.checked })}
+                  />
+                  <span className="text-sm text-slate-600">Enabled</span>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs uppercase tracking-[0.2em] text-slate-600">Allowed domains</label>
+                <textarea
+                  value={googleSettings.allowedDomains ?? ""}
+                  onChange={(event) =>
+                    setGoogleSettings({ ...googleSettings, allowedDomains: event.target.value })
+                  }
+                  className="mt-2 h-28 w-full rounded-xl bg-white/80 border border-slate-200 p-3 text-xs"
+                  placeholder="e.g. linkedin.com, muckrack.com, goskribe.com, twitter.com"
+                />
+                <p className="mt-2 text-xs text-slate-500">
+                  Use <span className="font-semibold">*</span> to allow all domains.
+                </p>
+              </div>
+              <button
+                onClick={handleSaveGoogleSettings}
+                disabled={savingGoogleSettings}
+                className="rounded-xl border border-cyan-300 bg-cyan-50 px-4 py-2 font-semibold text-cyan-700 disabled:opacity-60"
+              >
+                <span className="inline-flex items-center gap-2">
+                  {savingGoogleSettings && (
+                    <span className="h-3 w-3 animate-spin rounded-full border border-cyan-600 border-t-transparent" />
+                  )}
+                  Save settings
+                </span>
+              </button>
+              {googleSettings.updatedAt && (
+                <p className="text-xs text-slate-500">
+                  Updated {new Date(googleSettings.updatedAt).toLocaleString()} by{" "}
+                  {googleSettings.updatedBy ?? "system"}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-slate-600">Google defaults unavailable.</p>
           )}
         </div>
       </section>

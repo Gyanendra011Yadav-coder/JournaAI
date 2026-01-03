@@ -7,8 +7,11 @@ public class EnrichmentProperties {
   private int htmlCacheMinutes = 60;
   private int perDomainDelayMs = 1500;
   private int requestTimeoutSeconds = 10;
-  private boolean htmlFetchEnabled = false;
   private boolean autoRunAfterIngest = true;
+  private boolean playwrightEnabled = true;
+  private int playwrightTimeoutSeconds = 15;
+  private int playwrightPostLoadDelayMs = 1000;
+  private int playwrightMinHtmlChars = 2500;
   private Scheduled scheduled = new Scheduled();
   private Runner runner = new Runner();
 
@@ -36,20 +39,44 @@ public class EnrichmentProperties {
     this.requestTimeoutSeconds = requestTimeoutSeconds;
   }
 
-  public boolean isHtmlFetchEnabled() {
-    return htmlFetchEnabled;
-  }
-
-  public void setHtmlFetchEnabled(boolean htmlFetchEnabled) {
-    this.htmlFetchEnabled = htmlFetchEnabled;
-  }
-
   public boolean isAutoRunAfterIngest() {
     return autoRunAfterIngest;
   }
 
   public void setAutoRunAfterIngest(boolean autoRunAfterIngest) {
     this.autoRunAfterIngest = autoRunAfterIngest;
+  }
+
+  public boolean isPlaywrightEnabled() {
+    return playwrightEnabled;
+  }
+
+  public void setPlaywrightEnabled(boolean playwrightEnabled) {
+    this.playwrightEnabled = playwrightEnabled;
+  }
+
+  public int getPlaywrightTimeoutSeconds() {
+    return playwrightTimeoutSeconds;
+  }
+
+  public void setPlaywrightTimeoutSeconds(int playwrightTimeoutSeconds) {
+    this.playwrightTimeoutSeconds = playwrightTimeoutSeconds;
+  }
+
+  public int getPlaywrightPostLoadDelayMs() {
+    return playwrightPostLoadDelayMs;
+  }
+
+  public void setPlaywrightPostLoadDelayMs(int playwrightPostLoadDelayMs) {
+    this.playwrightPostLoadDelayMs = playwrightPostLoadDelayMs;
+  }
+
+  public int getPlaywrightMinHtmlChars() {
+    return playwrightMinHtmlChars;
+  }
+
+  public void setPlaywrightMinHtmlChars(int playwrightMinHtmlChars) {
+    this.playwrightMinHtmlChars = playwrightMinHtmlChars;
   }
 
   public Scheduled getScheduled() {

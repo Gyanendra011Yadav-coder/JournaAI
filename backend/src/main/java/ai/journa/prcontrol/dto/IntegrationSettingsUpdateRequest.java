@@ -23,6 +23,10 @@ public class IntegrationSettingsUpdateRequest {
   @Min(1)
   private int maxPerRequest;
 
+  private String searchEngineId;
+
+  private String allowedDomains;
+
   public Boolean getEnabled() {
     return enabled;
   }
@@ -69,5 +73,21 @@ public class IntegrationSettingsUpdateRequest {
 
   public void setMaxPerRequest(int maxPerRequest) {
     this.maxPerRequest = maxPerRequest;
+  }
+
+  public String getSearchEngineId() {
+    return searchEngineId;
+  }
+
+  public void setSearchEngineId(String searchEngineId) {
+    this.searchEngineId = searchEngineId;
+  }
+
+  public String getAllowedDomains() {
+    return allowedDomains;
+  }
+
+  public void setAllowedDomains(String allowedDomains) {
+    this.allowedDomains = allowedDomains;
   }
 }

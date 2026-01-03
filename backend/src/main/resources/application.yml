@@ -109,12 +109,25 @@ app:
       apiKeyBase64: "MDlmZjdmNjJlNDQyYmViZTc2YzYzMDJmYWUzZTc4ZmI="
       requestTimeoutSeconds: 10
       maxBackoffSeconds: 30
+  search:
+    google:
+      apiKeyBase64: "QUl6YVN5QTg0QzFyamM3elZNU1EwbGFWVU5LOTNyR1VOUDRPMnNR"
+      searchEngineId: "01f32d91ca0e847db"
+      baseUrl: "https://www.googleapis.com/customsearch/v1"
+      requestTimeoutSeconds: 10
+      maxResults: 5
+      defaultLang: "en"
+      defaultCountry: "us"
+      allowedDomains: "*"
   enrichment:
     htmlCacheMinutes: 60
     perDomainDelayMs: 1500
     requestTimeoutSeconds: 10
-    htmlFetchEnabled: true
     autoRunAfterIngest: true
+    playwrightEnabled: true
+    playwrightTimeoutSeconds: 15
+    playwrightPostLoadDelayMs: 1000
+    playwrightMinHtmlChars: 2500
     scheduled:
       enabled: true
       fixedDelayMs: 600000

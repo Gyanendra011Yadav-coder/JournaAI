@@ -36,6 +36,12 @@ public class IntegrationSettings {
   @Column(name = "max_per_request", nullable = false)
   private Integer maxPerRequest = 10;
 
+  @Column(name = "search_engine_id")
+  private String searchEngineId;
+
+  @Column(name = "allowed_domains")
+  private String allowedDomains;
+
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt = Instant.now();
 
@@ -113,6 +119,22 @@ public class IntegrationSettings {
 
   public void setMaxPerRequest(Integer maxPerRequest) {
     this.maxPerRequest = maxPerRequest;
+  }
+
+  public String getSearchEngineId() {
+    return searchEngineId;
+  }
+
+  public void setSearchEngineId(String searchEngineId) {
+    this.searchEngineId = searchEngineId;
+  }
+
+  public String getAllowedDomains() {
+    return allowedDomains;
+  }
+
+  public void setAllowedDomains(String allowedDomains) {
+    this.allowedDomains = allowedDomains;
   }
 
   public Instant getUpdatedAt() {

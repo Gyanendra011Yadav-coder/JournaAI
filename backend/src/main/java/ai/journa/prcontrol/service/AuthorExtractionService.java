@@ -99,28 +99,32 @@ public class AuthorExtractionService {
       return deterministic;
     }
 
-    if (enrichmentProperties.isHtmlFetchEnabled()) {
-      Optional<String> html = htmlFetchService.fetchHtml(article.getUrl());
-      if (html.isEmpty()) {
-        logger.warn("Author extraction failed articleId={} reason=HTML_FETCH_FAILED url={}",
-            article.getId(), article.getUrl());
-      } else {
-        Document document = Jsoup.parse(html.get());
-        candidates.addAll(extractFromJsonLd(document, signals));
-        candidates.addAll(extractFromMeta(document, signals));
-        if (candidates.isEmpty()) {
-          candidates.addAll(extractFromByline(document, signals));
-        }
-        if (!candidates.isEmpty()) {
-          authorRaw = candidates.get(0).name();
-        }
-        if (signals.pageTextSnippet == null) {
-          signals.pageTextSnippet = pickSnippet(document.text(), 800);
+    Optional<String> html = htmlFetchService.fetchHtml(article.getUrl());
+    if (html.isEmpty()) {
+      logger.warn("Author extraction failed articleId={} reason=HTML_FETCH_FAILED url={}",
+          article.getId(), article.getUrl());
+    } else {
+      Document document = Jsoup.parse(html.get());
+      extractFromDocument(document, signals, candidates);
+      if (!candidates.isEmpty()) {
+        authorRaw = candidates.get(0).name();
+      }
+      if (candidates.isEmpty() && !htmlFetchService.wasRendered(article.getUrl())) {
+        logger.info("Author extraction retry with Playwright articleId={} reason=NO_BYLINE", article.getId());
+        Optional<String> rendered = htmlFetchService.fetchHtmlWithPlaywright(article.getUrl());
+        if (rendered.isPresent()) {
+          Document renderedDoc = Jsoup.parse(rendered.get());
+          SignalCollector renderedSignals = new SignalCollector();
+          List<Candidate> renderedCandidates = new ArrayList<>();
+          extractFromDocument(renderedDoc, renderedSignals, renderedCandidates);
+          if (!renderedCandidates.isEmpty()) {
+            candidates.clear();
+            candidates.addAll(renderedCandidates);
+            authorRaw = candidates.get(0).name();
+          }
+          mergeSignals(signals, renderedSignals);
         }
       }
-    } else {
-      logger.info("Author extraction skipped articleId={} reason=HTML_FETCH_DISABLED url={}",
-          article.getId(), article.getUrl());
     }
 
     if (candidates.isEmpty()) {
@@ -422,6 +426,38 @@ public class AuthorExtractionService {
     String candidate = parts.length > 0 ? parts[0].trim() : trimmed;
     if (!candidate.isBlank()) {
       candidates.add(new Candidate(candidate, confidence, method));
+    }
+  }
+
+  private void extractFromDocument(Document document, SignalCollector signals, List<Candidate> candidates) {
+    if (document == null) {
+      return;
+    }
+    candidates.addAll(extractFromJsonLd(document, signals));
+    candidates.addAll(extractFromMeta(document, signals));
+    if (candidates.isEmpty()) {
+      candidates.addAll(extractFromByline(document, signals));
+    }
+    if (signals.pageTextSnippet == null) {
+      signals.pageTextSnippet = pickSnippet(document.text(), 800);
+    }
+  }
+
+  private void mergeSignals(SignalCollector base, SignalCollector incoming) {
+    if (incoming == null || base == null) {
+      return;
+    }
+    if (incoming.jsonLdSnippet != null && !incoming.jsonLdSnippet.isBlank()) {
+      base.jsonLdSnippet = incoming.jsonLdSnippet;
+    }
+    if (incoming.metaTags != null && !incoming.metaTags.isBlank()) {
+      base.metaTags = incoming.metaTags;
+    }
+    if (incoming.bylineSnippet != null && !incoming.bylineSnippet.isBlank()) {
+      base.bylineSnippet = incoming.bylineSnippet;
+    }
+    if (incoming.pageTextSnippet != null && !incoming.pageTextSnippet.isBlank()) {
+      base.pageTextSnippet = incoming.pageTextSnippet;
     }
   }
 
