@@ -82,7 +82,7 @@ public class SearchEvidenceService {
       return Optional.empty();
     }
     String articleTitle = extractArticleTitle(recentArticles);
-    String query = buildQuery(journalist, articleTitle);
+    List<String> queries = buildQueryVariants(journalist, articleTitle);
     LocalePreference preference = resolveLocaleFromProfile();
     String lang = preference.lang();
     String country = preference.country();
@@ -100,12 +100,33 @@ public class SearchEvidenceService {
     int maxPerRequest = settings.getMaxPerRequest() != null
         ? settings.getMaxPerRequest()
         : searchProviderProperties.getGoogle().getMaxResults();
-    List<SearchResult> results = googleSearchService.search(query, apiKey, searchEngineId, maxPerRequest, lang, country);
-    logger.info("Google CSE query={} results={}", query, results.size());
-    if (results.isEmpty()) {
-      logger.info("Google CSE returned no results query={}", query);
+    boolean hasLocale = (lang != null && !lang.isBlank()) || (country != null && !country.isBlank());
+    List<SearchResult> results = List.of();
+    String queryUsed = null;
+    boolean usedLocale = true;
+    for (String candidate : queries) {
+      results = googleSearchService.search(candidate, apiKey, searchEngineId, maxPerRequest, lang, country);
+      logger.info("Google CSE query={} results={}", candidate, results.size());
+      if (!results.isEmpty()) {
+        queryUsed = candidate;
+        usedLocale = true;
+        break;
+      }
+      if (hasLocale) {
+        results = googleSearchService.search(candidate, apiKey, searchEngineId, maxPerRequest, null, null);
+        logger.info("Google CSE query={} locale=none results={}", candidate, results.size());
+        if (!results.isEmpty()) {
+          queryUsed = candidate;
+          usedLocale = false;
+          break;
+        }
+      }
+    }
+    if (results.isEmpty() || queryUsed == null) {
+      logger.info("Google CSE returned no results queries={}", queries);
       return Optional.empty();
     }
+    logger.info("Google CSE selected query={} localeUsed={}", queryUsed, usedLocale);
     Set<String> allowedDomains = parseAllowedDomains(settings.getAllowedDomains());
     boolean allowAll = allowedDomains.contains("*");
     logger.info("Search evidence allowAll={} allowedDomains={}", allowAll, allowAll ? "*" : allowedDomains);
@@ -132,14 +153,14 @@ public class SearchEvidenceService {
       }
     }
     if (pages.isEmpty()) {
-      logger.info("Search evidence captured none query={}", query);
+      logger.info("Search evidence captured none query={}", queryUsed);
       return Optional.empty();
     }
     logger.info("Google CSE evidence captured query={} pages={} urls={}",
-        query,
+        queryUsed,
         pages.size(),
         pages.stream().map(EvidencePage::url).toList());
-    return Optional.of(new SearchEvidence(query, pages));
+    return Optional.of(new SearchEvidence(queryUsed, pages));
   }
 
   private EvidencePage buildEvidencePage(SearchResult result) {
@@ -163,19 +184,76 @@ public class SearchEvidenceService {
     return new EvidencePage(url, result.title(), result.snippet(), pageText, linkHints);
   }
 
-  private String buildQuery(Journalist journalist, String articleTitle) {
-    String name = journalist.getFullName().trim();
-    String publication = journalist.getPublicationName();
-    List<String> parts = new ArrayList<>();
-    parts.add("\"" + name + "\"");
-    if (publication != null && !publication.isBlank()) {
-      parts.add("\"" + publication.trim() + "\"");
+  private List<String> buildQueryVariants(Journalist journalist, String articleTitle) {
+    String name = safeQuoted(journalist.getFullName());
+    String publication = safeQuoted(journalist.getPublicationName());
+    String domain = normalizeDomain(journalist.getPublicationDomain());
+    String titleTerm = safeTerm(articleTitle);
+    Set<String> queries = new java.util.LinkedHashSet<>();
+    queries.add(joinTerms(name, publication, "journalist profile"));
+    queries.add(joinTerms(name, publication, "author profile"));
+    if (!titleTerm.isBlank()) {
+      queries.add(joinTerms(name, publication, titleTerm));
     }
-    if (articleTitle != null && !articleTitle.isBlank()) {
-      parts.add("\"" + articleTitle + "\"");
+    queries.add(joinTerms(name, publication));
+    if (!domain.isBlank()) {
+      queries.add(joinTerms(name, "site:" + domain));
     }
-    parts.add("journalist profile");
-    return String.join(" ", parts);
+    queries.add(joinTerms(name, "site:linkedin.com"));
+    queries.add(joinTerms(name, "site:muckrack.com"));
+    queries.add(joinTerms(name, "site:goskribe.com"));
+    queries.add(joinTerms(name, "site:twitter.com"));
+    queries.removeIf(String::isBlank);
+    return new ArrayList<>(queries);
+  }
+
+  private String safeQuoted(String value) {
+    if (value == null) {
+      return "";
+    }
+    String cleaned = value.replace("\"", "").trim();
+    if (cleaned.isBlank()) {
+      return "";
+    }
+    return "\"" + cleaned + "\"";
+  }
+
+  private String safeTerm(String value) {
+    if (value == null) {
+      return "";
+    }
+    return value.replace("\"", "").trim();
+  }
+
+  private String joinTerms(String... terms) {
+    List<String> values = new ArrayList<>();
+    for (String term : terms) {
+      if (term == null) {
+        continue;
+      }
+      String trimmed = term.trim();
+      if (!trimmed.isBlank()) {
+        values.add(trimmed);
+      }
+    }
+    return String.join(" ", values);
+  }
+
+  private String normalizeDomain(String domain) {
+    if (domain == null || domain.isBlank()) {
+      return "";
+    }
+    String trimmed = domain.trim().toLowerCase(Locale.ROOT);
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+      try {
+        String host = URI.create(trimmed).getHost();
+        return host == null ? "" : host;
+      } catch (Exception ex) {
+        return "";
+      }
+    }
+    int slashIndex = trimmed.indexOf('/');
+    return slashIndex > 0 ? trimmed.substring(0, slashIndex) : trimmed;
   }
 
   private String extractArticleTitle(List<Article> recentArticles) {

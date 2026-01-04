@@ -1,23 +1,33 @@
 package ai.journa.prcontrol.service;
 
 import ai.journa.prcontrol.domain.Article;
+import ai.journa.prcontrol.domain.ContactSourceType;
+import ai.journa.prcontrol.domain.ContactVisibility;
 import ai.journa.prcontrol.domain.Journalist;
+import ai.journa.prcontrol.domain.JournalistContact;
+import ai.journa.prcontrol.repository.JournalistContactRepository;
 import ai.journa.prcontrol.service.llm.LlmClientService;
 import ai.journa.prcontrol.service.llm.LlmRequest;
 import ai.journa.prcontrol.service.llm.LlmResponse;
 import ai.journa.prcontrol.service.llm.PromptFileService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class JournalistEnrichmentService {
@@ -26,6 +36,11 @@ public class JournalistEnrichmentService {
   private static final int MAX_PAGE_TEXT_CHARS = 2500;
   private static final int MAX_LINK_HINTS = 6;
   private static final int MAX_DISCOVERY_ARTICLES = 3;
+  private static final int MAX_CONTACT_EVIDENCE_CHARS = 12000;
+  private static final Pattern EMAIL_PATTERN = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
+  private static final Pattern URL_PATTERN = Pattern.compile("https?://\\S+");
+  private static final Pattern TEL_PATTERN = Pattern.compile("(?i)tel:\\s*([+\\d][\\d\\s().-]{5,})");
+  private static final Pattern PHONE_PATTERN = Pattern.compile("(?:\\+?\\d[\\d\\s().-]{6,}\\d)");
 
   private final LlmClientService llmClientService;
   private final PromptFileService promptFileService;
@@ -33,19 +48,22 @@ public class JournalistEnrichmentService {
   private final HtmlFetchService htmlFetchService;
   private final JournalistEnrichmentReviewService reviewService;
   private final SearchEvidenceService searchEvidenceService;
+  private final JournalistContactRepository contactRepository;
 
   public JournalistEnrichmentService(LlmClientService llmClientService,
                                      PromptFileService promptFileService,
                                      ObjectMapper objectMapper,
                                      HtmlFetchService htmlFetchService,
                                      JournalistEnrichmentReviewService reviewService,
-                                     SearchEvidenceService searchEvidenceService) {
+                                     SearchEvidenceService searchEvidenceService,
+                                     JournalistContactRepository contactRepository) {
     this.llmClientService = llmClientService;
     this.promptFileService = promptFileService;
     this.objectMapper = objectMapper;
     this.htmlFetchService = htmlFetchService;
     this.reviewService = reviewService;
     this.searchEvidenceService = searchEvidenceService;
+    this.contactRepository = contactRepository;
   }
 
   public EnrichmentOutcome enrich(Journalist journalist, List<Article> recentArticles) {
@@ -83,6 +101,9 @@ public class JournalistEnrichmentService {
         logger.warn("Journalist enrichment failed journalistId={} reason=EMPTY_PROFILE", journalist.getId());
         return EnrichmentOutcome.failed("Empty profile");
       }
+      ensureBioSummary(root);
+      applyEvidenceOverrides(root, authorPageUrl, pageSignals, searchEvidence);
+      persistContacts(journalist, pageSignals, searchEvidence);
       boolean queued = reviewService.createReview(journalist, proposed).isPresent();
       if (queued) {
         logger.info("Journalist enrichment queued journalistId={}", journalist.getId());
@@ -128,6 +149,429 @@ public class JournalistEnrichmentService {
       }
     }
     return String.join("\n", lines);
+  }
+
+  private void ensureBioSummary(JsonNode root) {
+    if (root == null || !root.isObject()) {
+      return;
+    }
+    JsonNode proposed = root.path("proposed_profile");
+    if (!proposed.isObject()) {
+      return;
+    }
+    String current = text(proposed, "bio_summary");
+    if (current != null && !current.isBlank()) {
+      return;
+    }
+    String summary = buildFallbackSummary(proposed);
+    if (summary == null || summary.isBlank()) {
+      return;
+    }
+    ((ObjectNode) proposed).put("bio_summary", summary);
+  }
+
+  private void applyEvidenceOverrides(JsonNode root, String authorPageUrl, PageSignals pageSignals, String searchEvidence) {
+    if (root == null || !root.isObject()) {
+      return;
+    }
+    JsonNode proposed = root.path("proposed_profile");
+    if (!proposed.isObject()) {
+      return;
+    }
+    ObjectNode mutable = (ObjectNode) proposed;
+    ObjectNode links = proposed.path("public_links").isObject()
+        ? (ObjectNode) proposed.path("public_links")
+        : mutable.putObject("public_links");
+    if (isBlank(text(links, "author_page")) && hasText(authorPageUrl)) {
+      links.put("author_page", authorPageUrl);
+    }
+    EvidenceLinks evidenceLinks = extractEvidenceLinks(pageSignals, searchEvidence, text(proposed, "full_name"));
+    if (isBlank(text(links, "linkedin")) && evidenceLinks.linkedin() != null) {
+      links.put("linkedin", evidenceLinks.linkedin());
+    }
+    if (isBlank(text(links, "twitter")) && evidenceLinks.twitter() != null) {
+      links.put("twitter", evidenceLinks.twitter());
+    }
+    if (isBlank(text(proposed, "journey_summary"))) {
+      String bio = text(proposed, "bio_summary");
+      if (bio != null && !bio.isBlank()) {
+        mutable.put("journey_summary", bio);
+      }
+    }
+  }
+
+  private EvidenceLinks extractEvidenceLinks(PageSignals pageSignals, String searchEvidence, String fullName) {
+    String combined = buildEvidenceText(pageSignals, searchEvidence);
+    Set<String> linkedInUrls = new LinkedHashSet<>();
+    Set<String> twitterUrls = new LinkedHashSet<>();
+    Matcher matcher = URL_PATTERN.matcher(combined);
+    while (matcher.find()) {
+      String raw = trimUrl(matcher.group());
+      if (raw == null || raw.isBlank()) {
+        continue;
+      }
+      String normalized = raw.toLowerCase(Locale.ROOT);
+      if (normalized.contains("linkedin.com")) {
+        linkedInUrls.add(raw);
+      } else if (normalized.contains("twitter.com") || normalized.contains("x.com")) {
+        twitterUrls.add(raw);
+      }
+    }
+    String linkedin = selectBestLinkedIn(linkedInUrls, fullName);
+    String twitter = selectBestTwitter(twitterUrls, fullName);
+    return new EvidenceLinks(linkedin, twitter);
+  }
+
+  private String selectBestLinkedIn(Set<String> urls, String fullName) {
+    if (urls == null || urls.isEmpty()) {
+      return null;
+    }
+    String nameSlug = slugify(fullName);
+    for (String url : urls) {
+      String lower = url.toLowerCase(Locale.ROOT);
+      if (lower.contains("/in/") || lower.contains("/pub/")) {
+        return url;
+      }
+    }
+    if (nameSlug != null && !nameSlug.isBlank()) {
+      for (String url : urls) {
+        if (url.toLowerCase(Locale.ROOT).contains(nameSlug)) {
+          return url;
+        }
+      }
+    }
+    for (String url : urls) {
+      if (!url.toLowerCase(Locale.ROOT).contains("/company/")) {
+        return url;
+      }
+    }
+    return urls.iterator().next();
+  }
+
+  private String selectBestTwitter(Set<String> urls, String fullName) {
+    if (urls == null || urls.isEmpty()) {
+      return null;
+    }
+    String nameSlug = slugify(fullName);
+    for (String url : urls) {
+      String normalized = url.toLowerCase(Locale.ROOT);
+      if (normalized.contains("/share") || normalized.contains("/intent")) {
+        continue;
+      }
+      if (nameSlug != null && !nameSlug.isBlank() && normalized.contains(nameSlug)) {
+        return url;
+      }
+    }
+    for (String url : urls) {
+      String normalized = url.toLowerCase(Locale.ROOT);
+      if (normalized.contains("/share") || normalized.contains("/intent")) {
+        continue;
+      }
+      return url;
+    }
+    return urls.iterator().next();
+  }
+
+  private String trimUrl(String url) {
+    if (url == null) {
+      return null;
+    }
+    String trimmed = url.trim();
+    while (!trimmed.isBlank() && (trimmed.endsWith(",") || trimmed.endsWith(".") || trimmed.endsWith(")") || trimmed.endsWith("]"))) {
+      trimmed = trimmed.substring(0, trimmed.length() - 1);
+    }
+    return trimmed;
+  }
+
+  private void persistContacts(Journalist journalist, PageSignals pageSignals, String searchEvidence) {
+    if (journalist == null || journalist.getId() == null) {
+      return;
+    }
+    ContactCandidates candidates = extractContactCandidates(journalist, pageSignals, searchEvidence);
+    if (candidates.emails().isEmpty() && candidates.phones().isEmpty()) {
+      return;
+    }
+    List<JournalistContact> existing = contactRepository.findByJournalistId(journalist.getId());
+    Set<String> existingEmails = new LinkedHashSet<>();
+    Set<String> existingPhones = new LinkedHashSet<>();
+    for (JournalistContact contact : existing) {
+      if (contact.getEmail() != null) {
+        existingEmails.add(contact.getEmail().trim().toLowerCase(Locale.ROOT));
+      }
+      if (contact.getPhone() != null) {
+        existingPhones.add(normalizePhone(contact.getPhone()));
+      }
+    }
+    List<JournalistContact> created = new ArrayList<>();
+    for (String email : candidates.emails()) {
+      String normalized = email.toLowerCase(Locale.ROOT);
+      if (existingEmails.contains(normalized)) {
+        continue;
+      }
+      JournalistContact contact = new JournalistContact();
+      contact.setJournalist(journalist);
+      contact.setEmail(email);
+      contact.setVisibility(ContactVisibility.ADMIN_ONLY);
+      contact.setSourceType(ContactSourceType.PUBLIC_BIO);
+      created.add(contact);
+      existingEmails.add(normalized);
+    }
+    for (String phone : candidates.phones()) {
+      String normalized = normalizePhone(phone);
+      if (normalized.isBlank() || existingPhones.contains(normalized)) {
+        continue;
+      }
+      JournalistContact contact = new JournalistContact();
+      contact.setJournalist(journalist);
+      contact.setPhone(normalized);
+      contact.setVisibility(ContactVisibility.ADMIN_ONLY);
+      contact.setSourceType(ContactSourceType.PUBLIC_BIO);
+      created.add(contact);
+      existingPhones.add(normalized);
+    }
+    if (!created.isEmpty()) {
+      contactRepository.saveAll(created);
+      logger.info("Journalist contact extracted journalistId={} emails={} phones={}",
+          journalist.getId(),
+          candidates.emails().size(),
+          candidates.phones().size());
+    }
+  }
+
+  private ContactCandidates extractContactCandidates(Journalist journalist, PageSignals pageSignals, String searchEvidence) {
+    String combined = buildEvidenceText(pageSignals, searchEvidence);
+    Set<String> emails = new LinkedHashSet<>();
+    Set<String> phones = new LinkedHashSet<>();
+    Matcher emailMatcher = EMAIL_PATTERN.matcher(combined);
+    while (emailMatcher.find()) {
+      String email = trimPunctuation(emailMatcher.group());
+      if (email != null && !email.isBlank() && isLikelyJournalistEmail(email, journalist)) {
+        emails.add(email.toLowerCase(Locale.ROOT));
+      }
+    }
+    String sanitized = stripUrls(combined);
+    Matcher telMatcher = TEL_PATTERN.matcher(sanitized);
+    while (telMatcher.find()) {
+      String phone = normalizePhone(telMatcher.group(1));
+      if (!phone.isBlank()) {
+        phones.add(phone);
+      }
+    }
+    String[] lines = sanitized.split("\\R");
+    for (String line : lines) {
+      String lower = line.toLowerCase(Locale.ROOT);
+      boolean hasKeyword = hasPhoneKeyword(lower);
+      Matcher phoneMatcher = PHONE_PATTERN.matcher(line);
+      while (phoneMatcher.find()) {
+        String raw = phoneMatcher.group();
+        if (!isLikelyPhone(raw, hasKeyword)) {
+          continue;
+        }
+        String phone = normalizePhone(raw);
+        if (!phone.isBlank()) {
+          phones.add(phone);
+        }
+      }
+    }
+    return new ContactCandidates(emails, phones);
+  }
+
+  private String buildEvidenceText(PageSignals pageSignals, String searchEvidence) {
+    StringBuilder builder = new StringBuilder();
+    if (pageSignals != null) {
+      appendEvidence(builder, pageSignals.text());
+      appendEvidence(builder, pageSignals.links());
+    }
+    appendEvidence(builder, searchEvidence);
+    String combined = builder.toString();
+    if (combined.length() <= MAX_CONTACT_EVIDENCE_CHARS) {
+      return combined;
+    }
+    return combined.substring(0, MAX_CONTACT_EVIDENCE_CHARS);
+  }
+
+  private void appendEvidence(StringBuilder builder, String value) {
+    if (value == null || value.isBlank()) {
+      return;
+    }
+    if (!builder.isEmpty()) {
+      builder.append('\n');
+    }
+    builder.append(value);
+  }
+
+  private String trimPunctuation(String value) {
+    if (value == null) {
+      return null;
+    }
+    String trimmed = value.trim();
+    while (!trimmed.isBlank() && (trimmed.endsWith(",") || trimmed.endsWith(".") || trimmed.endsWith(";") || trimmed.endsWith(")"))) {
+      trimmed = trimmed.substring(0, trimmed.length() - 1);
+    }
+    return trimmed;
+  }
+
+  private String stripUrls(String value) {
+    if (value == null || value.isBlank()) {
+      return "";
+    }
+    return URL_PATTERN.matcher(value).replaceAll(" ");
+  }
+
+  private String normalizePhone(String value) {
+    if (value == null) {
+      return "";
+    }
+    String trimmed = value.trim();
+    boolean hasPlus = trimmed.startsWith("+") || trimmed.startsWith("00");
+    String digits = trimmed.replaceAll("[^0-9]", "");
+    if (trimmed.startsWith("00") && digits.length() > 2) {
+      digits = digits.substring(2);
+    }
+    if (digits.length() < 8 || digits.length() > 15) {
+      return "";
+    }
+    return hasPlus ? "+" + digits : digits;
+  }
+
+  private boolean hasPhoneKeyword(String line) {
+    if (line == null) {
+      return false;
+    }
+    return line.contains("phone") || line.contains("mobile") || line.contains("call")
+        || line.contains("contact") || line.contains("tel") || line.contains("whatsapp");
+  }
+
+  private boolean isLikelyPhone(String raw, boolean hasKeyword) {
+    if (raw == null || raw.isBlank()) {
+      return false;
+    }
+    String digits = raw.replaceAll("[^0-9]", "");
+    int length = digits.length();
+    boolean hasSeparator = raw.matches(".*[\\s().-].*");
+    boolean hasPlus = raw.trim().startsWith("+") || raw.trim().startsWith("00");
+    if (length >= 10) {
+      return true;
+    }
+    if ((hasSeparator || hasPlus) && length >= 8) {
+      return true;
+    }
+    return hasKeyword && length >= 7;
+  }
+
+  private boolean isLikelyJournalistEmail(String email, Journalist journalist) {
+    if (email == null || journalist == null) {
+      return false;
+    }
+    String lower = email.toLowerCase(Locale.ROOT);
+    int atIndex = lower.indexOf('@');
+    if (atIndex <= 0) {
+      return false;
+    }
+    String local = lower.substring(0, atIndex);
+    String domain = lower.substring(atIndex + 1);
+    String publicationDomain = normalizeDomain(journalist.getPublicationDomain());
+    if (publicationDomain != null && !publicationDomain.isBlank() && domain.endsWith(publicationDomain)) {
+      return true;
+    }
+    String fullName = journalist.getFullName() == null ? "" : journalist.getFullName().toLowerCase(Locale.ROOT);
+    for (String part : fullName.split("\\s+")) {
+      String token = part.replaceAll("[^a-z0-9]", "");
+      if (token.length() < 3) {
+        continue;
+      }
+      if (local.contains(token)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private String normalizeDomain(String domain) {
+    if (domain == null || domain.isBlank()) {
+      return "";
+    }
+    String trimmed = domain.trim().toLowerCase(Locale.ROOT);
+    try {
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        String host = URI.create(trimmed).getHost();
+        if (host == null) {
+          return "";
+        }
+        return host.startsWith("www.") ? host.substring(4) : host;
+      }
+    } catch (Exception ignored) {
+    }
+    int slashIndex = trimmed.indexOf('/');
+    String host = slashIndex > 0 ? trimmed.substring(0, slashIndex) : trimmed;
+    return host.startsWith("www.") ? host.substring(4) : host;
+  }
+
+  private String buildFallbackSummary(JsonNode proposed) {
+    String name = text(proposed, "full_name");
+    String designation = text(proposed, "designation");
+    String publication = text(proposed, "publication_name");
+    JsonNode location = proposed.path("location");
+    String city = text(location, "city");
+    String country = text(location, "country");
+    List<String> beats = extractBeats(proposed.path("beats"));
+
+    List<String> lines = new ArrayList<>();
+    if (hasText(name) && hasText(designation) && hasText(publication)) {
+      lines.add(name + " is a " + designation + " at " + publication + ".");
+    } else if (hasText(designation) && hasText(publication)) {
+      lines.add("A " + designation + " at " + publication + ".");
+    } else if (hasText(name) && hasText(publication)) {
+      lines.add(name + " writes for " + publication + ".");
+    }
+    if (!beats.isEmpty()) {
+      lines.add("Covers " + String.join(", ", beats) + ".");
+    }
+    if (hasText(city) || hasText(country)) {
+      String locationText = hasText(city) && hasText(country)
+          ? city + ", " + country
+          : hasText(city) ? city : country;
+      lines.add("Based in " + locationText + ".");
+    }
+    if (lines.isEmpty()) {
+      return null;
+    }
+    return String.join(" ", lines);
+  }
+
+  private List<String> extractBeats(JsonNode beatsNode) {
+    List<String> beats = new ArrayList<>();
+    if (beatsNode == null || beatsNode.isMissingNode() || beatsNode.isNull()) {
+      return beats;
+    }
+    if (beatsNode.isArray()) {
+      for (JsonNode node : beatsNode) {
+        String beat = node.asText(null);
+        if (beat != null && !beat.isBlank()) {
+          beats.add(beat.trim());
+        }
+      }
+    } else {
+      String beat = beatsNode.asText(null);
+      if (beat != null && !beat.isBlank()) {
+        beats.add(beat.trim());
+      }
+    }
+    return beats;
+  }
+
+  private boolean hasText(String value) {
+    return value != null && !value.isBlank();
+  }
+
+  private boolean isBlank(String value) {
+    return value == null || value.isBlank();
+  }
+
+  private record EvidenceLinks(String linkedin, String twitter) {
+  }
+
+  private record ContactCandidates(Set<String> emails, Set<String> phones) {
   }
 
   private PageSignals fetchPageSignals(String url) {

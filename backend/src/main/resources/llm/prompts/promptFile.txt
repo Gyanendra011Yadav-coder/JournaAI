@@ -36,6 +36,7 @@ Fill every field in the schema. Use null when evidence is missing.
 Prefer exact titles for designation (e.g., "Senior Correspondent", "Editor") if visible.
 Extract LinkedIn/Twitter links if present in the author page or link hints.
 Never invent publication or designation.
+If evidence includes any role, beats, or bio details, summarize them in 2-4 lines for bio_summary. Only use null if no descriptive evidence exists.
 Do not wrap the JSON in markdown or code fences.
 
 Schema:
@@ -48,7 +49,8 @@ Schema:
     "beats": ["..."],
     "location": {"country":"...|null","city":"...|null"},
     "public_links": {"author_page":"...|null","twitter":"...|null","linkedin":"...|null"},
-    "bio_summary": "2-4 lines|null"
+    "bio_summary": "2-4 lines|null",
+    "journey_summary": "2-4 lines|null"
   },
   "confidence": 0-100,
   "evidence": {"field": "supporting snippet or url"},

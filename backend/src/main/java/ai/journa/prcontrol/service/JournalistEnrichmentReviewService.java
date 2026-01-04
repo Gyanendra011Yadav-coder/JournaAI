@@ -114,6 +114,7 @@ public class JournalistEnrichmentReviewService {
     snapshot.put("twitter", safe(journalist.getTwitter()));
     snapshot.put("linkedin", safe(journalist.getLinkedin()));
     snapshot.put("bio_summary", safe(journalist.getBioSummary()));
+    snapshot.put("journey_summary", safe(journalist.getJourneySummary()));
     if (journalist.getBeats() != null) {
       snapshot.put("beats", String.join(", ", journalist.getBeats()));
     }
@@ -127,6 +128,7 @@ public class JournalistEnrichmentReviewService {
     snapshot.put("publication_domain", text(proposedProfile, "publication_domain"));
     snapshot.put("designation", text(proposedProfile, "designation"));
     snapshot.put("bio_summary", text(proposedProfile, "bio_summary"));
+    snapshot.put("journey_summary", text(proposedProfile, "journey_summary"));
 
     JsonNode location = proposedProfile.path("location");
     snapshot.put("country", text(location, "country"));
@@ -172,6 +174,7 @@ public class JournalistEnrichmentReviewService {
     setIfPresent(journalist::setPublicationDomain, source, "publication_domain");
     setIfPresent(journalist::setDesignation, source, "designation");
     setIfPresent(journalist::setBioSummary, source, "bio_summary");
+    setIfPresent(journalist::setJourneySummary, source, "journey_summary");
 
     JsonNode location = source.path("location");
     if (location.isObject()) {

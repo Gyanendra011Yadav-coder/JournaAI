@@ -96,6 +96,7 @@ export default function JournalistProfilePage() {
   const [enrichmentStatus, setEnrichmentStatus] = useState<string | null>(null);
   const [enrichmentNotes, setEnrichmentNotes] = useState<string | null>(null);
   const [polling, setPolling] = useState(false);
+  const [showContacts, setShowContacts] = useState(false);
 
   const enrichmentActive =
     refreshing || polling || enrichmentStatus === "PENDING" || enrichmentStatus === "RUNNING";
@@ -218,6 +219,19 @@ export default function JournalistProfilePage() {
     }
     return links;
   }, [journalist, pendingProfile]);
+
+  const contactSummary = useMemo(() => {
+    if (!journalist?.contacts || journalist.contacts.length === 0) {
+      return { count: 0, emails: 0, phones: 0 };
+    }
+    let emails = 0;
+    let phones = 0;
+    journalist.contacts.forEach((contact) => {
+      if (contact.email) emails += 1;
+      if (contact.phone) phones += 1;
+    });
+    return { count: journalist.contacts.length, emails, phones };
+  }, [journalist]);
 
   const handleSearchWeb = () => {
     if (!journalist) return;
@@ -461,6 +475,50 @@ export default function JournalistProfilePage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+            {journalist && (
+              <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 space-y-3 shadow-[0_12px_40px_-32px_rgba(15,23,42,0.2)]">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-slate-700">Contact details</h2>
+                  {contactSummary.count > 0 && (
+                    <button
+                      onClick={() => setShowContacts((prev) => !prev)}
+                      className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-600 hover:border-cyan-300 hover:text-cyan-700"
+                    >
+                      {showContacts ? "Hide" : "Show"}
+                    </button>
+                  )}
+                </div>
+                {contactSummary.count === 0 ? (
+                  <p className="text-xs text-slate-500">No contact details captured yet.</p>
+                ) : (
+                  <>
+                    <p className="text-xs text-slate-500">
+                      {contactSummary.emails} emails · {contactSummary.phones} phones
+                    </p>
+                    {showContacts && (
+                      <div className="space-y-2 text-xs text-slate-600">
+                        {journalist.contacts?.map((contact) => (
+                          <div key={contact.id} className="rounded-xl border border-slate-200/70 bg-white px-3 py-2">
+                            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                              <span>{contact.visibility.replace("_", " ")}</span>
+                              <span>{contact.sourceType.replace("_", " ")}</span>
+                            </div>
+                            {contact.email && <p className="mt-1 text-sm text-slate-700">{contact.email}</p>}
+                            {contact.phone && <p className="text-sm text-slate-700">{contact.phone}</p>}
+                            {contact.verifiedAt && (
+                              <p className="text-[11px] text-emerald-600">
+                                Verified {new Date(contact.verifiedAt).toLocaleDateString()}
+                                {contact.verifiedBy ? ` · ${contact.verifiedBy}` : ""}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
             {role === "ADMIN" && (
