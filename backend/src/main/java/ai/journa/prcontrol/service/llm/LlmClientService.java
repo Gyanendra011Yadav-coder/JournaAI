@@ -99,6 +99,7 @@ public class LlmClientService {
   private List<LlmProvider> orderedProviders() {
     List<LlmProvider> providers = llmProviderRepository.findAll().stream()
         .filter(LlmProvider::isEnabled)
+        .filter(provider -> !isGeminiProvider(provider))
         .toList();
     List<String> order = llmProperties.getProviderOrder();
     if (order == null || order.isEmpty()) {

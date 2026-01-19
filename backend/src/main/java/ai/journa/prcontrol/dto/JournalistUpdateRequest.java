@@ -11,6 +11,12 @@ public class JournalistUpdateRequest {
   private String twitter;
   private String authorPageUrl;
   private List<String> beats;
+  private List<String> aliases;
+  private List<String> publicationAliases;
+  private List<String> topicKeywords;
+  private List<String> languages;
+  private List<String> coverageRegions;
+  private List<String> otherLinks;
   private String country;
   private String city;
   private String journeySummary;
@@ -80,6 +86,54 @@ public class JournalistUpdateRequest {
 
   public void setBeats(List<String> beats) {
     this.beats = beats;
+  }
+
+  public List<String> getAliases() {
+    return aliases;
+  }
+
+  public void setAliases(List<String> aliases) {
+    this.aliases = aliases;
+  }
+
+  public List<String> getPublicationAliases() {
+    return publicationAliases;
+  }
+
+  public void setPublicationAliases(List<String> publicationAliases) {
+    this.publicationAliases = publicationAliases;
+  }
+
+  public List<String> getTopicKeywords() {
+    return topicKeywords;
+  }
+
+  public void setTopicKeywords(List<String> topicKeywords) {
+    this.topicKeywords = topicKeywords;
+  }
+
+  public List<String> getLanguages() {
+    return languages;
+  }
+
+  public void setLanguages(List<String> languages) {
+    this.languages = languages;
+  }
+
+  public List<String> getCoverageRegions() {
+    return coverageRegions;
+  }
+
+  public void setCoverageRegions(List<String> coverageRegions) {
+    this.coverageRegions = coverageRegions;
+  }
+
+  public List<String> getOtherLinks() {
+    return otherLinks;
+  }
+
+  public void setOtherLinks(List<String> otherLinks) {
+    this.otherLinks = otherLinks;
   }
 
   public String getCountry() {

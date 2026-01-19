@@ -52,19 +52,26 @@ public class PromptFileService {
       """;
   private static final String DEFAULT_JOURNALIST_SYSTEM = """
       You enrich journalist profiles using ONLY the provided verified evidence text.
-      Do NOT guess email/phone. Do NOT fabricate details. Output JSON only.
+      Do NOT guess email/phone or private data. Do NOT fabricate details. Output JSON only.
+      Fill every field in the schema. Use null for scalars and [] for arrays when evidence is missing.
 
       Schema:
       {
         "proposed_profile": {
           "full_name": "...",
+          "aliases": ["..."],
           "publication_name": "...",
           "publication_domain": "...",
+          "publication_aliases": ["..."],
           "designation": "...|null",
           "beats": ["..."],
+          "topic_keywords": ["..."],
+          "languages": ["..."],
+          "coverage_regions": ["..."],
           "location": {"country":"...|null","city":"...|null"},
-          "public_links": {"author_page":"...|null","twitter":"...|null","linkedin":"...|null"},
-          "bio_summary": "2-4 lines|null"
+          "public_links": {"author_page":"...|null","twitter":"...|null","linkedin":"...|null","other":["..."]},
+          "bio_summary": "2-4 lines|null",
+          "journey_summary": "2-4 lines|null"
         },
         "confidence": 0-100,
         "evidence": {"field": "supporting snippet or url"},
@@ -78,6 +85,9 @@ public class PromptFileService {
       Verified evidence (may be empty):
       - Publisher author page URL: {{AUTHOR_PAGE_URL}}
       - Publisher author page text: {{AUTHOR_PAGE_TEXT}}
+      - Publisher author page links (social): {{AUTHOR_PAGE_LINKS}}
+      - Author page discovery notes: {{AUTHOR_PAGE_DISCOVERY}}
+      - External evidence (search API): {{SEARCH_EVIDENCE}}
       - Recent article titles/urls: {{RECENT_ARTICLES}}
 
       Enrich cautiously. Output JSON only.

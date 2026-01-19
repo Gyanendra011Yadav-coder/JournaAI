@@ -95,6 +95,18 @@ public class AdminJournalistController {
     response.setTwitter(journalist.getTwitter());
     response.setAuthorPageUrl(journalist.getAuthorPageUrl());
     response.setBeats(journalist.getBeats() != null ? Arrays.asList(journalist.getBeats()) : List.of());
+    response.setAliases(journalist.getAliases() != null ? Arrays.asList(journalist.getAliases()) : List.of());
+    response.setPublicationAliases(journalist.getPublicationAliases() != null
+        ? Arrays.asList(journalist.getPublicationAliases())
+        : List.of());
+    response.setTopicKeywords(journalist.getTopicKeywords() != null
+        ? Arrays.asList(journalist.getTopicKeywords())
+        : List.of());
+    response.setLanguages(journalist.getLanguages() != null ? Arrays.asList(journalist.getLanguages()) : List.of());
+    response.setCoverageRegions(journalist.getCoverageRegions() != null
+        ? Arrays.asList(journalist.getCoverageRegions())
+        : List.of());
+    response.setOtherLinks(journalist.getOtherLinks() != null ? Arrays.asList(journalist.getOtherLinks()) : List.of());
     response.setCountry(journalist.getCountry());
     response.setCity(journalist.getCity());
     response.setJourneySummary(journalist.getJourneySummary());

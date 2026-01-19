@@ -15,4 +15,11 @@ public interface JournalistContactRepository extends JpaRepository<JournalistCon
   @Query("select distinct contact.journalist.id from JournalistContact contact " +
       "where lower(contact.email) like lower(concat('%', :needle, '%'))")
   List<Long> findJournalistIdsByEmailLike(@Param("needle") String needle);
+
+  @Query("select distinct contact.journalist.id from JournalistContact contact " +
+      "where lower(contact.phone) like lower(concat('%', :needle, '%'))")
+  List<Long> findJournalistIdsByPhoneLike(@Param("needle") String needle);
+
+  @Query("select distinct contact.journalist.id from JournalistContact contact")
+  List<Long> findJournalistIdsWithContacts();
 }

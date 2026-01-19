@@ -25,9 +25,11 @@ import java.util.Set;
 @Service
 public class SearchEvidenceService {
   private static final Logger logger = LoggerFactory.getLogger(SearchEvidenceService.class);
-  private static final int MAX_EVIDENCE_PAGES = 3;
-  private static final int MAX_PAGE_TEXT_CHARS = 1200;
+  private static final int MAX_EVIDENCE_PAGES = 5;
+  private static final int MAX_PAGE_TEXT_CHARS = 2000;
   private static final int MAX_LINK_HINTS = 6;
+  private static final int MAX_NAME_VARIANTS = 2;
+  private static final int MAX_PUBLICATION_VARIANTS = 2;
 
   private final IntegrationSettingsService integrationSettingsService;
   private final SearchProviderProperties searchProviderProperties;
@@ -82,7 +84,7 @@ public class SearchEvidenceService {
       return Optional.empty();
     }
     String articleTitle = extractArticleTitle(recentArticles);
-    List<String> queries = buildQueryVariants(journalist, articleTitle);
+    List<QueryVariant> queries = buildQueryVariants(journalist, articleTitle);
     LocalePreference preference = resolveLocaleFromProfile();
     String lang = preference.lang();
     String country = preference.country();
@@ -101,61 +103,78 @@ public class SearchEvidenceService {
         ? settings.getMaxPerRequest()
         : searchProviderProperties.getGoogle().getMaxResults();
     boolean hasLocale = (lang != null && !lang.isBlank()) || (country != null && !country.isBlank());
-    List<SearchResult> results = List.of();
-    String queryUsed = null;
-    boolean usedLocale = true;
-    for (String candidate : queries) {
-      results = googleSearchService.search(candidate, apiKey, searchEngineId, maxPerRequest, lang, country);
-      logger.info("Google CSE query={} results={}", candidate, results.size());
-      if (!results.isEmpty()) {
-        queryUsed = candidate;
-        usedLocale = true;
-        break;
-      }
-      if (hasLocale) {
-        results = googleSearchService.search(candidate, apiKey, searchEngineId, maxPerRequest, null, null);
-        logger.info("Google CSE query={} locale=none results={}", candidate, results.size());
-        if (!results.isEmpty()) {
-          queryUsed = candidate;
-          usedLocale = false;
-          break;
-        }
-      }
-    }
-    if (results.isEmpty() || queryUsed == null) {
-      logger.info("Google CSE returned no results queries={}", queries);
-      return Optional.empty();
-    }
-    logger.info("Google CSE selected query={} localeUsed={}", queryUsed, usedLocale);
     Set<String> allowedDomains = parseAllowedDomains(settings.getAllowedDomains());
     boolean allowAll = allowedDomains.contains("*");
     logger.info("Search evidence allowAll={} allowedDomains={}", allowAll, allowAll ? "*" : allowedDomains);
+    List<String> queriesUsed = new ArrayList<>();
     List<EvidencePage> pages = new ArrayList<>();
-    for (SearchResult result : results) {
-      String url = result.url();
-      if (url == null || url.isBlank()) {
+    Set<String> seenUrls = new HashSet<>();
+    boolean profileSelected = false;
+    boolean emailSelected = false;
+    for (QueryVariant variant : queries) {
+      if (variant.type() == QueryType.PROFILE && profileSelected) {
         continue;
       }
-      if (skipUrl != null && !skipUrl.isBlank() && skipUrl.equalsIgnoreCase(url)) {
-        logger.info("Search evidence skip url reason=SKIP_URL url={}", url);
+      if (variant.type() == QueryType.EMAIL && emailSelected) {
         continue;
       }
-      if (!allowAll && !isAllowed(url, allowedDomains)) {
-        logger.info("Search evidence skip url reason=DOMAIN_BLOCKED url={}", url);
+      String candidate = variant.query();
+      List<SearchResult> results = googleSearchService.search(candidate, apiKey, searchEngineId, maxPerRequest, lang, country);
+      logger.info("Google CSE query={} results={}", candidate, results.size());
+      boolean usedLocale = true;
+      if (results.isEmpty() && hasLocale) {
+        results = googleSearchService.search(candidate, apiKey, searchEngineId, maxPerRequest, null, null);
+        logger.info("Google CSE query={} locale=none results={}", candidate, results.size());
+        usedLocale = false;
+      }
+      if (results.isEmpty()) {
         continue;
       }
-      EvidencePage page = buildEvidencePage(result);
-      if (page != null) {
-        pages.add(page);
+      queriesUsed.add(candidate + (usedLocale ? "" : " [locale=none]"));
+      if (variant.type() == QueryType.PROFILE) {
+        profileSelected = true;
+      } else if (variant.type() == QueryType.EMAIL) {
+        emailSelected = true;
+      }
+      for (SearchResult result : results) {
+        if (pages.size() >= MAX_EVIDENCE_PAGES) {
+          break;
+        }
+        String url = result.url();
+        if (url == null || url.isBlank() || seenUrls.contains(url)) {
+          continue;
+        }
+        seenUrls.add(url);
+        if (skipUrl != null && !skipUrl.isBlank() && skipUrl.equalsIgnoreCase(url)) {
+          logger.info("Search evidence skip url reason=SKIP_URL url={}", url);
+          continue;
+        }
+        if (!allowAll && !isAllowed(url, allowedDomains)) {
+          logger.info("Search evidence skip url reason=DOMAIN_BLOCKED url={}", url);
+          continue;
+        }
+        EvidencePage page = buildEvidencePage(result);
+        if (page != null) {
+          pages.add(page);
+        }
       }
       if (pages.size() >= MAX_EVIDENCE_PAGES) {
         break;
       }
+      if (profileSelected && emailSelected && !pages.isEmpty()) {
+        break;
+      }
     }
     if (pages.isEmpty()) {
-      logger.info("Search evidence captured none query={}", queryUsed);
+      logger.info("Google CSE returned no results queries={}",
+          queries.stream().map(QueryVariant::query).toList());
       return Optional.empty();
     }
+    String queryUsed = String.join(" | ", queriesUsed);
+    logger.info("Google CSE selected queries={} profileQuery={} emailQuery={}",
+        queryUsed,
+        profileSelected,
+        emailSelected);
     logger.info("Google CSE evidence captured query={} pages={} urls={}",
         queryUsed,
         pages.size(),
@@ -170,7 +189,7 @@ public class SearchEvidenceService {
     String linkHints = "";
     if (html.isPresent()) {
       org.jsoup.nodes.Document document = Jsoup.parse(html.get(), url);
-      String text = document.text();
+      String text = HtmlTextExtractor.extractMainText(document);
       if (text != null) {
         pageText = text.length() > MAX_PAGE_TEXT_CHARS ? text.substring(0, MAX_PAGE_TEXT_CHARS) : text;
       }
@@ -184,27 +203,77 @@ public class SearchEvidenceService {
     return new EvidencePage(url, result.title(), result.snippet(), pageText, linkHints);
   }
 
-  private List<String> buildQueryVariants(Journalist journalist, String articleTitle) {
-    String name = safeQuoted(journalist.getFullName());
-    String publication = safeQuoted(journalist.getPublicationName());
+  private List<QueryVariant> buildQueryVariants(Journalist journalist, String articleTitle) {
+    List<String> nameVariants = collectVariants(journalist.getFullName(), journalist.getAliases(), MAX_NAME_VARIANTS);
+    List<String> publicationVariants = collectVariants(journalist.getPublicationName(),
+        journalist.getPublicationAliases(), MAX_PUBLICATION_VARIANTS);
     String domain = normalizeDomain(journalist.getPublicationDomain());
     String titleTerm = safeTerm(articleTitle);
-    Set<String> queries = new java.util.LinkedHashSet<>();
-    queries.add(joinTerms(name, publication, "journalist profile"));
-    queries.add(joinTerms(name, publication, "author profile"));
-    if (!titleTerm.isBlank()) {
-      queries.add(joinTerms(name, publication, titleTerm));
+    List<QueryVariant> variants = new ArrayList<>();
+    Set<String> seen = new java.util.LinkedHashSet<>();
+    if (nameVariants.isEmpty()) {
+      nameVariants = List.of("");
     }
-    queries.add(joinTerms(name, publication));
+    if (publicationVariants.isEmpty()) {
+      publicationVariants = List.of("");
+    }
+    for (String nameVariant : nameVariants) {
+      String name = safeQuoted(nameVariant);
+      for (String publicationVariant : publicationVariants) {
+        String publication = safeQuoted(publicationVariant);
+        addVariant(variants, seen, QueryType.PROFILE, joinTerms(name, publication, "journalist profile"));
+        addVariant(variants, seen, QueryType.EMAIL, joinTerms(name, publication, "email"));
+        addVariant(variants, seen, QueryType.PROFILE, joinTerms(name, publication, "author profile"));
+        if (!titleTerm.isBlank()) {
+          addVariant(variants, seen, QueryType.PROFILE, joinTerms(name, publication, titleTerm));
+        }
+        addVariant(variants, seen, QueryType.PROFILE, joinTerms(name, publication));
+      }
+      addVariant(variants, seen, QueryType.EMAIL, joinTerms(name, "email"));
+      addVariant(variants, seen, QueryType.PROFILE, joinTerms(name, "site:linkedin.com"));
+      addVariant(variants, seen, QueryType.PROFILE, joinTerms(name, "site:muckrack.com"));
+      addVariant(variants, seen, QueryType.PROFILE, joinTerms(name, "site:goskribe.com"));
+      addVariant(variants, seen, QueryType.PROFILE, joinTerms(name, "site:twitter.com"));
+    }
     if (!domain.isBlank()) {
-      queries.add(joinTerms(name, "site:" + domain));
+      for (String nameVariant : nameVariants) {
+        String name = safeQuoted(nameVariant);
+        addVariant(variants, seen, QueryType.PROFILE, joinTerms(name, "site:" + domain));
+        addVariant(variants, seen, QueryType.EMAIL, joinTerms(name, "email", "site:" + domain));
+      }
     }
-    queries.add(joinTerms(name, "site:linkedin.com"));
-    queries.add(joinTerms(name, "site:muckrack.com"));
-    queries.add(joinTerms(name, "site:goskribe.com"));
-    queries.add(joinTerms(name, "site:twitter.com"));
-    queries.removeIf(String::isBlank);
-    return new ArrayList<>(queries);
+    return variants;
+  }
+
+  private List<String> collectVariants(String primary, String[] aliases, int max) {
+    List<String> variants = new ArrayList<>();
+    if (primary != null && !primary.isBlank()) {
+      variants.add(primary.trim());
+    }
+    if (aliases != null) {
+      for (String alias : aliases) {
+        if (alias == null || alias.isBlank()) {
+          continue;
+        }
+        String trimmed = alias.trim();
+        if (variants.stream().noneMatch(existing -> existing.equalsIgnoreCase(trimmed))) {
+          variants.add(trimmed);
+        }
+        if (variants.size() >= max) {
+          break;
+        }
+      }
+    }
+    return variants;
+  }
+
+  private void addVariant(List<QueryVariant> variants, Set<String> seen, QueryType type, String query) {
+    if (query == null || query.isBlank()) {
+      return;
+    }
+    if (seen.add(query)) {
+      variants.add(new QueryVariant(type, query));
+    }
   }
 
   private String safeQuoted(String value) {
@@ -362,8 +431,13 @@ public class SearchEvidenceService {
         continue;
       }
       String normalized = href.toLowerCase(Locale.ROOT);
-      if (!(normalized.contains("linkedin.com") || normalized.contains("twitter.com") || normalized.contains("x.com")
-          || normalized.contains("facebook.com") || normalized.contains("instagram.com"))) {
+      boolean isSocial = normalized.contains("linkedin.com") || normalized.contains("twitter.com")
+          || normalized.contains("x.com") || normalized.contains("facebook.com")
+          || normalized.contains("instagram.com") || normalized.contains("threads.net")
+          || normalized.contains("tiktok.com") || normalized.contains("youtube.com")
+          || normalized.contains("medium.com") || normalized.contains("substack.com");
+      boolean isContact = normalized.startsWith("mailto:") || normalized.startsWith("tel:");
+      if (!isSocial && !isContact) {
         continue;
       }
       hints.add(href.trim());
@@ -398,6 +472,14 @@ public class SearchEvidenceService {
   }
 
   public record EvidencePage(String url, String title, String snippet, String pageText, String linkHints) {
+  }
+
+  private enum QueryType {
+    PROFILE,
+    EMAIL
+  }
+
+  private record QueryVariant(QueryType type, String query) {
   }
 
   private record LocalePreference(String country, String lang, String source) {

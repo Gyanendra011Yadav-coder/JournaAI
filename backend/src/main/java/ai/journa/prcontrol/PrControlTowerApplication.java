@@ -3,6 +3,7 @@ package ai.journa.prcontrol;
 import ai.journa.prcontrol.config.BeatProperties;
 import ai.journa.prcontrol.config.CorsProperties;
 import ai.journa.prcontrol.config.EnrichmentProperties;
+import ai.journa.prcontrol.config.JournalistCleanupProperties;
 import ai.journa.prcontrol.config.LlmProperties;
 import ai.journa.prcontrol.config.NewsProviderProperties;
 import ai.journa.prcontrol.config.RequestLoggingProperties;
@@ -18,6 +19,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
     BeatProperties.class,
     CorsProperties.class,
     EnrichmentProperties.class,
+    JournalistCleanupProperties.class,
     LlmProperties.class,
     RequestLoggingProperties.class
 })

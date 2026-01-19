@@ -21,7 +21,7 @@ public class JournalistContact {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  private ContactVisibility visibility = ContactVisibility.ADMIN_ONLY;
+  private ContactVisibility visibility = ContactVisibility.PUBLIC;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "source_type", nullable = false)

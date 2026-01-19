@@ -136,14 +136,18 @@ app:
       reviewBatchSize: 10
       oldPendingBatchSize: 10
       maxConcurrentTasks: 4
+  journalist-cleanup:
+    enabled: true
+    fixedDelayMs: 600000
+    batchSize: 200
   llm:
     enabled: true
     seed:
       enabled: true
       updateExisting: true
     providerOrder:
-      - "GEMINI"
       - "GROQ"
+      - "CHATGPT"
     authorExtraction:
       enabled: true
       cacheDays: 7
@@ -156,7 +160,7 @@ app:
       openMinutes: 20
     providers:
       - name: "GEMINI"
-        enabled: true
+        enabled: false
         baseUrl: "https://generativelanguage.googleapis.com/v1/models/{{MODEL}}:generateContent"
         authType: "API_KEY_HEADER"
         authHeaderName: "x-goog-api-key"
@@ -187,6 +191,34 @@ app:
         authType: "BEARER"
         apiKeyBase64: "Z3NrX1FXYTdDMmZXcm9EcTJkRzVRN0JHV0dkeWIzRlk4djBvOUxFWFFIYU9ndVFPN21DWDhjc0U="
         model: "llama-3.1-8b-instant"
+        timeoutMs: 12000
+        responseJsonpath: "$.choices[0].message.content"
+        requestTemplate:
+          model: "{{MODEL}}"
+          messages:
+            - role: "system"
+              content: "{{SYSTEM_PROMPT}}"
+            - role: "user"
+              content: "{{USER_PROMPT}}"
+          temperature: "{{TEMPERATURE}}"
+          max_tokens: "{{MAX_TOKENS}}"
+          response_format:
+            type: "json_object"
+        retryPolicy:
+          maxRetries: 2
+          retryableStatusCodes:
+            - 408
+            - 429
+            - 500
+            - 502
+            - 503
+            - 504
+      - name: "CHATGPT"
+        enabled: true
+        baseUrl: "https://api.openai.com/v1/chat/completions"
+        authType: "BEARER"
+        apiKeyBase64: ""
+        model: "gpt-4o-mini"
         timeoutMs: 12000
         responseJsonpath: "$.choices[0].message.content"
         requestTemplate:

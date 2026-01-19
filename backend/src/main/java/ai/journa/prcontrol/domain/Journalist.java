@@ -30,6 +30,30 @@ public class Journalist {
   @Column(name = "beats", columnDefinition = "text[]")
   private String[] beats;
 
+  @JdbcTypeCode(SqlTypes.ARRAY)
+  @Column(name = "aliases", columnDefinition = "text[]")
+  private String[] aliases;
+
+  @JdbcTypeCode(SqlTypes.ARRAY)
+  @Column(name = "publication_aliases", columnDefinition = "text[]")
+  private String[] publicationAliases;
+
+  @JdbcTypeCode(SqlTypes.ARRAY)
+  @Column(name = "topic_keywords", columnDefinition = "text[]")
+  private String[] topicKeywords;
+
+  @JdbcTypeCode(SqlTypes.ARRAY)
+  @Column(name = "languages", columnDefinition = "text[]")
+  private String[] languages;
+
+  @JdbcTypeCode(SqlTypes.ARRAY)
+  @Column(name = "coverage_regions", columnDefinition = "text[]")
+  private String[] coverageRegions;
+
+  @JdbcTypeCode(SqlTypes.ARRAY)
+  @Column(name = "other_links", columnDefinition = "text[]")
+  private String[] otherLinks;
+
   private String country;
 
   private String city;
@@ -119,6 +143,54 @@ public class Journalist {
 
   public void setBeats(String[] beats) {
     this.beats = beats;
+  }
+
+  public String[] getAliases() {
+    return aliases;
+  }
+
+  public void setAliases(String[] aliases) {
+    this.aliases = aliases;
+  }
+
+  public String[] getPublicationAliases() {
+    return publicationAliases;
+  }
+
+  public void setPublicationAliases(String[] publicationAliases) {
+    this.publicationAliases = publicationAliases;
+  }
+
+  public String[] getTopicKeywords() {
+    return topicKeywords;
+  }
+
+  public void setTopicKeywords(String[] topicKeywords) {
+    this.topicKeywords = topicKeywords;
+  }
+
+  public String[] getLanguages() {
+    return languages;
+  }
+
+  public void setLanguages(String[] languages) {
+    this.languages = languages;
+  }
+
+  public String[] getCoverageRegions() {
+    return coverageRegions;
+  }
+
+  public void setCoverageRegions(String[] coverageRegions) {
+    this.coverageRegions = coverageRegions;
+  }
+
+  public String[] getOtherLinks() {
+    return otherLinks;
+  }
+
+  public void setOtherLinks(String[] otherLinks) {
+    this.otherLinks = otherLinks;
   }
 
   public String getCountry() {
