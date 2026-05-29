@@ -7,14 +7,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ConfigValidationRunner implements ApplicationRunner {
-  private final NewsProviderProperties newsProviderProperties;
   private final String integrationMasterKey;
   private final String jwtSecret;
 
-  public ConfigValidationRunner(NewsProviderProperties newsProviderProperties,
-                                @Value("${app.security.integrationMasterKey}") String integrationMasterKey,
+  public ConfigValidationRunner(@Value("${app.security.integrationMasterKey}") String integrationMasterKey,
                                 @Value("${app.jwt.secret}") String jwtSecret) {
-    this.newsProviderProperties = newsProviderProperties;
     this.integrationMasterKey = integrationMasterKey;
     this.jwtSecret = jwtSecret;
   }
@@ -23,14 +20,13 @@ public class ConfigValidationRunner implements ApplicationRunner {
   public void run(ApplicationArguments args) {
     validateMasterKey();
     validateJwtSecret();
-    validateGnewsKey();
   }
 
   private void validateMasterKey() {
     if (integrationMasterKey == null || integrationMasterKey.isBlank()) {
       throw new IllegalStateException("Missing app.security.integrationMasterKey; provide a strong secret.");
     }
-    if ("change-me-please".equals(integrationMasterKey)) {
+    if (isPlaceholderSecret(integrationMasterKey)) {
       throw new IllegalStateException("Replace app.security.integrationMasterKey with a strong secret.");
     }
     if (integrationMasterKey.length() < 32) {
@@ -42,15 +38,16 @@ public class ConfigValidationRunner implements ApplicationRunner {
     if (jwtSecret == null || jwtSecret.isBlank()) {
       throw new IllegalStateException("Missing app.jwt.secret; provide a strong secret.");
     }
+    if (isPlaceholderSecret(jwtSecret)) {
+      throw new IllegalStateException("Replace app.jwt.secret with a strong secret.");
+    }
     if (jwtSecret.length() < 32) {
       throw new IllegalStateException("app.jwt.secret must be at least 32 characters.");
     }
   }
 
-  private void validateGnewsKey() {
-    String decoded = newsProviderProperties.getGnews().getDecodedApiKey();
-    if (decoded == null || decoded.isBlank()) {
-      throw new IllegalStateException("Missing or invalid app.news.gnews.apiKeyBase64; provide base64-encoded key.");
-    }
+  private boolean isPlaceholderSecret(String value) {
+    return value != null && value.toLowerCase().startsWith("change-me");
   }
+
 }

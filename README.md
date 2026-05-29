@@ -98,8 +98,22 @@ npm run test
 
 ## Environment Variables
 ```bash
-# Optional: supply integration master key for encryption at rest
-INTEGRATION_MASTER_KEY=your-master-key
+# Required for backend startup outside tests
+INTEGRATION_MASTER_KEY=replace-with-a-strong-32-char-minimum-secret
+JWT_SECRET=replace-with-a-strong-32-char-minimum-secret
+
+# Optional local overrides
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/prcontrol
+SPRING_DATASOURCE_USERNAME=prcontrol
+SPRING_DATASOURCE_PASSWORD=prcontrol
+
+# Optional external integrations. Values are base64-encoded API keys.
+GNEWS_API_KEY_BASE64=
+GOOGLE_SEARCH_API_KEY_BASE64=
+GOOGLE_SEARCH_ENGINE_ID=
+GEMINI_API_KEY_BASE64=
+GROQ_API_KEY_BASE64=
+OPENAI_API_KEY_BASE64=
 ```
 
 ## Configuration

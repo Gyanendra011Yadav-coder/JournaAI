@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/prcontrol
-    username: prcontrol
-    password: prcontrol
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/prcontrol}
+    username: ${SPRING_DATASOURCE_USERNAME:prcontrol}
+    password: ${SPRING_DATASOURCE_PASSWORD:prcontrol}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -93,8 +93,8 @@ app:
         - "automotive industry"
         - "electric vehicle"
   jwt:
-    secret: "change-me-change-me-change-me-change-me"
-    expirationSeconds: 3600
+    secret: ${JWT_SECRET:change-me-change-me-change-me-change-me}
+    expirationSeconds: ${JWT_EXPIRATION_SECONDS:3600}
   news:
     ttlMinutes: 15
     failureThreshold: 3
@@ -106,13 +106,13 @@ app:
       fixedDelayMs: 600000
     gnews:
       baseUrl: "https://gnews.io/api/v4"
-      apiKeyBase64: "MDlmZjdmNjJlNDQyYmViZTc2YzYzMDJmYWUzZTc4ZmI="
+      apiKeyBase64: ${GNEWS_API_KEY_BASE64:}
       requestTimeoutSeconds: 10
       maxBackoffSeconds: 30
   search:
     google:
-      apiKeyBase64: "QUl6YVN5QTg0QzFyamM3elZNU1EwbGFWVU5LOTNyR1VOUDRPMnNR"
-      searchEngineId: "01f32d91ca0e847db"
+      apiKeyBase64: ${GOOGLE_SEARCH_API_KEY_BASE64:}
+      searchEngineId: ${GOOGLE_SEARCH_ENGINE_ID:}
       baseUrl: "https://www.googleapis.com/customsearch/v1"
       requestTimeoutSeconds: 10
       maxResults: 5
@@ -164,7 +164,7 @@ app:
         baseUrl: "https://generativelanguage.googleapis.com/v1/models/{{MODEL}}:generateContent"
         authType: "API_KEY_HEADER"
         authHeaderName: "x-goog-api-key"
-        apiKeyBase64: "QUl6YVN5Q2djN1Z0Tm1KcC03dkdPcUVidUc0QWllb1pCdDBLR1RB"
+        apiKeyBase64: ${GEMINI_API_KEY_BASE64:}
         model: "gemini-1.5-flash"
         timeoutMs: 12000
         responseJsonpath: "$.candidates[0].content.parts[0].text"
@@ -189,7 +189,7 @@ app:
         enabled: true
         baseUrl: "https://api.groq.com/openai/v1/chat/completions"
         authType: "BEARER"
-        apiKeyBase64: "Z3NrX1FXYTdDMmZXcm9EcTJkRzVRN0JHV0dkeWIzRlk4djBvOUxFWFFIYU9ndVFPN21DWDhjc0U="
+        apiKeyBase64: ${GROQ_API_KEY_BASE64:}
         model: "llama-3.1-8b-instant"
         timeoutMs: 12000
         responseJsonpath: "$.choices[0].message.content"
@@ -217,7 +217,7 @@ app:
         enabled: true
         baseUrl: "https://api.openai.com/v1/chat/completions"
         authType: "BEARER"
-        apiKeyBase64: ""
+        apiKeyBase64: ${OPENAI_API_KEY_BASE64:}
         model: "gpt-4o-mini"
         timeoutMs: 12000
         responseJsonpath: "$.choices[0].message.content"
@@ -242,7 +242,7 @@ app:
             - 503
             - 504
   security:
-    integrationMasterKey: ${INTEGRATION_MASTER_KEY:2b5d3a9c1f7e4d8a6c0e9b1f5d7c3a2b8e6f4c1a9d7b5e3c2f8a1e6d4c0b9f2a}
+    integrationMasterKey: ${INTEGRATION_MASTER_KEY:change-me-please}
   logging:
     request:
       enabled: true

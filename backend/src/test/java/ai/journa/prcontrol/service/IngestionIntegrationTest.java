@@ -40,7 +40,8 @@ class IngestionIntegrationTest {
     registry.add("spring.datasource.url", postgres::getJdbcUrl);
     registry.add("spring.datasource.username", postgres::getUsername);
     registry.add("spring.datasource.password", postgres::getPassword);
-    registry.add("app.security.integrationMasterKey", () -> "test-master-key");
+    registry.add("app.security.integrationMasterKey", () -> "test-master-key-for-integration-tests-32");
+    registry.add("app.jwt.secret", () -> "test-jwt-secret-for-integration-tests-32");
   }
 
   @Autowired
